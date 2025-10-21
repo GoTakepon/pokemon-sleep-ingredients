@@ -4,8 +4,12 @@
 // - 数量は 0 まで可（−で 0、× で削除）
 // - おすすめレシピ：必要食材「合計数が多い順」に並び替え
 import { parseOcrText } from "./ocr-parse.js";
+import {
+  collectThisWeekIngredientIds,
+  buildChosenRecipeSet,
+} from "./logic/recommendation.js";
 
-const APP_VERSION = '20251021-2225'; // update-version.js と連動
+const APP_VERSION = '20251021-2324'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -385,22 +389,11 @@ function renderSuggestionsTable() {
 
   const cat = els.cat.value;
   const inv = buildInventoryMap();
-  const chosenSet = new Set(
-    (state.chosen || [])
-      .filter(item => (Number(item?.qty) || 0) > 0)
-      .map(item => item.recipe)
-  );
+  const chosenSet = buildChosenRecipeSet(state.chosen);
   const candidates = (state.data.recipes[cat] || []).filter(r => !chosenSet.has(r.id));
 
-  // ★ ここを追加：今週/次週で使っている食材セットを用意
   // 今週＝選択済みレシピの needs を合算 (キー集合だけ欲しい)
-  const thisWeekIds = new Set();
-  for (const ch of state.chosen) {
-    const qty = Number(ch?.qty) || 0;
-    if (qty <= 0) continue;
-    const rr = findRecipeById(ch.recipe);
-    if (rr && rr.needs) for (const id of Object.keys(rr.needs)) thisWeekIds.add(id);
-  }
+  const thisWeekIds = collectThisWeekIngredientIds(state.chosen, findRecipeById);
   // 次週＝computeNextWeekTotals のキー
   const nextTotals = computeNextWeekTotals(state.next) || {};
   const nextWeekIds = new Set(Object.keys(nextTotals));

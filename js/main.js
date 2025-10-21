@@ -9,8 +9,9 @@ import {
   buildChosenRecipeSet,
 } from "./logic/recommendation.js";
 import { computeNextWeekTotals } from "./logic/next-week.js";
+import { computeThisWeekTotals, buildTableRows } from "./logic/weekly-totals.js";
 
-const APP_VERSION = '20251021-2350'; // update-version.js と連動
+const APP_VERSION = '20251022-0010'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -227,129 +228,33 @@ function renderNextChosen() {
 
 // 今週/次週チェックに基づき「使用食材／その他の食材」の2表を1回で描画
 function renderTables() {
-  const invMap = buildInventoryMap();               // Map<id, have>
+  const invMap = buildInventoryMap();
   const ingredients = state.data.ingredients || [];
 
-  // ----- 週ごとのターゲット集計 -----
-  // 今週：選んだ全レシピ×数量 を素直に合算
-  const computeThis = () => {
-    const map = new Map();
-    const used = new Set();
-    (state.chosen || []).forEach(it => {
-      const r = findRecipeById(it.recipe);
-      const qty = Number(it.qty) || 0;
-      if (!r || !qty) return;
-      Object.entries(r.needs || {}).forEach(([id, need]) => {
-        used.add(id);
-        map.set(id, (map.get(id) || 0) + need * qty);
-      });
-    });
-    return { map, used };
-  };
+  const thisTotals = computeThisWeekTotals(state.chosen, findRecipeById);
+  const nextTotalsRaw = computeNextWeekTotals(
+    state.next,
+    state.data.recipes || {},
+    ingredients,
+  ) || {};
+  const nextMap = new Map(
+    Object.entries(nextTotalsRaw).map(([id, info]) => [id, Number(info?.qty) || 0])
+  );
+  const nextTotals = { map: nextMap, used: new Set(nextMap.keys()) };
 
-  // 次週：カテゴリ内は合算、カテゴリ間は最大＋個別食材を加算（現行ルール）
-  const computeNext = () => {
-    const byKey = { CURRY: "curry", SALAD: "salad", SWEETS: "dessert" };
-    const recipesByCat = state.data.recipes || {};
-    const sumCat = (arr, catKey) => {
-      const list = recipesByCat[catKey] || [];
-      const rmap = new Map(list.map(r => [r.id, r]));
-      const acc = {};
-      (arr || []).forEach(({ recipe, qty }) => {
-        const r = rmap.get(recipe);
-        const q = Number(qty) || 0;
-        if (!r || !q) return;
-        Object.entries(r.needs || {}).forEach(([id, need]) => {
-          acc[id] = (acc[id] || 0) + need * q;
-        });
-      });
-      return acc;
-    };
+  const { usedRows, otherRows, sums } = buildTableRows({
+    thisTotals,
+    nextTotals,
+    tableFilter: state.tableFilter || { this: true, next: true },
+    inventoryMap: invMap,
+    ingredients,
+  });
 
-    const catTotals = {
-      CURRY:  sumCat(state.next?.CURRY,  byKey.CURRY),
-      SALAD:  sumCat(state.next?.SALAD,  byKey.SALAD),
-      SWEETS: sumCat(state.next?.SWEETS, byKey.SWEETS),
-    };
-
-    // カテゴリ間は最大
-    const merged = {};
-    for (const cat of ["CURRY", "SALAD", "SWEETS"]) {
-      for (const [id, q] of Object.entries(catTotals[cat])) {
-        merged[id] = Math.max(merged[id] || 0, q);
-      }
-    }
-
-    // 個別食材（配列 [{ingId, qty}]）を加算
-    for (const e of (state.next?.extra || [])) {
-      const q = Number(e.qty) || 0;
-      if (q > 0) merged[e.ingId] = (merged[e.ingId] || 0) + q;
-    }
-
-    const used = new Set(Object.keys(merged));
-    const map = new Map(Object.entries(merged).map(([k, v]) => [k, Number(v) || 0]));
-    return { map, used };
-  };
-
-  const useThis = !!state.tableFilter?.this;
-  const useNext = !!state.tableFilter?.next;
-
-  // ★ 色付け用には「常にフル集計」して used セットを作る
-  const thisTotals = computeThis();
-  const nextTotals = computeNext();
-
-  // 目標の合成（今週のみ/次週のみ/両方＝単純加算）
-  const targetMap = new Map();
-  const addAll = (m) => m.forEach((v, k) => targetMap.set(k, (targetMap.get(k) || 0) + v));
-  if (useThis) addAll(thisTotals.map);
-  if (useNext) addAll(nextTotals.map);
-
-  // 行の色分け（今週のみ=淡赤 / 次週のみ=淡黄 / 両方=淡橙）
-  const usedThisSet = thisTotals.used;
-  const usedNextSet = nextTotals.used;
-
-  // ----- 行を構築 → used/other へ振り分け -----
-  const usedRows = [];
-  const otherRows = [];
-  let sumCurU = 0, sumTarU = 0;
-  let sumCurO = 0, sumTarO = 0;
-
-  for (const ing of ingredients) {
-    const id = ing.id;
-    const cur = Number(invMap.get(id) || 0);
-    const tar = Number(targetMap.get(id) || 0);
-    const diff = cur - tar;
-
-    const inThis = usedThisSet.has(id);
-    const inNext = usedNextSet.has(id);
-    const rowCls = (inThis && inNext) ? 'wk-both'
-                  : inThis            ? 'wk-this'
-                  : inNext            ? 'wk-next'
-                  : '';
-
-    const rowHtml = `
-      <tr class="${rowCls}">
-        <td>${ing.emoji || ''} ${ing.name || id}</td>
-        <td class="num">${cur}</td>
-        <td class="num">${tar}</td>
-        <td class="num ${diff < 0 ? 'neg' : diff > 0 ? 'pos' : ''}">${diff}</td>
-      </tr>`;
-
-    if (tar > 0) {
-      usedRows.push(rowHtml);
-      sumCurU += cur; sumTarU += tar;
-    } else {
-      otherRows.push(rowHtml);
-      sumCurO += cur; sumTarO += tar;
-    }
-  }
-
-  // ----- 出力（使用食材 / その他の食材） -----
-  const writeTable = (tableId, rows, sums) => {
+  const writeTable = (tableId, rows, sumsObj) => {
     const el = document.getElementById(tableId);
     if (!el) return;
     const body = rows.length ? rows.join("") : `<tr><td class="muted" colspan="4">（なし）</td></tr>`;
-    const footDiff = sums.cur - sums.tar;
+    const footDiff = sumsObj.cur - sumsObj.tar;
     el.innerHTML = `
       <thead>
         <tr><th>食材名</th><th class="num">現在</th><th class="num">目標</th><th class="num">差分</th></tr>
@@ -358,15 +263,15 @@ function renderTables() {
       <tfoot>
         <tr>
           <th>合計</th>
-          <th class="num">${sums.cur}</th>
-          <th class="num">${sums.tar}</th>
+          <th class="num">${sumsObj.cur}</th>
+          <th class="num">${sumsObj.tar}</th>
           <th class="num ${footDiff < 0 ? 'neg' : footDiff > 0 ? 'pos' : ''}">${footDiff}</th>
         </tr>
       </tfoot>`;
   };
 
-  writeTable('usedTable',  usedRows,  { cur: sumCurU, tar: sumTarU });
-  writeTable('otherTable', otherRows, { cur: sumCurO, tar: sumTarO });
+  writeTable('usedTable', usedRows, sums.used);
+  writeTable('otherTable', otherRows, sums.other);
 }
 
 /* ---- おすすめ（未選択・今週の料理） ---- */
@@ -794,20 +699,6 @@ function setupIngredientsFilter(){
 }
 /*
 // 今週：選んだすべての料理 × それぞれの数量 をそのまま合算
-function computeThisWeekTotals(){
-  const map = new Map();            // id -> target qty
-  const used = new Set();           // 使用された食材id
-  (state.chosen || []).forEach(it=>{
-    const r = findRecipeById(it.recipe);
-    const qty = Number(it.qty) || 0;
-    if(!r || !qty) return;
-    Object.entries(r.needs||{}).forEach(([id, need])=>{
-      used.add(id);
-      map.set(id, (map.get(id)||0) + need*qty);
-    });
-  });
-  return {map, used};
-}
 */
 
 

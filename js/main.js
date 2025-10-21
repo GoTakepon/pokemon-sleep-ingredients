@@ -8,8 +8,9 @@ import {
   collectThisWeekIngredientIds,
   buildChosenRecipeSet,
 } from "./logic/recommendation.js";
+import { computeNextWeekTotals } from "./logic/next-week.js";
 
-const APP_VERSION = '20251021-2324'; // update-version.js と連動
+const APP_VERSION = '20251021-2350'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -395,7 +396,7 @@ function renderSuggestionsTable() {
   // 今週＝選択済みレシピの needs を合算 (キー集合だけ欲しい)
   const thisWeekIds = collectThisWeekIngredientIds(state.chosen, findRecipeById);
   // 次週＝computeNextWeekTotals のキー
-  const nextTotals = computeNextWeekTotals(state.next) || {};
+const nextTotals = computeNextWeekTotals(state.next, state.data.recipes || {}, state.data.ingredients || []) || {};
   const nextWeekIds = new Set(Object.keys(nextTotals));
 
   const rows = [];
@@ -457,54 +458,6 @@ function renderSuggestionsTable() {
   `;
 }
 
-function computeNextWeekTotals(nwState) {
-  const recipesByCat = state.data.recipes || {};
-  const ingsDict = state.data.ingredients || [];
-
-  const byKey = { CURRY:"curry", SALAD:"salad", SWEETS:"dessert" };
-
-  // カテゴリ内：単純合算
-  const sumCat = (catKey, arr) => {
-    const list = recipesByCat[catKey] || [];
-    const rmap = new Map(list.map(r => [r.id, r]));
-    const acc = {};
-    (arr||[]).forEach(({recipe, qty}) => {
-      const r = rmap.get(recipe); const q = Number(qty)||0;
-      if (!r || !q) return;
-      for (const [ingId, need] of Object.entries(r.needs||{})) {
-        acc[ingId] = (acc[ingId]||0) + need*q;
-      }
-    });
-    return acc; // {ingId: qty}
-  };
-
-  const catTotals = {
-    CURRY:  sumCat(byKey.CURRY,  nwState.CURRY),
-    SALAD:  sumCat(byKey.SALAD,  nwState.SALAD),
-    SWEETS: sumCat(byKey.SWEETS, nwState.SWEETS),
-  };
-
-  // カテゴリ間：最大値で統合
-  const merged = {};
-  for (const cat of ["CURRY","SALAD","SWEETS"]) {
-    for (const [id, q] of Object.entries(catTotals[cat])) {
-      merged[id] = Math.max(merged[id]||0, q);
-    }
-  }
-
-  // 個別食材を加算
-  (nwState.extra||[]).forEach(({ingId, qty}) => {
-    merged[ingId] = (merged[ingId]||0) + (Number(qty)||0);
-  });
-
-  // 表示用
-  const out = {};
-  for (const [id, q] of Object.entries(merged)) {
-    const meta = ingsDict.find(i => i.id===id) || {};
-    out[id] = { ingId:id, name: meta.name||id, emoji: meta.emoji||"", qty:q };
-  }
-  return out;
-}
 
 function setupNextWeekSelects() {
   const selMap = {
@@ -857,76 +810,6 @@ function computeThisWeekTotals(){
 }
 */
 
-/*
-// 次週：カテゴリ内は合算、カテゴリ間は「同一食材は最大」を採用＋個別食材を加算
-function computeNextWeekTotalsWithSets(){
-  const byKey = { CURRY:"curry", SALAD:"salad", SWEETS:"dessert" };
-  const recipesByCat = state.data.recipes || {};
-
-  // カテゴリ内：合算 {ingId: qty}
-  const sumCat = (arr, catKey) => {
-    const list = recipesByCat[catKey] || [];
-    const rmap = new Map(list.map(r => [r.id, r]));
-    const acc = {};
-    (arr||[]).forEach(({recipe, qty})=>{
-      const r = rmap.get(recipe); const q = Number(qty)||0;
-      if(!r || !q) return;
-      Object.entries(r.needs||{}).forEach(([id,need])=>{
-        acc[id] = (acc[id]||0) + need*q;
-      });
-    });
-    return acc;
-  };
-
-  // 3カテゴリを個別に合算
-  const catTotals = {
-    CURRY : sumCat(state.next?.CURRY,  byKey.CURRY),
-    SALAD : sumCat(state.next?.SALAD,  byKey.SALAD),
-    SWEETS: sumCat(state.next?.SWEETS, byKey.SWEETS),
-  };
-
-  // カテゴリ間：最大でマージ
-  const merged = {};
-  for (const cat of ["CURRY","SALAD","SWEETS"]) {
-    for (const [id, q] of Object.entries(catTotals[cat])) {
-      merged[id] = Math.max(merged[id]||0, q);
-    }
-  }
-
-  // 個別食材（配列 [{ingId,qty}]）を加算
-  for (const e of (state.next?.extra || [])) {
-    const q = Number(e.qty)||0;
-    if (q>0) merged[e.ingId] = (merged[e.ingId]||0) + q;
-  }
-
-  // Set（どの食材が“次週で”使われるか）
-  const used = new Set(Object.keys(merged));
-
-  // Map へ
-  const map = new Map(Object.entries(merged).map(([k,v])=>[k, Number(v)||0]));
-  return { map, used };
-}
-*/
-/*
-// マージ：チェックされた週だけ合算。どの週で使われたかのセットも返す
-function buildMergedTargets(){
-  const useThis = !!state.tableFilter.this;
-  const useNext = !!state.tableFilter.next;
-
-  const t = useThis ? computeThisWeekTotals()        : {map:new Map(), used:new Set()};
-  const n = useNext ? computeNextWeekTotalsWithSets(): {map:new Map(), used:new Set()};
-
-  const merged = new Map();
-  const addAll = (m)=>m.forEach((v,k)=>merged.set(k,(merged.get(k)||0)+v));
-  addAll(t.map); addAll(n.map);
-
-  return {
-    map: merged,
-    usedThis: t.used,
-    usedNext: n.used
-  };
-}
-*/
 
 /*
 function renderUnifiedIngredients(){

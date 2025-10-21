@@ -10,8 +10,10 @@ import {
 } from "./logic/recommendation.js";
 import { computeNextWeekTotals } from "./logic/next-week.js";
 import { computeThisWeekTotals, buildTableRows } from "./logic/weekly-totals.js";
+import { bindMenuCardOpsDelegation } from "./ui/card-ops.js";
+import { computeThisWeekTotals, buildTableRows } from "./logic/weekly-totals.js";
 
-const APP_VERSION = '20251022-0010'; // update-version.js と連動
+const APP_VERSION = '20251022-0027'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -432,80 +434,6 @@ function renderMenuList() {
   });
 }
 
-function bindMenuCardOpsDelegation(rootIds) {
-  rootIds.forEach(id => {
-    const root = document.getElementById(id);
-    if (!root) return;
-
-    // クリック（− / ＋ / ×）
-    root.addEventListener('click', (e) => {
-      const card = e.target.closest('.menu-card');
-      if (!card) return;
-      const ctx     = card.dataset.ctx;         // 'THIS' or 'NEXT'
-      const catKey  = card.dataset.cat || null; // 'CURRY'|'SALAD'|'SWEETS'|'extra'
-      const id      = card.dataset.id;          // recipeId or ingId
-
-      const rerender = () => {
-        if (ctx === 'THIS') {
-          renderMenuList();
-          renderTables();
-          renderSuggestionsTable();
-        } else {
-          renderNextChosen();
-          renderTables();
-          renderSuggestionsTable();    // ★ 追加
-        }
-      };
-
-      // ▼ extra / NEXT / THIS で分岐
-      const doMinus = () => {
-        if (ctx === 'THIS') decChosen(id);
-        else if (catKey === 'extra') decNextExtra(id);
-        else decNextRecipe(catKey, id);
-      };
-      const doPlus = () => {
-        if (ctx === 'THIS') incChosen(id);
-        else if (catKey === 'extra') incNextExtra(id);
-        else incNextRecipe(catKey, id);
-      };
-      const doRemove = () => {
-        if (ctx === 'THIS') removeChosen(id);
-        else if (catKey === 'extra') removeNextExtra(id);
-        else removeNextRecipe(catKey, id);
-      };
-
-      if (e.target.classList.contains('op-minus')) { doMinus(); rerender(); }
-      else if (e.target.classList.contains('op-plus')) { doPlus(); rerender(); }
-      else if (e.target.classList.contains('op-remove')) { doRemove(); rerender(); }
-    });
-
-    // 数量直接編集
-    root.addEventListener('change', (e) => {
-      const input = e.target.closest('.qty-input');
-      if (!input) return;
-      const card   = e.target.closest('.menu-card');
-      const ctx    = card.dataset.ctx;
-      const catKey = card.dataset.cat || null;
-      const id     = card.dataset.id;
-      const qty    = Math.max(0, parseInt(e.target.value || '0', 10));
-
-      if (ctx === 'THIS') {
-        setChosenQty(id, qty);
-      } else {
-        if (catKey === 'extra') setNextExtraQty(id, qty);
-        else                    setNextRecipeQty(catKey, id, qty);
-      }
-
-      if (ctx === 'THIS') {
-        renderMenuList(); renderTables(); renderSuggestionsTable();
-      } else {
-        renderNextChosen();
-        renderTables();
-      }
-    });
-  });
-}
-
 // ▼ 個別食材は「選んだら即カード化」へ（Addボタン/数量入力は使わない）
 function setupNextExtraSelect() {
   const sel = document.getElementById('nwExtraSelect');
@@ -756,13 +684,35 @@ document.addEventListener("DOMContentLoaded", () => {
     setupNextExtraSelect();
     renderNextChosen();       // ← 追加（初期描画）
     // ★ ここで一度だけイベント委譲をセット
-    bindMenuCardOpsDelegation([
-      'menuList',        // 今週のカード置き場
-      'nwListCurry',     // 次週：カレー・シチュー
-      'nwListSalad',     // 次週：サラダ
-      'nwListSweets',    // 次週：デザート・ドリンク
-      'nwExtraList'      // （もし個別食材カードを表示するなら）
-    ]);
+    bindMenuCardOpsDelegation({
+      rootIds: [
+        'menuList',        // 今週のカード置き場
+        'nwListCurry',     // 次週：カレー・シチュー
+        'nwListSalad',     // 次週：サラダ
+        'nwListSweets',    // 次週：デザート・ドリンク
+        'nwExtraList'      // （もし個別食材カードを表示するなら）
+      ],
+      handlers: {
+        incChosen,
+        decChosen,
+        setChosenQty,
+        removeChosen,
+        incNextRecipe,
+        decNextRecipe,
+        setNextRecipeQty,
+        removeNextRecipe,
+        incNextExtra,
+        decNextExtra,
+        setNextExtraQty,
+        removeNextExtra,
+      },
+      renderers: {
+        renderMenuList,
+        renderNextChosen,
+        renderTables,
+        renderSuggestionsTable,
+      }
+    });
     setupIngredientsFilter();          // ← 追加（今週/次週チェック）      
     refresh();
   }).catch(err => console.error("Init failed:", err));

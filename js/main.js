@@ -5,6 +5,8 @@
 // - おすすめレシピ：必要食材「合計数が多い順」に並び替え
 import { parseOcrText } from "./ocr-parse.js";
 
+const APP_VERSION = '20251021-2207'; // update-version.js と連動
+
 /* ----------------- DOM ----------------- */
 const els = {
   // 既存…
@@ -45,10 +47,9 @@ function save() {
 
 /* ----------------- Data load ----------------- */
 async function loadData() {
-  const version = '20251020-1557'; // 直近 update-version.js の VER と合わせる
   const [ingredients, recipes] = await Promise.all([
-    fetch(`./data/ingredients.json?v=${version}`).then( r => r.json()),
-    fetch(`./data/recipes.json?v=${version}`).then( r => r.json()),
+    fetch(`./data/ingredients.json?v=${APP_VERSION}`).then( r => r.json()),
+    fetch(`./data/recipes.json?v=${APP_VERSION}`).then( r => r.json()),
   ]);
   state.data = { ingredients, recipes };
   buildCategoryOptions(recipes);
@@ -691,6 +692,11 @@ function renderExtraCards() {
     : `<div class="empty muted">（なし）</div>`;
 }
 
+function displayAppVersion() {
+  const el = document.getElementById("appVersion");
+  if (el) el.textContent = APP_VERSION;
+}
+
 /* ==== 今週（THIS）用の増減/削除 ==== */
 function findChosen(recipeId) {
   return state.chosen.find(c => c.recipe === recipeId) || null;
@@ -967,6 +973,7 @@ function renderUnifiedIngredients(){
 */
 /* ----------------- boot ----------------- */
 document.addEventListener("DOMContentLoaded", () => {
+  displayAppVersion();
   loadData().then(() => {
     // boot / after loadData
     setupTabs();

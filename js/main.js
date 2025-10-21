@@ -186,19 +186,6 @@ function buildInventoryMap() {
   for (const ing of state.data.ingredients) m.set(ing.id, Number(state.have[ing.id] || 0));
   return m;
 }
-function computeTargetsFromChosen() {
-  const allRecipes = Object.values(state.data.recipes).flat();
-  const rmap = new Map(allRecipes.map(r => [r.id, r]));
-  const tgt = new Map();
-  for (const c of state.chosen) {
-    const r = rmap.get(c.recipe);
-    if (!r) continue;
-    for (const [id, need] of Object.entries(r.needs || {})) {
-      tgt.set(id, (tgt.get(id) || 0) + need * c.qty);
-    }
-  }
-  return tgt;
-}
 function em(ingId) {
   const ing = state.data.ingredients.find(x => x.id === ingId);
   return ing?.emoji || "";
@@ -517,15 +504,6 @@ function computeNextWeekTotals(nwState) {
     out[id] = { ingId:id, name: meta.name||id, emoji: meta.emoji||"", qty:q };
   }
   return out;
-}
-
-// どの形式でも扱えるように正規化
-function toDiffMap(diffLike) {
-  if (!diffLike) return new Map();
-  if (diffLike instanceof Map) return diffLike;
-  if (Array.isArray(diffLike)) return new Map(diffLike); // [[id,goal], ...]
-  if (typeof diffLike === "object") return new Map(Object.entries(diffLike));
-  return new Map();
 }
 
 function setupNextWeekSelects() {

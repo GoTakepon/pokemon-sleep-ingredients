@@ -1,0 +1,19 @@
+[
+  { "id": "spring_onion", "name": "ふといながねぎ", "emoji": "🧅", "aliases": ["ふといながねぎ","太い長ねぎ","ねぎ","negi","onion"] },
+  { "id": "mushroom", "name": "あじわいキノコ", "emoji": "🍄", "aliases": ["あじわいキノコ","キノコ","mushroom"] },
+  { "id": "egg", "name": "とくせんエッグ", "emoji": "🥚", "aliases": ["とくせんエッグ","卵","egg"] },
+  { "id": "potato", "name": "ほっこりポテト", "emoji": "🥔", "aliases": ["ほっこりポテト","じゃがいも","potato"] },
+  { "id": "apple", "name": "とくせんリンゴ", "emoji": "🍎", "aliases": ["とくせんリンゴ","リンゴ","apple"] },
+  { "id": "herb", "name": "げきからハーブ", "emoji": "🌿", "aliases": ["げきからハーブ","ハーブ","herb"] },
+  { "id": "mame_meat", "name": "マメミート", "emoji": "🍖", "aliases": ["マメミート","豆ミート","bean"] },
+  { "id": "moo_milk", "name": "モーモーミルク", "emoji": "🥛", "aliases": ["モーモーミルク","ミルク","milk"] },
+  { "id": "sweet_honey", "name": "あまいミツ", "emoji": "🍯", "aliases": ["あまいミツ","はちみつ","蜂蜜","honey"] },
+  { "id": "pure_oil", "name": "ピュアなオイル", "emoji": "🫒", "aliases": ["ピュアなオイル","オイル","oil"] },
+  { "id": "warm_ginger", "name": "あったかジンジャー", "emoji": "🫚", "aliases": ["あったかジンジャー","ジンジャー","しょうが","生姜","ginger"] },
+  { "id": "sleep_tomato", "name": "あんみんトマト", "emoji": "🍅", "aliases": ["あんみんトマト","トマト","tomato"] },
+  { "id": "relax_cacao", "name": "リラックスカカオ", "emoji": "🍫", "aliases": ["リラックスカカオ","カカオ","ココア","cacao"] },
+  { "id": "delicious_tail", "name": "おいしいシッポ", "emoji": "🦎", "aliases": ["おいしいシッポ","しっぽ","tail"] },
+  { "id": "wakaku_soy", "name": "ワカクサ大豆", "emoji": "🫘", "aliases": ["ワカクサ大豆","大豆","soybean"] },
+  { "id": "wakaku_corn", "name": "ワカクサコーン", "emoji": "🌽", "aliases": ["ワカクサコーン","コーン","とうもろこし","corn"] },
+  { "id": "wake_coffee", "name": "めざましコーヒー", "emoji": "☕", "aliases": ["めざましコーヒー","コーヒー","coffee"] }
+]

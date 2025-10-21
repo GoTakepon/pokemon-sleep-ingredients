@@ -1,0 +1,296 @@
+@layer sections;
+@layer sections {
+  /* ===============================
+     目標料理セクション
+     =============================== */
+  #section-goal {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 20px;
+    padding: 20px;
+  }
+
+  .goal-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .goal-header label {
+    font-weight: 800;
+    color: #111827;
+  }
+
+  .select {
+    min-width: 220px;
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 12px;
+    background: #fff;
+    font-weight: 700;
+  }
+
+  @media (max-width: 480px) {
+    #section-goal { padding: 14px 12px; }
+    .goal-header { gap: 8px; }
+    .select { min-width: 160px; height: 38px; font-size: 0.9rem; }
+  }
+
+  /* ===== 目標料理ブロック（共通フォーム系） ===== */
+  .section .card .form-row{ display:flex; align-items:center; gap:12px; }
+  .section .card .form-row .label{
+    flex:0 0 auto; min-width:88px;
+    font-size:.92rem; line-height:1.2; font-weight:800; color:var(--text);
+  }
+  @media (max-width: 520px){ .section .card .form-row .label{ font-size:.86rem; } }
+  .section .card .form-row .select{
+    flex:1 1 auto; width:100%; max-width:100%; box-sizing:border-box;
+  }
+  .section .card .form-row.end{ justify-content:flex-end; }
+  .section .card .form-row.end .select-wide{ width:min(520px,100%); }
+
+  /* =========================================================
+     目標料理カード見た目（before仕様を維持）
+     ========================================================= */
+  :root {
+    --goal-chip-bg: #f7f8fc;
+    --goal-chip-bd: #e6ebf2;
+    --goal-card-bg: #f6f9ff;
+    --goal-card-bd: #e6ebf2;
+  }
+
+  /* カード一覧 */
+  .section .card .menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ---------- 1. 料理名とコントロールの横並び ---------- */
+  .section .card .menu-list .menu-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: var(--goal-card-bg, #f6f9ff);
+    border: 1px solid var(--goal-card-bd, #e6ebf2);
+  }
+
+  /* 上部：タイトル＋ボタンを同一行に配置 */
+  .section .card .menu-list .menu-card .header-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* タイトルを左端揃え */
+  .section .card .menu-list .menu-card .title {
+    font-weight: 700;
+    letter-spacing: .02em;
+    margin: 0;
+    flex: 1;
+  }
+
+  /* 下部：食材ピル */
+  .section .card .menu-list .menu-card .needs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .section .card .menu-list .menu-card .need-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: var(--goal-chip-bg, #fff);
+    border: 1px solid var(--goal-chip-bd, #e6ebf2);
+    line-height: 1;
+  }
+  .section .card .menu-list .menu-card .need-pill .em { font-size: 20px; }
+  .section .card .menu-list .menu-card .need-pill .num { font-weight: 700; }
+  .section .card .menu-list .menu-card .need-pill .lack{
+    margin-left: 2px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--danger, #d93025);
+  }
+
+  /* ボタン群（− 1 ＋ ×）右端揃え */
+  .section .card .menu-list .menu-card .qty-ops {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .section .card .menu-list .menu-card .qty-ops .op-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .section .card .menu-list .menu-card .qty-ops .qty-input {
+    width: 50px;
+    height: 38px;
+    border-radius: 10px;
+    text-align: center;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* 青ボタン（− ＋）、赤ボタン（×） */
+  .section .card .menu-list .menu-card .qty-ops .op-minus,
+  .section .card .menu-list .menu-card .qty-ops .op-plus {
+    background: #2457ff;
+    color: #fff;
+    border: none;
+  }
+  .section .card .menu-list .menu-card .qty-ops .op-remove {
+    background: #ff4d4f;
+    color: #fff;
+    border: none;
+  }
+
+  /* ---------- 2. 次週タブ：カテゴリ選択ボックス右端揃え ---------- */
+  /* ラベル + セレクトの横並び、ラベル分の余白を確保 */
+  #tab_next_week .form-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #tab_next_week .form-row .label {
+    flex: 0 0 auto;
+    min-width: 7.5em; /* ← ここでラベルの確保幅 */
+  }
+
+  /* セレクトは右端寄せの見た目に、幅を狭めてラベルが切れないように */
+  #tab_next_week .form-row .select-wide {
+    flex: 1 1 auto;
+    max-width: 520px;            /* PC */
+  }
+  @media (max-width: 480px){
+    #tab_next_week .form-row .select-wide{
+      max-width: 70vw;           /* モバイルでは少し狭める */
+    }
+  }
+
+  /* “(なし)” を右寄せに（JS側で .empty を出します） */
+  #tab_next_week .menu-list .empty{
+    text-align: right;
+    padding-right: 8px;
+  }
+
+  /* モバイルで少しだけ縮める */
+  @media (max-width: 480px){
+    .section .card .menu-list .menu-card{ border-radius: 14px; padding: 10px 12px; }
+    .section .card .menu-list .menu-card .need-pill{ padding: 3px 8px; }
+    .section .card .menu-list .menu-card .need-pill .em{ font-size: 18px; }
+    .section .card .menu-list .menu-card .need-pill .num{ font-size: 13px; }
+    .section .card .menu-list .menu-card .qty-ops .op-btn{ width: 40px; height: 40px; border-radius: 10px; }
+    .section .card .menu-list .menu-card .qty-ops .qty-input{ width: 52px; height: 40px; border-radius: 10px; }
+  }
+
+  /* 次週の在庫差分テーブルも今週と同じスタイルに */
+  #nwDiffTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  #nwDiffTable th,
+  #nwDiffTable td {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    text-align: right;
+  }
+
+  #nwDiffTable th:first-child,
+  #nwDiffTable td:first-child {
+    text-align: left;
+  }
+
+  #nwDiffTable .neg {
+    color: #d33;
+  }
+
+  #nwDiffTable .pos {
+    color: #0070f3;
+  }
+
+  #nwDiffTable tr.sum {
+    background: rgba(255, 192, 203, 0.15);
+    font-weight: 600;
+  }
+
+  .collapse-toggle{
+    margin-left: auto;
+    font-size: .85rem;
+    line-height: 1;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border, #e5e7eb);
+    background: #fff;
+    color: var(--text, #111);
+    cursor: pointer;
+  }
+  .collapse-toggle:active{ opacity:.85; }
+  /* === 目標料理カードのレイアウト修正 === */
+  .menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* ここが header-line を壊さないよう、.menu-card の “縦積みレイアウト” は削除 or 最小化 */
+  .menu-card{
+    /* 既存の丸め・余白・枠だけ維持。flex指定は消す/最小化 */
+    background:#fff;
+    border:1px solid var(--border,#e5e7eb);
+    border-radius:8px;
+    padding:8px 10px;
+  }
+
+  .menu-card .title {
+    flex: 1;
+    font-weight: 800;
+    text-align: left;
+  }
+
+  .menu-card .qty-ops {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .menu-card .needs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .need-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    font-size: 0.9rem;
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "pokemon-sleep-ingredients",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node update-version.js && vite",
+    "build": "node update-version.js && vite build",
+    "test": "vitest run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.1.2",
+    "node-fetch": "^3.3.2",
+    "puppeteer": "^24.23.0"
+  },
+  "type": "module",
+  "devDependencies": {
+    "jsdom": "^27.0.1",
+    "vite": "^7.1.9",
+    "vitest": "^1.6.1"
+  }
+}

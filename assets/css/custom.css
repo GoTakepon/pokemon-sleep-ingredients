@@ -1,0 +1,180 @@
+/* =========================================================
+   custom.css
+   - 共通レイアウト / テーブルUI / おすすめレシピ表示 / 色分け
+   - OCR・目標料理セクションのスタイルは含めません
+   ========================================================= */
+
+/* --------------------------
+   ベース変数（base.cssを補完）
+--------------------------- */
+:root{
+  --bg: #f7f8fb;
+  --card-bg: #fff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --primary: #1d4ed8;
+  --primary-weak:#eef2ff;
+  --ok: #16a34a;
+  --warn:#f59e0b;
+  --danger:#ef4444;
+  --pos: #2563eb;
+  --neg: #ef4444;
+  --radius-lg: 0px;
+  --radius-md: 0px;
+  --radius-sm: 0px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md: 0 6px 20px rgba(0,0,0,.08);
+}
+
+/* --------------------------
+   汎用
+--------------------------- */
+body{
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* === 全セクションのカードスタイルをフラットに変更 === */
+.section .card {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* セクション間の余白を少し確保（上だけ余裕を） */
+.section + .section {
+  margin-top: 20px;
+}
+
+.section-header{
+  display:flex; align-items:center; gap:10px;
+  margin-bottom: 14px;
+}
+.section-title{
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+.badge-dot{
+  width:10px; height:10px; border-radius:50%;
+  background:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.12);
+}
+
+/* 小見出し */
+.subcap{
+  display:flex; align-items:center; gap:10px;
+  font-weight:800; color:var(--text);
+  margin:10px 0 8px;
+}
+
+/* チップ（必要数等で使い回し） */
+.chip{
+  display:inline-flex; align-items:center; gap:6px;
+  padding: 4px 8px;
+  border:1px solid var(--border);
+  border-radius: 999px;
+  background:#fff;
+  font-weight:700; font-size:.9rem;
+}
+
+/* 文字色 */
+.pos  { color: var(--pos);   font-weight:700; }
+.neg  { color: var(--neg);   font-weight:700; }
+.muted{ color: var(--muted); }
+
+/* ==========================
+   テーブル（食材一覧・合計）
+========================== */
+.table{
+  width:100%; border-collapse:collapse;
+  border:1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow:hidden; background:#fff;
+  box-shadow: var(--shadow-sm);
+}
+.table th, .table td{
+  padding: 12px 14px;
+  border-bottom:1px solid var(--border);
+  vertical-align: middle;
+}
+.table th{
+  background:#f8fafc;
+  font-weight:900; text-align:left;
+  color:#0f172a;
+}
+.table tr:last-child td{ border-bottom:none; }
+.table .sum-row th, .table .sum-row td{
+  background:#f3f6ff; font-weight:900;
+}
+
+/* テーブルの横位置もページ左端に揃える */
+.table-wrapper {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* 食材名セル：絵文字＋名前の並び */
+.cell-ing{
+  display:flex; align-items:center; gap:10px;
+  min-width: 0;
+}
+.cell-ing .em{ font-size: 20px; }
+.cell-ing .name{ font-weight:800; }
+
+/* 差分を赤/青で */
+.table .diff-pos{ color:var(--pos); font-weight:900; }
+.table .diff-neg{ color:var(--neg); font-weight:900; }
+
+/* 使用食材・その他食材の節見出し */
+.group-title{
+  display:flex; align-items:center; gap:10px;
+  margin: 4px 0 8px;
+  font-weight:900;
+}
+
+/* ==========================
+   レスポンシブ
+========================== */
+@media (max-width: 860px){
+  .section{ padding: 16px; }
+  .section-title{ font-size: 1.05rem; }
+  .chip{ font-size:.85rem; padding: 3px 7px; }
+  .cell-ing .em{ font-size:18px; }
+}
+
+@media (max-width: 520px){
+  .table th, .table td,
+  .reco-table th, .reco-table td{
+    padding:10px 10px;
+  }
+  .reco-chip{ font-size:.85rem; padding:3px 6px; }
+  .reco-chip .em{ font-size:15px; }
+  .reco-lack{ width:80px; }
+}
+
+/* ==========================
+   ユーティリティ（必要なら）
+========================== */
+.hidden { display:none !important; }
+.center { text-align:center; }
+.right  { text-align:right; }
+.nowrap { white-space:nowrap; }
+
+/* Tabs */
+.tabs {
+  display:flex; gap:8px; margin:12px 8px 0; align-items:center;
+}
+.tab {
+  appearance:none; border:1px solid var(--border); background:#fff;
+  padding:8px 14px; border-radius:10px; font-weight:700; color:var(--muted);
+}
+.tab.is-active {
+  background:var(--paper); color:var(--text); border-color:var(--primary);
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+
+/* パネル切替（hidden を確実に隠す） */
+.tab-panel[hidden] { display:none; }

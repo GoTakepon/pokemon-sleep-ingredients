@@ -1,0 +1,56 @@
+/* ============================
+   🌸 Yadon Theme (Soft Pink)
+   ============================ */
+
+/* 各セクションヘッダー */
+.section-header {
+  background-color: #fdeef4 !important;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+
+/* タイトル文字 */
+.section-title {
+  color: #ad1457 !important;
+  font-weight: 700;
+}
+
+/* テーブルヘッダ */
+.table th {
+  background-color: #fff5f8;
+  color: #ad1457;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+  white-space: normal;
+  word-break: keep-all;
+}
+
+/* 「不足(合計)」の2段表記 */
+.table th.num {
+  line-height: 1.1;
+}
+
+/* ステータスバッジ */
+.status-ok {
+  background-color: #f8bbd0 !important;
+  color: #4a148c !important;
+}
+
+.status-near {
+  background-color: #f48fb1 !important;
+  color: #4a148c !important;
+}
+
+/* テーブル境界線 */
+.table {
+  border-color: #f8d9e2;
+}
+
+/* 左詰め調整 */
+.table-wrapper {
+  margin-left: 0;
+  padding-left: 0;
+  width: 100%;
+}

@@ -1,0 +1,140 @@
+@layer sections;
+@layer sections {
+  /* ───────────── おすすめレシピ（JS: renderSuggestionsTable） ───────────── */
+
+  /* セクション枠は共通の雰囲気を維持しつつ、詰め気味 */
+  #section-recommend .section-header { margin-bottom: 8px; }
+
+  /* テーブル本体：関数が出力する #recommendTable をそのまま装飾 */
+  #recommendTable,
+  .reco-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+  }
+
+  #recommendTable th,
+  #recommendTable td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    vertical-align: middle;
+  }
+  #recommendTable th {
+    background: #f8fafc;
+    font-weight: 900;
+    text-align: left;
+    font-size: .95rem;
+  }
+  #recommendTable tr:last-child td { border-bottom: none; }
+
+  /* 料理名 */
+  .sugg-title {
+    font-weight: 900;
+    margin-bottom: 4px;
+    font-size: .96rem;
+  }
+
+  /* 食材の並び：必ず横並び1行／必要なら横スクロール（折返し無し） */
+  .need-pods{
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    gap:6px;
+    margin-top:4px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .need-pods::-webkit-scrollbar{ display:none; }
+
+  /* 食材のカプセル（絵文字上、数×下、不足はさらに下） */
+  .need-pod{
+    display:flex !important;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    width:40px; min-width:auto;
+    padding:4px 6px;
+    border:1px solid var(--border, #e5e7eb);
+    border-radius:6px;
+    background:#fff;
+    box-shadow:0 1px 1px rgba(0,0,0,.04);
+  }
+  .need-pod .em  { font-size:20px; line-height:1; }
+  .need-pod .num { font-size:13px; font-weight:700; margin-top:2px; }
+  .need-pod .lack{ font-size:12px; font-weight:800; color:#e11d48; margin-top:0; }
+
+  /* 状態バッジ（作れる／あと少し） */
+  .status-col{ text-align:center; white-space:nowrap; }
+  .status-ok,.status-near{
+    display:inline-block;
+    padding:2px 10px;
+    border-radius:999px;
+    font-weight:800;
+    letter-spacing:.03em;
+    font-size:.9rem;
+    line-height:1.3;
+  }
+  .status-ok  { color:#065f46; background:#d1fae5; border:1px solid #34d399; }
+  .status-near{ color:#7c2d12; background:#ffedd5; border:1px solid #fb923c; }
+
+  /* 行間を少し詰める */
+  #recommendTable td{ padding-block:6px; }
+  #recommendTable tr + tr td{ border-top:1px solid #eee; }
+
+  /* モバイル微調整 */
+  @media (max-width:520px){
+    .sugg-title{ font-size:.88rem; }
+    .need-pod{ width:40px; min-width:40px; padding:1px; }
+    .need-pod .em{ font-size:13px; }
+    .need-pod .num{ font-size:11px; }
+    .need-pod .lack{ font-size:10px; }
+    .status-ok,.status-near{ font-size:.85rem; padding:2px 8px; }
+  }
+
+  /* --- テーブルの整列を食材一覧表に合わせる --- */
+  .table-recipe th.left,
+  .table-recipe td.title-cell { text-align: left; }
+  .table-recipe th.right,
+  .table-recipe td.status-col { text-align: right; }
+
+  /* 料理名は太字をやめて通常に（見出しの強調はしない） */
+  .table-recipe .sugg-title{
+    font-weight: 400;
+    margin: 0 0 6px;
+  }
+
+  /* チップのベース */
+  .table-recipe .need-pods{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .table-recipe .need-pod{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 12px;
+    padding: 6px 10px;
+    border: 1px solid #e7e7e7;
+    background: #fff; /* デフォルト */
+  }
+
+  /* 食材一覧と同ルールの色（少し濃いめに） */
+  :root{
+    --bg-this: #ffd6de;   /* 今週(赤系)   */
+    --bg-next: #ffeaa3;   /* 次週(黄系)   */
+    --bg-both: #ffd4a3;   /* 両方(橙系)   */
+  }
+
+  .table-recipe .need-pod.is-this{ background: var(--bg-this); }
+  .table-recipe .need-pod.is-next{ background: var(--bg-next); }
+  .table-recipe .need-pod.is-both{ background: var(--bg-both); }
+
+  /* 絵文字と数字の並び */
+  .table-recipe .need-pod .em{ font-size: 1.05rem; line-height: 1; }
+  .table-recipe .need-pod .num{ font-variant-numeric: tabular-nums; }
+  .table-recipe .need-pod .lack{ color: #d33; font-weight: 600; margin-left: 2px; }
+}

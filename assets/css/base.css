@@ -1,0 +1,164 @@
+@layer base {
+  /* これを最上部、またはhtmlタグのスタイルの中に追加 */
+  html, body {
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+    font-size: 16px;
+  }
+
+  /* iOS PWAでのフォント暴れ防止（任意） */
+  /*@supports (-webkit-touch-callout: none) {
+    html, body { font-size: 16px; }
+  }*/
+
+  /* ---------- Base Layout & Theme ---------- */
+  :root{
+    --bg: #f6f7fb;
+    --paper: #ffffff;
+    --border: #e6e9ef;
+    --text: #1a1f36;
+    --muted: #64748b;
+    --primary: #0ea5e9;
+    --accent: #10b981;
+    --danger: #ef4444;
+    --positive: #2563eb;
+    --radius: 14px;
+    --shadow: 0 6px 18px rgba(20,24,40,.08);
+    --font-title: 20px;
+    --font-body: 15px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color:var(--text);
+    background:var(--bg);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .container{
+    max-width:1100px;
+    margin:0 auto;
+    padding:18px 14px 50px;
+  }
+
+  /* セクション全体の左右余白もフラット化 */
+  .section {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* セクション間は控えめに間隔を取る */
+  .section + .section {
+    margin-top: 24px;
+  }
+
+  .section:first-of-type{margin-top:6px;}
+
+  /* === 各セクションヘッダーの背景色を淡い緑に === */
+  .section-header {
+    background-color: #e8f5e9;  /* 淡い緑 (#e8f5e9はGoogleのMaterial Light Green系) */
+    border-radius: 6px;         /* 少し丸みを残す。要らなければ0に */
+    padding: 8px 12px;
+    margin-bottom: 10px;
+  }
+
+  /* 見出し内テキストも少し濃くして読みやすく */
+  .section-title {
+    color: #1b5e20;  /* 濃い緑 */
+    font-weight: 700;
+  }
+
+  .dot{width:10px;height:10px;border-radius:999px;display:inline-block}
+  .dot-green{background:var(--accent);box-shadow:0 0 0 4px rgba(16,185,129,.12)}
+
+  .card {
+    background: none;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0 8px;
+    margin: 0;
+  }
+
+  /* Controls */
+  .textarea{
+    width:100%;min-height:160px;resize:vertical;
+    padding:12px;border:1px solid var(--border);border-radius:var(--radius);
+    font-size:var(--font-body);background:#fff;
+  }
+  .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+  .row-gap{margin-top:12px}
+  .form-row{display:flex;gap:10px;align-items:center;margin:10px 0}
+  .form-row.end{justify-content:flex-end}
+  .label{color:var(--muted);font-weight:700}
+  .select{
+    min-width:210px;height:40px;padding:0 12px;
+    border:1px solid var(--border);border-radius:10px;background:#fff;
+    font-size:var(--font-body);
+  }
+  .select-wide{min-width:320px;}
+
+  .btn{
+    height:40px;padding:0 16px;border-radius:10px;
+    border:1px solid transparent;font-weight:700;
+  }
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-ghost{background:#fff;color:var(--muted);border-color:var(--border);}
+  .hint{font-size:13px;color:var(--muted);margin-top:6px}
+
+  /* 全tableをページ左端に寄せる（おすすめレシピ含む） */
+  .table-wrapper,
+  #recommendTable,
+  #usedTable,
+  #otherTable {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    width: 100%;
+  }
+
+  /* table自体がセンタリングされるのを防ぐ */
+  table {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* === 🧾 「不足(合計)」を2段に === */
+
+  /* すべてのテーブル見出しセルを2行まで許可 */
+  .table th {
+    white-space: normal; /* 折り返し許可 */
+    word-break: keep-all;
+  }
+
+  /* 不足(合計)だけ2段表記に強制 */
+  .table th.num {
+    line-height: 1.1;
+  }
+
+  .table thead th{
+    text-align:left;color:var(--muted);font-weight:900;
+    background:#f6f7fb;border-bottom:1px solid var(--border);
+    padding:10px 12px;
+  }
+  .table tbody td{
+    border-bottom:1px solid var(--border);
+    padding:12px;vertical-align:middle;
+  }
+  .table tfoot td{
+    background:#f1f5f9;font-weight:900;
+    border-top:1px solid var(--border);
+  }
+  .pos{color:var(--positive);font-weight:700;}
+  .neg{color:var(--danger);font-weight:700;}
+  .ok{color:var(--accent);font-weight:800;}
+}
+
+
+
+
+
+
+

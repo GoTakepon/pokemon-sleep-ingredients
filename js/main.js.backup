@@ -1,0 +1,142 @@
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+const tableBody = $("#table tbody");
+const catSel = $("#category");
+const recSel = $("#recipe");
+const qtyInp = $("#qty");
+const chosenBox = $("#chosen");
+const statusEl = $("#parseStatus");
+
+const state = JSON.parse(localStorage.getItem("state_v1") || '{"have":{},"chosen":[]}');
+function saveState(){ localStorage.setItem("state_v1", JSON.stringify(state)); }
+
+async function loadData() {
+  const [ingredients, recipes] = await Promise.all([
+    fetch("./data/ingredients.json").then(r=>r.json()),
+    fetch("./data/recipes.json").then(r=>r.json())
+  ]);
+  return { ingredients, recipes };
+}
+
+function buildAliasFinder(ingredients){
+  const pairs = [];
+  for (const ing of ingredients) {
+    for (const a of ing.aliases) {
+      pairs.push([a.replace(/\s+/g,''), ing.id]);
+    }
+  }
+  return (raw) => {
+    const s = (raw||'').trim().replace(/\s+/g,'');
+    for (const [alias,id] of pairs) if (s.includes(alias)) return id;
+    return null;
+  };
+}
+
+function aggregateNeed(chosen, recipes){
+  const need = {};
+  for (const sel of chosen) {
+    const rec = recipes[sel.category]?.find(r => r.id === sel.recipe);
+    if (!rec) continue;
+    for (const [id, qty] of Object.entries(rec.needs)) {
+      need[id] = (need[id]||0) + qty * sel.qty;
+    }
+  }
+  return need;
+}
+
+function renderChosen(data){
+  chosenBox.innerHTML = state.chosen.map((sel, i)=>{
+    const rec = data.recipes[sel.category]?.find(r=>r.id===sel.recipe);
+    const title = rec ? rec.title : '(unknown)';
+    return `<span class="tag">${title} ×${sel.qty} <button data-i="${i}" class="rm small">×</button></span>`;
+  }).join('');
+  chosenBox.onclick = (e)=>{
+    const i = e.target.dataset.i;
+    if (i!==undefined) { state.chosen.splice(+i,1); saveState(); refresh(data); }
+  };
+}
+
+function renderTable(data){
+  const need = aggregateNeed(state.chosen, data.recipes);
+  const keys = new Set([...Object.keys(need), ...Object.keys(state.have)]);
+  const knownOrder = data.ingredients.map(i=>i.id);
+  const rows = Array.from(keys).sort((a,b)=>{
+    const ia = knownOrder.indexOf(a), ib = knownOrder.indexOf(b);
+    if (ia!==-1 && ib!==-1) return ia-ib;
+    if (ia!==-1) return -1;
+    if (ib!==-1) return 1;
+    return a.localeCompare(b);
+  });
+
+  tableBody.innerHTML = rows.map(id=>{
+    const ing = data.ingredients.find(i=>i.id===id);
+    const name = ing ? `${ing.emoji||''} ${ing.name}` : `🧩 ${id}`;
+    const have = state.have[id]||0;
+    const goal = need[id]||0;
+    const diff = goal - have;
+    const cls = diff>0 ? 'neg' : diff<0 ? 'pos' : '';
+    return `<tr><td>${name}</td><td class="num">${have}</td><td class="num">${goal}</td><td class="num ${cls}">${diff}</td></tr>`;
+  }).join('');
+}
+
+function refresh(data){
+  renderChosen(data);
+  renderTable(data);
+}
+
+async function main(){
+  const data = await loadData();
+
+  // Fill selectors
+catSel.innerHTML = Object.keys(data.recipes).map(c=>{
+  const label = 
+    c==='curry'   ? 'カレー・シチュー' :
+    c==='salad'   ? 'サラダ' :
+    c==='dessert' ? 'デザート・ドリンク' :
+    c;
+  return `<option value="${c}">${label}</option>`;
+}).join('');
+  function fillRecipes(){
+    const list = data.recipes[catSel.value] || [];
+    recSel.innerHTML = list.map(r=>`<option value="${r.id}">${r.title}</option>`).join('');
+  }
+  catSel.addEventListener('change', fillRecipes);
+  fillRecipes();
+
+  const findIdByAlias = buildAliasFinder(data.ingredients);
+
+  // Events
+  $("#parseBtn").onclick = ()=>{
+    const txt = $("#ocr").value;
+    const lines = txt.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+    const have = {};
+    for (const line of lines) {
+      const id = findIdByAlias(line);
+      const m = line.match(/(-?\d+)(?!.*\d)/);
+      if (!id || !m) continue;
+      const n = parseInt(m[1],10);
+      if (Number.isFinite(n)) have[id] = n;
+    }
+    state.have = { ...state.have, ...have };
+    saveState();
+    statusEl.textContent = `Updated ${Object.keys(have).length} items.`;
+    refresh(data);
+  };
+
+  $("#clearBtn").onclick = ()=>{
+    state.have = {}; state.chosen = []; saveState(); refresh(data);
+    statusEl.textContent = 'Cleared.';
+  };
+
+  $("#addRecipeBtn").onclick = ()=>{
+    const qty = Math.max(1, parseInt($("#qty").value||'1',10));
+    state.chosen.push({ category: catSel.value, recipe: recSel.value, qty });
+    saveState();
+    refresh(data);
+  };
+
+  refresh(data);
+}
+
+main();

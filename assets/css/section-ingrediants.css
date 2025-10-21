@@ -1,0 +1,175 @@
+@layer sections;
+@layer sections {
+  /* =========================================================
+    食材一覧（使用食材 / その他の食材）専用スタイル
+    ========================================================= */
+
+  /* 小見出し（使用食材 / その他の食材）をタイトルと同じサイズ感へ */
+  .sub-title {
+    font-size: 1.05rem;     /* セクションタイトルと並ぶ控えめサイズ */
+    font-weight: 900;
+    margin: 10px 0 8px;
+    color: var(--text, #0f172a);
+  }
+
+  /* テーブルのベース */
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-md, 10px);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,.04));
+  }
+
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    vertical-align: middle;
+  }
+
+  .table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* ヘッダー行を少しコンパクトに */
+  .table thead th {
+    background: #f8fafc;
+    font-weight: 900;
+    color: #0f172a;
+    font-size: 0.92rem;
+  }
+
+  /* 本文セルのデフォルトサイズ */
+  .table tbody td {
+    font-size: 0.92rem;
+    text-align: center;
+  }
+
+  /* 1列目＝食材名セルを1行固定＆少し小さめに */
+  #usedTable td:first-child,
+  #otherTable td:first-child {
+    text-align: left;
+    white-space: nowrap;     /* ★ 2行に折り返さない */
+    font-size: 0.90rem;      /* ほんの少し小さくして収まりを良く */
+    font-weight: 700;
+  }
+
+  /* 食材名セル内の絵文字を控えめサイズに（クラスがあれば優先） */
+  #usedTable td:first-child .emoji,
+  #otherTable td:first-child .emoji {
+    font-size: 1.1rem;
+    margin-right: 6px;
+  }
+
+  /* 合計行の強調 */
+  .table .sum-row td {
+    background: #f3f6ff;
+    font-weight: 900;
+  }
+
+  /* 差分の色分け（既存のカラートークンを尊重） */
+  .diff-pos { color: var(--pos, #2563eb); font-weight: 900; }
+  .diff-neg { color: var(--neg, #ef4444); font-weight: 900; }
+
+  /* モバイル最適化 */
+  @media (max-width: 520px) {
+    .sub-title {
+      font-size: 0.98rem;
+      margin: 8px 0 6px;
+    }
+    .table th,
+    .table td {
+      padding: 8px 8px;
+      font-size: 0.88rem;
+    }
+    #usedTable td:first-child,
+    #otherTable td:first-child {
+      font-size: 0.80rem;   /* さらに微縮小して折り返しを防ぐ */
+    }
+    #usedTable td:first-child .emoji,
+    #otherTable td:first-child .emoji {
+      font-size: 1.05rem;
+      margin-right: 6px;
+    }
+
+      /* --- テーブルヘッダーの折り返し防止と列幅調整 --- */
+    .table thead th {
+      white-space: nowrap;        /* 改行しない */
+      text-align: center;
+      padding: 10px 8px;
+    }
+
+    /* 各列の幅を安定させる（目安値） */
+    #usedTable th:nth-child(1),
+    #otherTable th:nth-child(1) {
+      width: 45%;   /* 食材名列を広く確保 */
+      text-align: left;
+    }
+
+    #usedTable th:nth-child(2),
+    #otherTable th:nth-child(2),
+    #usedTable th:nth-child(3),
+    #otherTable th:nth-child(3),
+    #usedTable th:nth-child(4),
+    #otherTable th:nth-child(4) {
+      width: 18%;   /* 残り3列を均等に */
+    }
+
+    /* モバイルでもヘッダーが1行に収まるよう微調整 */
+    @media (max-width: 520px) {
+      #usedTable th,
+      #otherTable th {
+        font-size: 0.82rem;
+        padding: 8px 6px;
+      }
+
+      #usedTable th:nth-child(1),
+      #otherTable th:nth-child(1) {
+        width: 44%;
+      }
+
+      #usedTable th:nth-child(2),
+      #otherTable th:nth-child(2),
+      #usedTable th:nth-child(3),
+      #otherTable th:nth-child(3),
+      #usedTable th:nth-child(4),
+      #otherTable th:nth-child(4) {
+        width: 18%;
+      }
+    }           
+  }
+
+  /* ヘッダー右のチェックボックス */
+  .section-header .ingr-filter {
+    margin-left: auto;
+    display: flex; gap: 12px; align-items: center;
+    font-weight: 800;
+  }
+  .section-header .ingr-filter input { transform: translateY(1px); }
+
+  /* 行ハイライト：今週/次週/両方（濃く） */
+  .table tbody tr.wk-this  { background: #ffd6de; } /* 旧 #ffecef */
+  .table tbody tr.wk-next  { background: #ffefb3; } /* 旧 #fff7d6 */
+  .table tbody tr.wk-both  { background: #ffe0b8; } /* 旧 #ffeed9 */
+
+  /* 折りたたみトグル（簡易） */
+  .collapse-toggle{
+    margin-left: auto;
+    font-size: .85rem;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border, #e5e7eb);
+    background: #fff;
+  }
+
+  .table-filters {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* ← 右寄せ */
+    gap: 12px;
+  }
+ }

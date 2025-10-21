@@ -1,0 +1,760 @@
+{
+  "curry": [
+    {
+      "id": "ごちゃまぜカレ",
+      "title": "ごちゃまぜカレー",
+      "needs": {},
+      "total": 0,
+      "energy": 0
+    },
+    {
+      "id": "とくせんリンゴカレ",
+      "title": "とくせんリンゴカレー",
+      "needs": {
+        "apple": 7
+      },
+      "total": 7,
+      "energy": 748
+    },
+    {
+      "id": "あぶりテ-ルカレ",
+      "title": "あぶりテールカレー",
+      "needs": {
+        "delicious_tail": 8,
+        "herb": 25
+      },
+      "total": 33,
+      "energy": 7483
+    },
+    {
+      "id": "サンパワ-トマトカレ",
+      "title": "サンパワートマトカレー",
+      "needs": {
+        "sleep_tomato": 10,
+        "herb": 5
+      },
+      "total": 15,
+      "energy": 2078
+    },
+    {
+      "id": "ぜったいねむりバタ-カレ",
+      "title": "ぜったいねむりバターカレー",
+      "needs": {
+        "potato": 18,
+        "sleep_tomato": 15,
+        "relax_cacao": 12,
+        "moo_milk": 10
+      },
+      "total": 55,
+      "energy": 9010
+    },
+    {
+      "id": "からくちネギもりカレ",
+      "title": "からくちネギもりカレー",
+      "needs": {
+        "spring_onion": 14,
+        "warm_ginger": 10,
+        "herb": 8
+      },
+      "total": 32,
+      "energy": 5900
+    },
+    {
+      "id": "キノコのほうしカレ",
+      "title": "キノコのほうしカレー",
+      "needs": {
+        "mushroom": 14,
+        "potato": 9
+      },
+      "total": 23,
+      "energy": 4162
+    },
+    {
+      "id": "おやこあいカレ",
+      "title": "おやこあいカレー",
+      "needs": {
+        "sweet_honey": 12,
+        "apple": 11,
+        "egg": 8,
+        "potato": 4
+      },
+      "total": 35,
+      "energy": 4523
+    },
+    {
+      "id": "満腹チ-ズバ-グカレ",
+      "title": "満腹チーズバーグカレー",
+      "needs": {
+        "moo_milk": 8,
+        "mame_meat": 8
+      },
+      "total": 16,
+      "energy": 1910
+    },
+    {
+      "id": "ほっこりホワイトシチュ",
+      "title": "ほっこりホワイトシチュー",
+      "needs": {
+        "moo_milk": 10,
+        "potato": 8,
+        "mushroom": 4
+      },
+      "total": 22,
+      "energy": 3181
+    },
+    {
+      "id": "たんじゅんホワイトシチュ",
+      "title": "たんじゅんホワイトシチュー",
+      "needs": {
+        "moo_milk": 7
+      },
+      "total": 7,
+      "energy": 814
+    },
+    {
+      "id": "マメバ-グカレ",
+      "title": "マメバーグカレー",
+      "needs": {
+        "mame_meat": 7
+      },
+      "total": 7,
+      "energy": 856
+    },
+    {
+      "id": "ベイビィハニ-カレ",
+      "title": "ベイビィハニーカレー",
+      "needs": {
+        "sweet_honey": 7
+      },
+      "total": 7,
+      "energy": 839
+    },
+    {
+      "id": "ニンジャカレ",
+      "title": "ニンジャカレー",
+      "needs": {
+        "wakaku_soy": 24,
+        "mame_meat": 9,
+        "spring_onion": 12,
+        "mushroom": 5
+      },
+      "total": 50,
+      "energy": 9445
+    },
+    {
+      "id": "ひでりカツレツカレ",
+      "title": "ひでりカツレツカレー",
+      "needs": {
+        "mame_meat": 10,
+        "pure_oil": 5
+      },
+      "total": 15,
+      "energy": 1942
+    },
+    {
+      "id": "とけるオムカレ",
+      "title": "とけるオムカレー",
+      "needs": {
+        "egg": 10,
+        "sleep_tomato": 6
+      },
+      "total": 16,
+      "energy": 2150
+    },
+    {
+      "id": "ビルドアップマメカレ",
+      "title": "ビルドアップマメカレー",
+      "needs": {
+        "wakaku_soy": 12,
+        "mame_meat": 6,
+        "herb": 4,
+        "egg": 4
+      },
+      "total": 26,
+      "energy": 3372
+    },
+    {
+      "id": "じゅうなんコ-ンシチュ",
+      "title": "じゅうなんコーンシチュー",
+      "needs": {
+        "wakaku_corn": 14,
+        "moo_milk": 8,
+        "potato": 8
+      },
+      "total": 30,
+      "energy": 4670
+    },
+    {
+      "id": "れんごくコ-ンキ-マカレ",
+      "title": "れんごくコーンキーマカレー",
+      "needs": {
+        "herb": 27,
+        "mame_meat": 24,
+        "wakaku_corn": 14,
+        "warm_ginger": 12
+      },
+      "total": 77,
+      "energy": 13690
+    },
+    {
+      "id": "ピヨピヨパンチ辛口カレ",
+      "title": "ピヨピヨパンチ辛口カレー",
+      "needs": {
+        "wake_coffee": 11,
+        "herb": 11,
+        "sweet_honey": 11
+      },
+      "total": 33,
+      "energy": 5702
+    },
+    {
+      "id": "めざめるパワ-シチュ",
+      "title": "めざめるパワーシチュー",
+      "needs": {
+        "wakaku_soy": 28,
+        "sleep_tomato": 25,
+        "mushroom": 23,
+        "wake_coffee": 16
+      },
+      "total": 92,
+      "energy": 19061
+    },
+    {
+      "id": "いあいぎりすき焼きカレ",
+      "title": "いあいぎりすき焼きカレー",
+      "needs": {
+        "spring_onion": 27,
+        "mame_meat": 26,
+        "sweet_honey": 26,
+        "egg": 22
+      },
+      "total": 101,
+      "energy": 20655
+    }
+  ],
+  "salad": [
+    {
+      "id": "ごちゃまぜサラダ",
+      "title": "ごちゃまぜサラダ",
+      "needs": {},
+      "total": 0,
+      "energy": 0
+    },
+    {
+      "id": "ヤドンテ-ルのペッパ-サラダ",
+      "title": "ヤドンテールのペッパーサラダ",
+      "needs": {
+        "delicious_tail": 10,
+        "herb": 10,
+        "pure_oil": 15
+      },
+      "total": 35,
+      "energy": 8169
+    },
+    {
+      "id": "キノコのほうしサラダ",
+      "title": "キノコのほうしサラダ",
+      "needs": {
+        "mushroom": 17,
+        "sleep_tomato": 8,
+        "pure_oil": 8
+      },
+      "total": 33,
+      "energy": 5859
+    },
+    {
+      "id": "ゆきかきシ-ザ-サラダ",
+      "title": "ゆきかきシーザーサラダ",
+      "needs": {
+        "moo_milk": 10,
+        "mame_meat": 6
+      },
+      "total": 16,
+      "energy": 1898
+    },
+    {
+      "id": "くいしんぼうポテトサラダ",
+      "title": "くいしんぼうポテトサラダ",
+      "needs": {
+        "potato": 14,
+        "egg": 9,
+        "mame_meat": 7,
+        "apple": 6
+      },
+      "total": 36,
+      "energy": 5040
+    },
+    {
+      "id": "うるおいとうふサラダ",
+      "title": "うるおいとうふサラダ",
+      "needs": {
+        "wakaku_soy": 15,
+        "sleep_tomato": 9
+      },
+      "total": 24,
+      "energy": 3113
+    },
+    {
+      "id": "ばかぢからワイルドサラダ",
+      "title": "ばかぢからワイルドサラダ",
+      "needs": {
+        "mame_meat": 9,
+        "warm_ginger": 6,
+        "egg": 5,
+        "potato": 3
+      },
+      "total": 23,
+      "energy": 3046
+    },
+    {
+      "id": "マメハムサラダ",
+      "title": "マメハムサラダ",
+      "needs": {
+        "mame_meat": 8
+      },
+      "total": 8,
+      "energy": 978
+    },
+    {
+      "id": "あんみんトマトサラダ",
+      "title": "あんみんトマトサラダ",
+      "needs": {
+        "sleep_tomato": 8
+      },
+      "total": 8,
+      "energy": 1045
+    },
+    {
+      "id": "モ-モ-カプレ-ゼ",
+      "title": "モーモーカプレーゼ",
+      "needs": {
+        "moo_milk": 12,
+        "sleep_tomato": 6,
+        "pure_oil": 5
+      },
+      "total": 23,
+      "energy": 2942
+    },
+    {
+      "id": "ムラっけチョコミ-トサラダ",
+      "title": "ムラっけチョコミートサラダ",
+      "needs": {
+        "relax_cacao": 14,
+        "mame_meat": 9
+      },
+      "total": 23,
+      "energy": 3665
+    },
+    {
+      "id": "オ-バ-ヒ-トサラダ",
+      "title": "オーバーヒートサラダ",
+      "needs": {
+        "herb": 17,
+        "warm_ginger": 10,
+        "sleep_tomato": 8
+      },
+      "total": 35,
+      "energy": 5225
+    },
+    {
+      "id": "とくせんリンゴサラダ",
+      "title": "とくせんリンゴサラダ",
+      "needs": {
+        "apple": 8
+      },
+      "total": 8,
+      "energy": 855
+    },
+    {
+      "id": "めんえきねぎサラダ",
+      "title": "めんえきねぎサラダ",
+      "needs": {
+        "spring_onion": 10,
+        "warm_ginger": 5
+      },
+      "total": 15,
+      "energy": 2845
+    },
+    {
+      "id": "メロメロりんごのチ-ズサラダ",
+      "title": "メロメロりんごのチーズサラダ",
+      "needs": {
+        "apple": 15,
+        "moo_milk": 5,
+        "pure_oil": 3
+      },
+      "total": 23,
+      "energy": 2655
+    },
+    {
+      "id": "ニンジャサラダ",
+      "title": "ニンジャサラダ",
+      "needs": {
+        "spring_onion": 15,
+        "wakaku_soy": 19,
+        "mushroom": 12,
+        "warm_ginger": 11
+      },
+      "total": 57,
+      "energy": 11659
+    },
+    {
+      "id": "ねっぷうとうふサラダ",
+      "title": "ねっぷうとうふサラダ",
+      "needs": {
+        "wakaku_soy": 10,
+        "herb": 6
+      },
+      "total": 16,
+      "energy": 2114
+    },
+    {
+      "id": "ワカクササラダ",
+      "title": "ワカクササラダ",
+      "needs": {
+        "pure_oil": 22,
+        "wakaku_corn": 17,
+        "sleep_tomato": 14,
+        "potato": 9
+      },
+      "total": 62,
+      "energy": 11393
+    },
+    {
+      "id": "めいそうスイ-トサラダ",
+      "title": "めいそうスイートサラダ",
+      "needs": {
+        "apple": 21,
+        "sweet_honey": 16,
+        "wakaku_corn": 12
+      },
+      "total": 49,
+      "energy": 7675
+    },
+    {
+      "id": "みだれづきコ-ンサラダ",
+      "title": "みだれづきコーンサラダ",
+      "needs": {
+        "wakaku_corn": 9,
+        "pure_oil": 8
+      },
+      "total": 17,
+      "energy": 2785
+    },
+    {
+      "id": "クロスチョップドサラダ",
+      "title": "クロスチョップドサラダ",
+      "needs": {
+        "egg": 20,
+        "mame_meat": 15,
+        "wakaku_corn": 11,
+        "sleep_tomato": 10
+      },
+      "total": 56,
+      "energy": 8755
+    },
+    {
+      "id": "まけんきコ-ヒ-サラダ",
+      "title": "まけんきコーヒーサラダ",
+      "needs": {
+        "wake_coffee": 28,
+        "mame_meat": 28,
+        "pure_oil": 22,
+        "potato": 22
+      },
+      "total": 100,
+      "energy": 20218
+    },
+    {
+      "id": "はなふぶきミモザサラダ",
+      "title": "はなふぶきミモザサラダ",
+      "needs": {
+        "egg": 25,
+        "pure_oil": 17,
+        "potato": 15,
+        "mame_meat": 12
+      },
+      "total": 69,
+      "energy": 11881
+    },
+    {
+      "id": "りんごさんヨ-グルトサラダ",
+      "title": "りんごさんヨーグルトサラダ",
+      "needs": {
+        "egg": 35,
+        "apple": 28,
+        "sleep_tomato": 23,
+        "moo_milk": 18
+      },
+      "total": 104,
+      "energy": 19293
+    }
+  ],
+  "dessert": [
+    {
+      "id": "ごちゃまぜジュ-ス",
+      "title": "ごちゃまぜジュース",
+      "needs": {},
+      "total": 0,
+      "energy": 0
+    },
+    {
+      "id": "じゅくせいスイ-トポテト",
+      "title": "じゅくせいスイートポテト",
+      "needs": {
+        "potato": 9,
+        "moo_milk": 5
+      },
+      "total": 14,
+      "energy": 1907
+    },
+    {
+      "id": "ふくつのジンジャ-クッキ",
+      "title": "ふくつのジンジャークッキー",
+      "needs": {
+        "sweet_honey": 14,
+        "warm_ginger": 12,
+        "relax_cacao": 5,
+        "egg": 4
+      },
+      "total": 35,
+      "energy": 4921
+    },
+    {
+      "id": "とくせんリンゴジュ-ス",
+      "title": "とくせんリンゴジュース",
+      "needs": {
+        "apple": 8
+      },
+      "total": 8,
+      "energy": 855
+    },
+    {
+      "id": "クラフトサイコソ-ダ",
+      "title": "クラフトサイコソーダ",
+      "needs": {
+        "sweet_honey": 9
+      },
+      "total": 9,
+      "energy": 1079
+    },
+    {
+      "id": "ひのこのジンジャ-ティ",
+      "title": "ひのこのジンジャーティー",
+      "needs": {
+        "warm_ginger": 9,
+        "apple": 7
+      },
+      "total": 16,
+      "energy": 1913
+    },
+    {
+      "id": "プリンのプリンアラモ-ド",
+      "title": "プリンのプリンアラモード",
+      "needs": {
+        "sweet_honey": 20,
+        "egg": 15,
+        "moo_milk": 10,
+        "apple": 10
+      },
+      "total": 55,
+      "energy": 7594
+    },
+    {
+      "id": "あくまのキッスフル-ツオレ",
+      "title": "あくまのキッスフルーツオレ",
+      "needs": {
+        "apple": 11,
+        "moo_milk": 9,
+        "sweet_honey": 7,
+        "relax_cacao": 8
+      },
+      "total": 35,
+      "energy": 4734
+    },
+    {
+      "id": "ねがいごとアップルパイ",
+      "title": "ねがいごとアップルパイ",
+      "needs": {
+        "apple": 12,
+        "moo_milk": 4
+      },
+      "total": 16,
+      "energy": 1748
+    },
+    {
+      "id": "ネロリのデトックスティ",
+      "title": "ネロリのデトックスティー",
+      "needs": {
+        "warm_ginger": 11,
+        "apple": 15,
+        "mushroom": 9
+      },
+      "total": 35,
+      "energy": 5065
+    },
+    {
+      "id": "あまいかおりチョコケ-キ",
+      "title": "あまいかおりチョコケーキ",
+      "needs": {
+        "sweet_honey": 9,
+        "relax_cacao": 8,
+        "moo_milk": 7
+      },
+      "total": 24,
+      "energy": 3378
+    },
+    {
+      "id": "モ-モ-ホットミルク",
+      "title": "モーモーホットミルク",
+      "needs": {
+        "moo_milk": 7
+      },
+      "total": 7,
+      "energy": 814
+    },
+    {
+      "id": "かるわざソイケ-キ",
+      "title": "かるわざソイケーキ",
+      "needs": {
+        "egg": 8,
+        "wakaku_soy": 7
+      },
+      "total": 15,
+      "energy": 1924
+    },
+    {
+      "id": "はりきりプロテインスム-ジ",
+      "title": "はりきりプロテインスムージー",
+      "needs": {
+        "wakaku_soy": 15,
+        "relax_cacao": 8
+      },
+      "total": 23,
+      "energy": 3263
+    },
+    {
+      "id": "マイペ-スやさいジュ-ス",
+      "title": "マイペースやさいジュース",
+      "needs": {
+        "sleep_tomato": 9,
+        "apple": 7
+      },
+      "total": 16,
+      "energy": 1924
+    },
+    {
+      "id": "おおきいマラサダ",
+      "title": "おおきいマラサダ",
+      "needs": {
+        "pure_oil": 10,
+        "moo_milk": 7,
+        "sweet_honey": 6
+      },
+      "total": 23,
+      "energy": 3015
+    },
+    {
+      "id": "ちからもちソイド-ナッツ",
+      "title": "ちからもちソイドーナッツ",
+      "needs": {
+        "pure_oil": 12,
+        "wakaku_soy": 16,
+        "relax_cacao": 7
+      },
+      "total": 35,
+      "energy": 5547
+    },
+    {
+      "id": "だいばくはつポップコ-ン",
+      "title": "だいばくはつポップコーン",
+      "needs": {
+        "wakaku_corn": 15,
+        "pure_oil": 14,
+        "moo_milk": 7
+      },
+      "total": 36,
+      "energy": 6048
+    },
+    {
+      "id": "おちゃかいコ-ンスコ-ン",
+      "title": "おちゃかいコーンスコーン",
+      "needs": {
+        "apple": 20,
+        "warm_ginger": 20,
+        "wakaku_corn": 18,
+        "moo_milk": 9
+      },
+      "total": 67,
+      "energy": 10925
+    },
+    {
+      "id": "はなびらのまいチョコタルト",
+      "title": "はなびらのまいチョコタルト",
+      "needs": {
+        "relax_cacao": 11,
+        "apple": 11
+      },
+      "total": 22,
+      "energy": 3314
+    },
+    {
+      "id": "フラワ-ギフトマカロン",
+      "title": "フラワーギフトマカロン",
+      "needs": {
+        "relax_cacao": 25,
+        "egg": 25,
+        "sweet_honey": 17,
+        "moo_milk": 10
+      },
+      "total": 77,
+      "energy": 13834
+    },
+    {
+      "id": "はやおきコ-ヒ-ゼリ",
+      "title": "はやおきコーヒーゼリー",
+      "needs": {
+        "wake_coffee": 16,
+        "moo_milk": 14,
+        "sweet_honey": 12
+      },
+      "total": 42,
+      "energy": 6793
+    },
+    {
+      "id": "スパ-クスパイスコ-ラ",
+      "title": "スパークスパイスコーラ",
+      "needs": {
+        "apple": 35,
+        "warm_ginger": 20,
+        "spring_onion": 20,
+        "wake_coffee": 12
+      },
+      "total": 87,
+      "energy": 17494
+    },
+    {
+      "id": "かたやぶりコ-ンティラミス",
+      "title": "かたやぶりコーンティラミス",
+      "needs": {
+        "wake_coffee": 14,
+        "wakaku_corn": 14,
+        "moo_milk": 12
+      },
+      "total": 40,
+      "energy": 7125
+    },
+    {
+      "id": "ドオ-のエクレア",
+      "title": "ドオーのエクレア",
+      "needs": {
+        "relax_cacao": 30,
+        "moo_milk": 26,
+        "wake_coffee": 24,
+        "sweet_honey": 22
+      },
+      "total": 102,
+      "energy": 20885
+    }
+  ]
+}

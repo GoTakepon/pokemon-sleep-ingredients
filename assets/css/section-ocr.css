@@ -1,0 +1,68 @@
+@layer sections;
+@layer sections {
+  /* ===============================
+     OCRテキスト入力セクション
+     =============================== */
+  #section-ocr {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 20px;
+    padding: 20px;
+  }
+
+  #section-ocr textarea,
+  #ocrInput {
+    width: 100%;
+    min-height: 160px;
+    padding: 12px 14px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 10px;
+    background: #fff;
+    resize: vertical;
+    font-size: 16px;
+  }
+
+  #section-ocr .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+  }
+
+  /* ボタン共通 */
+  #section-ocr .btn {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border, #e5e7eb);
+    font-weight: 700;
+  }
+
+  /* 解析ボタン（青） */
+  #parseBtn,
+  #section-ocr .btn-primary {
+    background: var(--primary, #1d4ed8);
+    border: 1px solid var(--primary, #1d4ed8);
+    color: #fff;
+  }
+
+  /* クリアボタン（白） */
+  #section-ocr .btn-ghost {
+    background: #fff;
+    border: 1px solid var(--border, #e5e7eb);
+    color: #111;
+  }
+
+  @media (max-width: 480px) {
+    #section-ocr {
+      padding: 14px 12px;
+    }
+    #section-ocr textarea {
+      min-height: 130px;
+      font-size: 0.95rem;
+    }
+    #section-ocr .btn {
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+  }
+}

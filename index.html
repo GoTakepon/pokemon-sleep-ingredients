@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>食材管理ツール</title>
+  <style>
+    @layer reset, base, sections, overrides;
+  </style>
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251021-2135">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251021-2135">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251021-2135">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251021-2135">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251021-2135">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251021-2135">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251021-2135">
+  <link rel="manifest" href="./manifest.json">
+  <!--<meta name="theme-color" content="#fdeef4">*/-->
+</head>
+<body>
+  <main class="container">
+    <div class="version-info">
+      現在のバージョン: <span id="appVersion">-</span>
+    </div>
+
+    <!-- ① OCR -->
+    <section class="section">
+      <header class="section-header">
+        <span class="dot dot-green"></span>
+        <h2 class="section-title">OCRテキストを貼り付け</h2>
+      </header>
+
+      <div class="card">
+        <textarea id="ocrInput" class="textarea" placeholder="Paste OCR text here..."></textarea>
+        <div class="row row-gap">
+          <button id="parseBtn" class="btn btn-primary">解析</button>
+          <button id="clearDataBtn" class="btn btn-ghost">データをクリア</button>
+        </div>
+        <p class="hint">Data is saved in browser localStorage automatically.</p>
+      </div>
+    </section>
+
+    <!-- タブナビ -->
+    <nav class="tabs" role="tablist" aria-label="期間切替">
+      <button type="button" class="tab is-active" data-tab="this" aria-selected="true">今週の目標料理</button>
+      <button type="button" class="tab" data-tab="next" aria-selected="false">次週の目標料理</button>
+    </nav>
+
+    <!-- ▼ 今週タブ（メインタブ） -->
+    <section id="tab_this_week" class="tab-panel is-active">
+
+      <!-- ② 今週の目標料理を追加 -->
+      <section class="section">
+        <header class="section-header">
+          <span class="dot dot-green"></span>
+          <h2 class="section-title">② 今週の目標料理を追加</h2>
+          <button class="collapse-toggle" data-target="#panel_this_week" aria-expanded="true">表示/非表示</button>
+        </header>
+
+        <div id="panel_this_week" class="card">
+          <div class="form-row">
+            <label class="label" for="categorySelect">今週の料理：</label>
+            <select id="categorySelect" class="select"></select>
+          </div>
+          <div class="form-row end">
+            <select id="recipeSelect" class="select select-wide"></select>
+          </div>
+          <div id="menuList" class="menu-list"></div>
+        </div>
+      </section>
+
+
+      <!-- ③ 次週の目標料理を追加 -->
+      <section class="section">
+        <header class="section-header">
+          <span class="dot dot-green"></span>
+          <h2 class="section-title">③ 次週の目標料理を追加</h2>
+          <button class="collapse-toggle" data-target="#panel_next_week" aria-expanded="false">表示/非表示</button>
+        </header>
+        <div id="panel_next_week" class="card">
+          <!-- カレー・シチュー -->
+          <div class="form-row">
+            <label class="label" for="nwRecCurry">カレー・シチュー：</label>
+            <select id="nwRecCurry" class="select select-wide"></select>
+          </div>
+          <div id="nwListCurry" class="menu-list"></div>
+
+          <!-- サラダ -->
+          <div class="form-row mt-md">
+            <label class="label" for="nwRecSalad">サラダ：</label>
+            <select id="nwRecSalad" class="select select-wide"></select>
+          </div>
+          <div id="nwListSalad" class="menu-list"></div>
+
+          <!-- デザート・ドリンク -->
+          <div class="form-row mt-md">
+            <label class="label" for="nwRecSweets">デザート・ドリンク：</label>
+            <select id="nwRecSweets" class="select select-wide"></select>
+          </div>
+          <div id="nwListSweets" class="menu-list"></div>
+
+          <!-- 個別食材 -->
+          <div class="form-row mt-lg">
+            <label class="label" for="nwExtraSelect">個別食材：</label>
+            <select id="nwExtraSelect" class="select select-wide"></select>
+          </div>
+          <div id="nwExtraList" class="menu-list"></div>
+        </div>
+      </section>
+
+
+      <!-- ④ 食材一覧 -->
+      <section class="section">
+        <header class="section-header">
+          <span class="dot dot-green"></span>
+          <h2 class="section-title">
+            ④ 食材一覧
+          </h2>
+          <div class="table-filters">
+            <label><input type="checkbox" id="chkThisWeek" checked> 今週</label>
+            <label><input type="checkbox" id="chkNextWeek"> 次週</label>
+          </div>
+        </header>
+
+        <div class="card">
+          <h3 class="sub-title">目標料理の使用食材</h3>
+          <div class="table-wrapper">
+            <table id="usedTable" class="table"></table>
+          </div>
+
+          <h3 class="sub-title mt-lg">その他の食材</h3>
+          <div class="table-wrapper">
+            <table id="otherTable" class="table"></table>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ⑤ おすすめレシピ -->
+      <section class="section">
+        <header class="section-header">
+          <span class="dot dot-green"></span>
+          <h2 class="section-title">⑤ おすすめレシピ（未選択・今週の料理）</h2>
+        </header>
+
+        <div class="card">
+          <div class="table-wrapper">
+            <table id="recommendTable" class="table table-recipe"></table>
+          </div>
+        </div>
+      </section>
+
+    </section> <!-- ← 今週タブをここで閉じる -->
+
+    <!-- ▼ 次週タブ（空、将来機能用） -->
+    <section id="tab_next_week" class="tab-panel" hidden>
+      <section class="section">
+        <header class="section-header">
+          <h2 class="section-title">（次週タブ：将来追加予定）</h2>
+        </header>
+        <div class="card">
+          <p class="muted">※ このタブは現在未使用です。</p>
+        </div>
+      </section>
+    </section>
+
+  </main>
+  <script src="./js/main.js?v=20251021-2135" type="module"></script>
+  <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js")
+        .then(() => console.log("Service Worker registered"))
+        .catch((err) => console.error("SW registration failed:", err));
+    });
+  }
+</script>
+</body>
+</html>

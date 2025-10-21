@@ -1,0 +1,215 @@
+/* ---------- CSS Variables (theme) ---------- */
+:root{
+  --bg: #f6f7fb;
+  --paper: #ffffff;
+  --border: #e6e9ef;
+  --text: #1a1f36;
+  --muted: #64748b;
+  --primary: #0ea5e9;
+  --primary-weak: #e0f2fe;
+  --accent: #10b981;
+  --accent-dot: #34d399;
+  --danger: #ef4444;
+  --positive: #2563eb;
+
+  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-lg: 18px;
+
+  --shadow: 0 6px 18px rgba(20, 24, 40, .08);
+  --section-gap: 28px;
+
+  --font-title: 20px;
+  --font-subtitle: 16px;
+  --font-body: 15px;
+
+  /* 絵文字・食材チップ系の統一サイズ */
+  --emoji-size: 18px;          /* ← おすすめ/メニュー/テーブルの絵文字 */
+  --chip-font: 14px;
+  --chip-pad-y: 6px;
+  --chip-pad-x: 10px;
+}
+
+/* ---------- Reset-ish ---------- */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, "SF Pro JP", "Hiragino Kaku Gothic ProN", Segoe UI, Roboto, "Noto Sans JP", sans-serif;
+  color:var(--text);
+  background:var(--bg);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* ---------- Layout ---------- */
+.container{
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 18px 14px 50px;
+}
+
+.section{ margin-top: var(--section-gap); }
+.section:first-of-type{ margin-top: 6px; }
+
+.section-header{
+  display:flex; align-items:center; gap:10px;
+  margin-bottom: 12px;
+}
+.section-title{
+  margin:0;
+  font-size: var(--font-title);
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+.dot{ width:10px; height:10px; border-radius:999px; display:inline-block }
+.dot-green{ background: var(--accent-dot); box-shadow:0 0 0 4px rgba(16,185,129,.12) }
+
+.card{
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+/* ---------- Controls ---------- */
+.textarea{
+  width:100%; min-height:160px; resize:vertical;
+  padding:12px; border:1px solid var(--border); border-radius: var(--radius);
+  font-size: var(--font-body);
+  background:#fff;
+}
+.row{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px }
+.row-gap{ margin-top:12px }
+.form-row{ display:flex; gap:10px; align-items:center; margin:10px 0 }
+.form-row.end{ justify-content:flex-end }
+
+.label{ color:var(--muted); font-weight:700; }
+
+.select{
+  min-width: 210px;
+  height: 40px;
+  padding: 0 12px;
+  border:1px solid var(--border);
+  border-radius: 10px;
+  background:#fff;
+  font-size: var(--font-body);
+}
+.select-wide{ min-width: 320px; }
+
+.btn{
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border:1px solid transparent;
+  font-weight: 700; letter-spacing:.02em;
+}
+.btn-primary{ background: var(--primary); color:#fff; }
+.btn-primary:active{ filter:brightness(.95) }
+.btn-ghost{ background:#fff; color:var(--muted); border-color: var(--border); }
+.btn-ghost:active{ background:#f3f4f6 }
+
+/* ---------- Sub titles ---------- */
+.sub-title{
+  margin: 6px 2px 10px;
+  font-size: var(--font-subtitle);
+  font-weight: 800;
+  color: var(--muted);
+}
+.mt-lg{ margin-top: 18px; }
+
+.hint{
+  margin: 8px 2px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ---------- Menu cards ---------- */
+.menu-list{ display:grid; gap:12px; grid-template-columns:1fr; }
+@media (min-width: 680px){
+  .menu-list{ grid-template-columns:1fr 1fr; }
+}
+.menu-card{
+  border:1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:#f8fbff;
+  padding: 12px;
+}
+.menu-header{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+}
+.menu-title{
+  margin:0; font-weight:800; letter-spacing:.02em;
+  font-size: 17px;
+}
+.qty-ctrl{ display:flex; gap:8px; align-items:center }
+.qty-field{
+  width:72px; height:40px;
+  border:1px solid var(--border); border-radius:10px;
+  text-align:center; font-weight:800; font-size:18px;
+  background:#fff;
+}
+.qty-btn{
+  width:44px; height:40px; border-radius:10px;
+  border:1px solid var(--border); background:#fff; font-weight:900; font-size:18px;
+}
+.qty-btn--danger{ color:#fff; background:#ef4444; border-color:#ef4444 }
+
+.menu-ingredients{
+  display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;
+}
+
+/* ---------- Chips (emoji + count) ---------- */
+.chip{
+  display:inline-flex; align-items:center; gap:8px;
+  border:1px solid var(--border); background:#fff;
+  border-radius: 999px;
+  padding: var(--chip-pad-y) var(--chip-pad-x);
+  font-size: var(--chip-font);
+}
+.chip .emoji{ font-size: var(--emoji-size); line-height:1; }
+.chip .count{ opacity:.85; font-weight:800; }
+
+/* ---------- Tables ---------- */
+.table-wrapper{ overflow-x:auto }
+.table{
+  width:100%; border-collapse:separate; border-spacing:0;
+  font-size: var(--font-body);
+}
+.table thead th{
+  text-align:left; color:var(--muted); font-weight:900;
+  background:#f6f7fb; position:sticky; top:0; z-index:1;
+  border-bottom:1px solid var(--border);
+  padding:10px 12px;
+}
+.table tbody td{
+  border-bottom:1px solid var(--border);
+  padding:12px;
+  vertical-align:middle;
+}
+.table tfoot td{
+  background:#f1f5f9; font-weight:900;
+  border-top:1px solid var(--border);
+}
+
+/* 状態色 */
+.pos{ color: var(--positive); font-weight: 700; }
+.neg{ color: var(--danger); font-weight: 700; }
+.ok { color: var(--accent); font-weight: 800; }
+
+/* 食材名セル：絵文字を小さく */
+.cell-ing{
+  display:flex; align-items:center; gap:10px;
+}
+.cell-ing .emoji{ font-size: var(--emoji-size); }
+
+/* おすすめレシピテーブル専用：不足(合計)を1行で収める */
+.table-recipe thead th:nth-child(2){ width: 108px; } /* 不足(合計) */
+.table-recipe .need-badges{
+  display:flex; flex-wrap:wrap; gap:8px;
+}
+.table-recipe .chip .sub{
+  display:block; margin-top:4px; font-size:12px; text-align:center;
+}
+.table-recipe .chip .sub.neg{ color: var(--danger); }

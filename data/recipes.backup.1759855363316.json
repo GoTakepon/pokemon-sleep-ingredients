@@ -1,0 +1,43 @@
+{
+  "curry": [
+    {
+      "id": "ninja_curry",
+      "title": "Ninja Curry",
+      "needs": {
+        "potato": 24,
+        "spring_onion": 12,
+        "mame_meat": 9,
+        "mushroom": 5
+      }
+    },
+    {
+      "id": "bean_curry",
+      "title": "Bean Curry",
+      "needs": {
+        "mame_meat": 15,
+        "spring_onion": 8,
+        "potato": 12
+      }
+    }
+  ],
+  "salad": [
+    {
+      "id": "apple_salad",
+      "title": "Apple Salad",
+      "needs": {
+        "apple": 28,
+        "herb": 6,
+        "egg": 4
+      }
+    }
+  ],
+  "dessert": [
+    {
+      "id": "egg_pudding",
+      "title": "Egg Pudding",
+      "needs": {
+        "egg": 8
+      }
+    }
+  ]
+}

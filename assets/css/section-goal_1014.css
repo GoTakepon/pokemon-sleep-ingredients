@@ -1,0 +1,184 @@
+@layer sections;
+@layer sections {
+  /* ===============================
+     目標料理セクション
+     =============================== */
+  #section-goal {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 20px;
+    padding: 20px;
+  }
+
+  .goal-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .goal-header label {
+    font-weight: 800;
+    color: #111827;
+  }
+
+  .select {
+    min-width: 220px;
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 12px;
+    background: #fff;
+    font-weight: 700;
+  }
+
+  /* レシピリストカード */
+  #menuList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .chosen-item {
+    background: #eef5ff;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 18px;
+    padding: 12px;
+  }
+
+  .chosen-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .chosen-title {
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  /* 数量ボタン */
+  .chosen-qty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .qty-btn,
+  .qty-input {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .qty-btn {
+    border: none;
+    color: #fff;
+  }
+
+  .qty-btn[data-act="dec"] { background: #1e40af; }
+  .qty-btn[data-act="inc"] { background: #2563eb; }
+  .qty-btn[data-act="del"] {
+    background: #ef4444;
+    width: 30px;
+    height: 30px;
+  }
+
+  .qty-input {
+    border: 1px solid var(--border, #e5e7eb);
+    background: #fff;
+    color: #111;
+  }
+
+  /* 食材チップ */
+  .emoji-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .emoji-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 6px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 10px;
+    background: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .emoji-chip .em {
+    font-size: 12px;
+  }
+
+  @media (max-width: 480px) {
+    #section-goal {
+      padding: 14px 12px;
+    }
+    .goal-header {
+      gap: 8px;
+    }
+    .select {
+      min-width: 160px;
+      height: 38px;
+      font-size: 0.9rem;
+    }
+    .chosen-title {
+      font-size: 0.9rem;
+    }
+  }
+ /* ===== 目標料理ブロック（既存の class 構成に合わせてスコープ） ===== */
+
+    /* 1) ラベル「今週の料理：」を少し小さく */
+    .section .card .form-row .label{
+    font-size: 0.92rem;
+    line-height: 1.2;
+    font-weight: 800;
+    color: var(--text);
+    }
+    @media (max-width: 520px){
+    .section .card .form-row .label{
+        font-size: 0.86rem;
+    }
+    }
+
+    /* 2) ラベル＋セレクトを横並びにし、セレクトは枠内に収める */
+    .section .card .form-row{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    }
+    .section .card .form-row .label{
+    flex: 0 0 auto;
+    min-width: 88px;       /* ラベル幅を固定気味に */
+    }
+    .section .card .form-row .select{
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box; /* はみ出し防止 */
+    margin: 0;
+    }
+
+    /* 3) 2段目（レシピのプルダウン）は右寄せ。はみ出さない幅に制御 */
+    .section .card .form-row.end{
+    justify-content: flex-end;
+    }
+    .section .card .form-row.end .select-wide{
+    width: min(520px, 100%); /* モバイルは100%、広い画面でも伸び過ぎない */
+    max-width: 100%;
+    box-sizing: border-box;
+    }
+
+}

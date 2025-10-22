@@ -13,7 +13,7 @@ import { computeThisWeekTotals, buildTableRows } from "./logic/weekly-totals.js"
 import { bindMenuCardOpsDelegation } from "./ui/card-ops.js";
 import { computeThisWeekTotals, buildTableRows } from "./logic/weekly-totals.js";
 
-const APP_VERSION = '20251022-0027'; // update-version.js と連動
+const APP_VERSION = '20251022-0105'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {

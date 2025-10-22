@@ -1,25 +1,25 @@
 // service-worker.js
 
 // ★ キャッシュ名を更新して強制入れ替え（update-version.js が自動更新）
-const CACHE_NAME = "psleep-cache-20251022-1646";
+const CACHE_NAME = "psleep-cache-20251023-0233";
 
 // ★ データ用のバージョン（update-version.js が自動更新）
-const VERSION = "20251022-1646";
+const VERSION = "20251023-0233";
 
 // 静的アセット（?v は update-version.js で更新される）
 const STATIC_ASSETS = [
   "./", "./index.html",
   "./manifest.json",
-  "./js/main.js?v=20251022-1646",
-  "./js/render/tables.js?v=20251022-1646",
-  "./js/state/store.js?v=20251022-1646",
-  "./js/ui/init.js?v=20251022-1646",
-  "./assets/css/base.css?v=20251022-1646",
-  "./assets/css/custom.css?v=20251022-1646",
-  "./assets/css/section-ocr.css?v=20251022-1646",
-  "./assets/css/section-goal.css?v=20251022-1646",
-  "./assets/css/section-ingrediants.css?v=20251022-1646",
-  "./assets/css/section-recommend.css?v=20251022-1646",
+  "./js/main.js?v=20251023-0233",
+  "./js/render/tables.js?v=20251023-0233",
+  "./js/state/store.js?v=20251023-0233",
+  "./js/ui/init.js?v=20251023-0233",
+  "./assets/css/base.css?v=20251023-0233",
+  "./assets/css/custom.css?v=20251023-0233",
+  "./assets/css/section-ocr.css?v=20251023-0233",
+  "./assets/css/section-goal.css?v=20251023-0233",
+  "./assets/css/section-ingrediants.css?v=20251023-0233",
+  "./assets/css/section-recommend.css?v=20251023-0233",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
 ];

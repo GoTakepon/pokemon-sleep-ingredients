@@ -209,27 +209,152 @@ body{
 
 .table-gather .gather-input{
   width: 100%;
-  padding: 4px 6px;
+  min-width: 40px;
+  padding: 6px 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  font-size: 16px;
+  box-sizing: border-box;
 }
 
+.table-gather{
+  table-layout: fixed;
+}
 .table-gather th:first-child,
 .table-gather td:first-child{
-  min-width: 260px;
+  width: 55%;
 }
-
-.table-gather th:not(:first-child),
-.table-gather td:not(:first-child){
-  width: 90px;
+.table-gather th:nth-child(2),
+.table-gather td:nth-child(2),
+.table-gather th:nth-child(3),
+.table-gather td:nth-child(3),
+.table-gather th:nth-child(4),
+.table-gather td:nth-child(4){
+  width: 15%;
+}
+.table-gather .cell-ing{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+}
+.table-gather .cell-ing .name{
+  flex:1;
+  min-width:0;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:unset;
+  font-size:clamp(0.95rem, 2.4vw, 1.05rem);
+  line-height:1.35;
 }
 
 .footnote{
   margin-top: 12px;
   font-size: 0.85rem;
 }
+
+.gather-controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  align-items:flex-end;
+  margin: 12px 0 16px;
+}
+.gather-controls .control{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  font-weight:700;
+  color:var(--muted);
+}
+.gather-controls .input{
+  padding:6px 10px;
+  border:1px solid var(--border);
+  border-radius:6px;
+  background:#fff;
+  font-weight:600;
+  min-width:120px;
+}
+
+
+.proposal-actions{
+  margin:16px 0;
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  align-items:flex-end;
+}
+.control-inline{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  font-weight:700;
+  color:var(--muted);
+}
+.control-inline .input{
+  padding:6px 10px;
+  border:1px solid var(--border);
+  border-radius:6px;
+  background:#fff;
+  font-weight:600;
+  min-width:120px;
+}
+.check-inline{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-weight:600;
+  color:var(--muted);
+}
+
+.proposal-results{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.proposal-card{
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px 14px;
+  background:#fff;
+  box-shadow:var(--shadow-sm);
+}
+
+.proposal-header{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+  font-weight:700;
+}
+
+.proposal-list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.proposal-list li{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  font-size:0.95rem;
+}
+
+.proposal-order{
+  width:2.5rem;
+  font-weight:700;
+}
+.proposal-recipe{ flex:1; min-width:0; }
+.proposal-hours{ width:80px; text-align:right; }
+.proposal-energy{ width:120px; text-align:right; font-variant-numeric:tabular-nums; }
 
 /* ==========================
    レスポンシブ

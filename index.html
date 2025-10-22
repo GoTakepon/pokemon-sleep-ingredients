@@ -7,13 +7,13 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251022-1646">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251022-1646">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251022-1646">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251022-1646">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251022-1646">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251022-1646">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251022-1646">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251023-0233">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251023-0233">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251023-0233">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251023-0233">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251023-0233">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251023-0233">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251023-0233">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
 </head>
@@ -191,16 +191,36 @@
           <h2 class="section-title">食材集め能力（24hあたり）</h2>
         </header>
         <div class="card">
-          <p class="muted">各食材が24時間で集められる個数を入力してください。5枠それぞれに数値を入力できます。</p>
+          <p class="muted">各食材が24時間で集められる個数を入力してください。食材タイプ・きのみポケ・その他常駐の3枠を入力できます。</p>
           <div class="table-wrapper">
             <table id="gatherTable" class="table table-gather"></table>
           </div>
+          <div class="proposal-actions">
+            <label class="control control-inline">
+              <span class="control-label">食材ポケモン数</span>
+              <input type="number" id="gatherPokemonCount" class="input" min="1" max="3" step="1">
+            </label>
+            <label class="control control-inline">
+              <span class="control-label">鍋容量</span>
+              <input type="number" id="potCapacityInput" class="input" min="1" step="1" value="200">
+            </label>
+            <label class="check-inline">
+              <input type="checkbox" id="excludeMaxLevelCheckbox">
+              レシピレベルMaxの料理は作らない
+            </label>
+            <label class="check-inline">
+              <input type="checkbox" id="excludeOverPotCheckbox">
+              食材合計が鍋容量を超える料理は作らない
+            </label>
+            <button type="button" id="calcRecipeProposalsBtn" class="btn btn-primary">料理提案を計算</button>
+          </div>
+          <div id="proposalResults" class="proposal-results"></div>
         </div>
       </section>
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251022-1646" type="module"></script>
+  <script src="./js/main.js?v=20251023-0233" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

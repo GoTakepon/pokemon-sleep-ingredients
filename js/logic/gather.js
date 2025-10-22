@@ -1,7 +1,7 @@
 // js/logic/gather.js
 // 食材集め能力（24時間あたりの個数）入力支援ヘルパー
 
-export const GATHER_COLUMNS = 5;
+export const GATHER_COLUMNS = 3;
 
 export function normalizeGatherValue(value) {
   const num = Number(value);

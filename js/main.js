@@ -26,7 +26,7 @@ import {
   normalizeGatherValue,
 } from "./logic/gather.js";
 
-const APP_VERSION = '20251022-1646'; // update-version.js と連動
+const APP_VERSION = '20251023-0233'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -51,6 +51,10 @@ const els = {
   fieldBonus: document.getElementById("fieldBonusInput"),
   eventBonus: document.getElementById("eventBonusInput"),
   energyTable: document.getElementById("energyTable"),
+  gatherPokemonCount: document.getElementById("gatherPokemonCount"),
+  potCapacity: document.getElementById("potCapacityInput"),
+  excludeMaxLevel: document.getElementById("excludeMaxLevelCheckbox"),
+  excludeOverPot: document.getElementById("excludeOverPotCheckbox"),
   gatherTable: document.getElementById("gatherTable"),
 };
 
@@ -102,6 +106,16 @@ const storedGatherRates = (() => {
   }
 })();
 
+function normalizePokemonCount(value) {
+  const num = Number.parseInt(value, 10);
+  if (!Number.isFinite(num) || num <= 0) return 1;
+  return Math.max(1, Math.min(GATHER_COLUMNS, num));
+}
+
+const gatherRatesPayload = storedGatherRates ? { ...storedGatherRates } : {};
+const storedPokemonCountRaw = gatherRatesPayload.__pokemonCount;
+if ("__pokemonCount" in gatherRatesPayload) delete gatherRatesPayload.__pokemonCount;
+
 const state = {
   have:   JSON.parse(localStorage.getItem("have")   || "{}"),
   chosen: JSON.parse(localStorage.getItem("chosen") || "[]"), // 今週
@@ -119,7 +133,11 @@ const state = {
     eventBonusMultiplier: storedEnergyConfig?.eventBonusMultiplier ?? 1,
     levels: storedEnergyConfig?.levels || {},
   },
-  gatherRates: storedGatherRates || {},
+  gatherRates: gatherRatesPayload,
+  gatherPokemonCount: normalizePokemonCount(storedPokemonCountRaw),
+  potCapacity: Number(localStorage.getItem("potCapacity") || 200),
+  excludeMaxLevel: localStorage.getItem("excludeMaxLevel") === "1",
+  excludeOverPot: localStorage.getItem("excludeOverPot") === "1",
 };
 
 state.energyConfig.fieldBonusPercent = normalizePercent(state.energyConfig.fieldBonusPercent ?? 0);
@@ -130,13 +148,22 @@ if (!state.energyConfig.levels || typeof state.energyConfig.levels !== "object")
 if (!state.gatherRates || typeof state.gatherRates !== "object") {
   state.gatherRates = {};
 }
+state.gatherPokemonCount = normalizePokemonCount(state.gatherPokemonCount);
+state.potCapacity = Math.max(1, Number(state.potCapacity) || 200);
 
 function save() {
   localStorage.setItem("have", JSON.stringify(state.have));
   localStorage.setItem("chosen", JSON.stringify(state.chosen));
   localStorage.setItem("next", JSON.stringify(state.next)); // ★追加
   localStorage.setItem("energyConfig", JSON.stringify(state.energyConfig));
-  localStorage.setItem("gatherRates", JSON.stringify(state.gatherRates));
+  const gatherPayload = {
+    ...state.gatherRates,
+    __pokemonCount: state.gatherPokemonCount,
+  };
+  localStorage.setItem("gatherRates", JSON.stringify(gatherPayload));
+  localStorage.setItem("potCapacity", String(state.potCapacity || 200));
+  localStorage.setItem("excludeMaxLevel", state.excludeMaxLevel ? "1" : "0");
+  localStorage.setItem("excludeOverPot", state.excludeOverPot ? "1" : "0");
 }
 
 function markNextDirty() {
@@ -311,6 +338,7 @@ function setRecipeLevel(recipeId, level) {
   levels[recipeId] = normalized;
   save();
   renderEnergyTable(els.cat?.value || null);
+  clearProposalResults();
 }
 
 function setFieldBonusPercent(value) {
@@ -319,6 +347,7 @@ function setFieldBonusPercent(value) {
   state.energyConfig.fieldBonusPercent = normalized;
   save();
   renderEnergyTable(els.cat?.value || null);
+  clearProposalResults();
 }
 
 function setEventBonusMultiplier(value) {
@@ -327,6 +356,7 @@ function setEventBonusMultiplier(value) {
   state.energyConfig.eventBonusMultiplier = normalized;
   save();
   renderEnergyTable(els.cat?.value || null);
+  clearProposalResults();
 }
 
 function renderFilterStatusIndicator({ this: showThis, next: showNext }) {
@@ -346,6 +376,17 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString("ja-JP");
 }
 
+function formatHours(value) {
+  if (!Number.isFinite(value) || value <= 0) return "—";
+  if (value >= 100) return Math.round(value).toString();
+  return (Math.round(value * 10) / 10).toFixed(1);
+}
+
+function formatEnergyPerHour(value) {
+  if (!Number.isFinite(value) || value <= 0) return "—";
+  return formatNumber(Math.round(value));
+}
+
 function getGatherRates(ingId) {
   return normalizeGatherArray(state.gatherRates?.[ingId], GATHER_COLUMNS);
 }
@@ -361,6 +402,114 @@ function setGatherRate(ingId, index, value) {
   state.gatherRates[ingId] = arr;
   save();
   renderGatherTable();
+  renderEnergyTable(els.cat?.value || null);
+  clearProposalResults();
+}
+
+function setGatherPokemonCount(value) {
+  const normalized = normalizePokemonCount(value);
+  if (state.gatherPokemonCount === normalized) return;
+  state.gatherPokemonCount = normalized;
+  save();
+  renderGatherTable();
+  renderEnergyTable(els.cat?.value || null);
+  clearProposalResults();
+}
+
+function computeIngredientHours(ingId, needQty, { usePokemonCount = true, pokemonCount = state.gatherPokemonCount } = {}) {
+  if ((Number(needQty) || 0) <= 0) return 0;
+  const rates = getGatherRates(ingId);
+  const normalizedRates = rates.map((val) => Math.max(0, val));
+  let dailyRate;
+  if (usePokemonCount) {
+    const count = normalizePokemonCount(pokemonCount);
+    const sorted = [...normalizedRates].sort((a, b) => b - a);
+    dailyRate = sorted.slice(0, count).reduce((sum, val) => sum + val, 0);
+  } else {
+    dailyRate = normalizedRates.reduce((sum, val) => sum + val, 0);
+  }
+  if (dailyRate <= 0) return Number.POSITIVE_INFINITY;
+  return (needQty / dailyRate) * 24;
+}
+
+function computeRecipeEnergyStats(recipe, {
+  level,
+  fieldBonusPercent,
+  eventBonusMultiplier,
+  usePokemonCount = false,
+  pokemonCount = state.gatherPokemonCount,
+  potCapacity = null,
+} = {}) {
+  const finalEnergy = computeFinalEnergy({
+    baseEnergy: recipe.energy,
+    level,
+    fieldBonusPercent,
+    eventBonusMultiplier,
+  });
+  if (potCapacity && Number(recipe.total || 0) > potCapacity) {
+    return { finalEnergy, hoursRequired: Number.POSITIVE_INFINITY, energyPerHour: null, overflow: true };
+  }
+
+  let hoursRequired = 0;
+  for (const [ingId, qty] of Object.entries(recipe.needs || {})) {
+    const need = Number(qty) || 0;
+    const hours = computeIngredientHours(ingId, need, { usePokemonCount, pokemonCount });
+    if (!Number.isFinite(hours)) {
+      hoursRequired = Number.POSITIVE_INFINITY;
+      break;
+    }
+    hoursRequired += hours;
+  }
+
+  const energyPerHour = (Number.isFinite(hoursRequired) && hoursRequired > 0)
+    ? finalEnergy / hoursRequired
+    : null;
+
+  return { finalEnergy, hoursRequired, energyPerHour };
+}
+
+function getAllRecipeEnergyStats({
+  categoryFilter = null,
+  usePokemonCount = false,
+  pokemonCount = state.gatherPokemonCount,
+  potCapacity = state.potCapacity,
+  excludeMaxLevel = state.excludeMaxLevel,
+  maxLevel = 65,
+} = {}) {
+  const recipesByCat = state.data?.recipes || {};
+  const { fieldBonusPercent, eventBonusMultiplier } = state.energyConfig;
+  const stats = [];
+  Object.entries(recipesByCat).forEach(([catKey, list]) => {
+    if (categoryFilter && catKey !== categoryFilter) return;
+    (list || []).forEach((recipe) => {
+      const level = getRecipeLevel(recipe.id);
+      if (excludeMaxLevel && level >= maxLevel) return;
+      const calc = computeRecipeEnergyStats(recipe, {
+        level,
+        fieldBonusPercent,
+        eventBonusMultiplier,
+        usePokemonCount,
+        pokemonCount,
+        potCapacity: state.excludeOverPot ? potCapacity : null,
+      });
+      stats.push({
+        id: recipe.id,
+        title: recipe.title,
+        categoryKey: catKey,
+        categoryLabel: CATEGORY_LABELS[catKey] || catKey,
+        recipe,
+        ...calc,
+      });
+    });
+  });
+  return stats;
+}
+
+function clearProposalResults(message = "条件が変更されました。再計算してください。") {
+  const container = document.getElementById("proposalResults");
+  if (container) {
+    container.innerHTML = `<p class="muted">${message}</p>`;
+  }
 }
 
 /* ----------------- Render ----------------- */
@@ -479,12 +628,14 @@ function renderEnergyTable(selectedCategory = null) {
 
   (targetList || []).forEach((recipe) => {
     const level = normalizeLevel(levels[recipe.id] ?? 0);
-    const finalEnergy = computeFinalEnergy({
-      baseEnergy: recipe.energy,
+    const { finalEnergy, hoursRequired, energyPerHour } = computeRecipeEnergyStats(recipe, {
       level,
       fieldBonusPercent,
       eventBonusMultiplier,
+      usePokemonCount: false,
     });
+    const hoursDisplay = formatHours(hoursRequired);
+    const energyPerHourDisplay = formatEnergyPerHour(energyPerHour);
     const pods = Object.entries(recipe.needs || {}).map(([id, qty]) => `
       <div class="need-pod">
         <div class="em">${em(id)}</div>
@@ -496,7 +647,11 @@ function renderEnergyTable(selectedCategory = null) {
       recipe,
       level,
       finalEnergy,
+      hoursRequired,
+      energyPerHour,
       pods,
+      hoursDisplay,
+      energyPerHourDisplay,
     });
   });
 
@@ -521,9 +676,11 @@ function renderEnergyTable(selectedCategory = null) {
             >
           </td>
           <td class="num">${formatNumber(row.finalEnergy)}</td>
+          <td class="num">${row.hoursDisplay}</td>
+          <td class="num">${row.energyPerHourDisplay}</td>
         </tr>
       `).join("")
-    : `<tr><td class="muted center" colspan="3">（データなし）</td></tr>`;
+    : `<tr><td class="muted center" colspan="5">（データなし）</td></tr>`;
 
   table.innerHTML = `
     <thead>
@@ -531,6 +688,8 @@ function renderEnergyTable(selectedCategory = null) {
         <th>料理名</th>
         <th>レシピLv</th>
         <th class="num">最終エナジー</th>
+        <th class="num">必要時間 (h)</th>
+        <th class="num">エナジー/時</th>
       </tr>
     </thead>
     <tbody>${tbody}</tbody>
@@ -541,7 +700,12 @@ function renderGatherTable() {
   const table = els.gatherTable || document.getElementById("gatherTable");
   if (!table || !state?.data?.ingredients) return;
 
-  const headerCols = Array.from({ length: GATHER_COLUMNS }, (_, idx) => `<th class="num">${idx + 1}</th>`).join("");
+  const pokemonInput = els.gatherPokemonCount || document.getElementById("gatherPokemonCount");
+  if (pokemonInput && document.activeElement !== pokemonInput) {
+    pokemonInput.value = String(state.gatherPokemonCount);
+  }
+
+  const headerLabels = ["食材ポケ", "きのポケ", "他常駐"];
   const rows = (state.data.ingredients || []).map((ing) => {
     const rates = getGatherRates(ing.id);
     const inputs = rates.map((val, idx) => `
@@ -572,14 +736,88 @@ function renderGatherTable() {
     <thead>
       <tr>
         <th>食材名</th>
-        ${headerCols}
+        ${headerLabels.map((label) => `<th class="num">${label}</th>`).join("")}
       </tr>
     </thead>
     <tbody>${rows}</tbody>
   `;
 }
 
-/* ---- おすすめ（未選択・今週の料理） ---- */
+function computeBestRecipeCombos(
+  stats,
+  {
+    maxMeals = 3,
+    maxHours = 24,
+    maxResults = 3,
+    allowRepeats = true,
+    pokemonCount = state.gatherPokemonCount,
+    excludeMaxLevel = false,
+    maxLevel = 65,
+    potCapacity = null,
+  } = {},
+) {
+  const valid = stats.filter(
+    (s) =>
+      Number.isFinite(s.hoursRequired) &&
+      s.hoursRequired > 0 &&
+      Number.isFinite(s.finalEnergy) &&
+      s.finalEnergy > 0,
+  );
+  const normCount = Math.max(1, normalizePokemonCount(pokemonCount));
+  const combosMap = new Map();
+  const n = valid.length;
+
+  const addIfValid = (indexes) => {
+    if (!indexes.length || indexes.length > maxMeals) return;
+    const key = indexes
+      .slice()
+      .sort((a, b) => a - b)
+      .join("-");
+    if (!allowRepeats && combosMap.has(key)) return;
+
+    const recipes = indexes.map((idx) => valid[idx]);
+    let totalHours = 0;
+    let totalEnergy = 0;
+    for (const stat of recipes) {
+      totalHours += stat.hoursRequired;
+      totalEnergy += stat.finalEnergy;
+    }
+
+    if (!Number.isFinite(totalHours) || totalHours <= 0) return;
+    if (totalHours / normCount > maxHours) return;
+
+    const efficiency = totalEnergy / totalHours;
+    if (!combosMap.has(key) || combosMap.get(key).totalEnergy < totalEnergy) {
+      combosMap.set(key, {
+        recipes,
+        totalHours,
+        totalEnergy,
+        efficiency,
+      });
+    }
+  };
+
+  // 探索
+  for (let i = 0; i < n; i++) {
+    addIfValid([i]);
+    for (let j = 0; j < n; j++) {
+      addIfValid([i, j]);
+      for (let k = 0; k < n; k++) {
+        addIfValid([i, j, k]);
+      }
+    }
+  }
+
+  const results = Array.from(combosMap.values());
+  results.sort((a, b) =>
+    b.totalEnergy - a.totalEnergy ||
+    b.efficiency - a.efficiency ||
+    a.recipes.length - b.recipes.length
+  );
+
+  return results.slice(0, maxResults);
+}
+
 function totalNeeds(recipe) {
   let total = 0;
   for (const n of Object.values(recipe.needs || {})) total += Number(n) || 0;
@@ -592,6 +830,38 @@ function shortageSum(recipe, invMap) {
     if (have < need) lack += (need - have);
   }
   return lack;
+}
+
+function renderProposalResults(combos) {
+  const container = document.getElementById("proposalResults");
+  if (!container) return;
+  if (!combos?.length) {
+    container.innerHTML = `<p class="muted">条件を満たす料理の組み合わせが見つかりませんでした。</p>`;
+    return;
+  }
+
+  container.innerHTML = combos.map((combo, idx) => {
+    const totalHours = formatHours(combo.totalHours);
+    const totalEnergy = formatNumber(combo.totalEnergy);
+    const efficiency = formatEnergyPerHour(combo.efficiency);
+    const list = combo.recipes.map((r, mealIdx) => `
+      <li>
+        <span class="proposal-order">${mealIdx + 1}</span>
+        <span class="proposal-recipe">${r.title}</span>
+        <span class="proposal-hours">${formatHours(r.hoursRequired)}h</span>
+        <span class="proposal-energy">${formatNumber(r.finalEnergy)}</span>
+      </li>
+    `).join("");
+    return `
+      <div class="proposal-card">
+        <div class="proposal-header">
+          <span class="proposal-rank">提案 ${idx + 1}</span>
+          <span class="proposal-summary">合計 ${totalEnergy} / ${totalHours}h / エナジー/時 ${efficiency}</span>
+        </div>
+        <ul class="proposal-list">${list}</ul>
+      </div>
+    `;
+  }).join("");
 }
 
 function renderSuggestionsTable() {
@@ -946,6 +1216,67 @@ function setupGatherTable() {
     input.value = String(normalized);
     setGatherRate(ingId, idx, normalized);
   });
+
+  const pokemonInput = els.gatherPokemonCount || document.getElementById("gatherPokemonCount");
+  if (pokemonInput) {
+    pokemonInput.value = String(state.gatherPokemonCount);
+    pokemonInput.addEventListener("change", () => {
+      setGatherPokemonCount(pokemonInput.value);
+    });
+  }
+
+  const potInput = els.potCapacity || document.getElementById("potCapacityInput");
+  if (potInput) {
+    potInput.value = String(state.potCapacity || 200);
+    potInput.addEventListener("change", () => {
+      const val = Math.max(1, Number(potInput.value) || 200);
+      state.potCapacity = val;
+      save();
+      clearProposalResults();
+    });
+  }
+
+  const excludeMaxLevelInput = els.excludeMaxLevel || document.getElementById("excludeMaxLevelCheckbox");
+  if (excludeMaxLevelInput) {
+    excludeMaxLevelInput.checked = !!state.excludeMaxLevel;
+    excludeMaxLevelInput.addEventListener("change", () => {
+      state.excludeMaxLevel = !!excludeMaxLevelInput.checked;
+      save();
+      clearProposalResults();
+    });
+  }
+
+  const excludeOverPotInput = els.excludeOverPot || document.getElementById("excludeOverPotCheckbox");
+  if (excludeOverPotInput) {
+    excludeOverPotInput.checked = !!state.excludeOverPot;
+    excludeOverPotInput.addEventListener("change", () => {
+      state.excludeOverPot = !!excludeOverPotInput.checked;
+      save();
+      clearProposalResults();
+    });
+  }
+
+  const proposalBtn = document.getElementById("calcRecipeProposalsBtn");
+  if (proposalBtn) {
+    proposalBtn.addEventListener("click", () => {
+      const stats = getAllRecipeEnergyStats({
+        categoryFilter: els.cat?.value || null,
+        usePokemonCount: true,
+        pokemonCount: state.gatherPokemonCount,
+      });
+      const combos = computeBestRecipeCombos(stats, {
+        pokemonCount: state.gatherPokemonCount,
+        maxHours: 24,
+        maxMeals: 3,
+        maxResults: 3,
+      });
+      renderProposalResults(combos);
+    });
+  }
+
+  clearProposalResults("料理提案を計算ボタンを押して結果を表示してください。");
+  renderGatherTable();
+  renderEnergyTable(els.cat?.value || null);
 }
 
 /*

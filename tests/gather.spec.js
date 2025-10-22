@@ -18,7 +18,5 @@ describe("gather logic", () => {
     expect(arr[0]).toBe(1);
     expect(arr[1]).toBe(2);
     expect(arr[2]).toBe(0);
-    expect(arr[3]).toBe(4);
-    expect(arr[4]).toBe(0);
   });
 });

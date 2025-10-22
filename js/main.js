@@ -14,7 +14,7 @@ import { bindMenuCardOpsDelegation } from "./ui/card-ops.js";
 import { setupNextWeekSelects, setupNextExtraSelect } from "./ui/next-week-selects.js";
 import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
 
-const APP_VERSION = '20251022-1127'; // update-version.js と連動
+const APP_VERSION = '20251022-1230'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {

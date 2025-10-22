@@ -22,25 +22,44 @@ describe("setupIngredientsFilter", () => {
   });
 
   it("initializes state.tableFilter based on checkbox state", () => {
-    const renderTables = vi.fn();
-    setupIngredientsFilter({ stateRef: mockState, renderTables });
+    const renderTablesSpy = vi.fn();
+    const renderSuggestionsSpy = vi.fn();
+    setupIngredientsFilter({
+      stateRef: mockState,
+      renderTables: () => {
+        renderTablesSpy();
+        renderSuggestionsSpy();
+      },
+    });
     expect(mockState.tableFilter.this).toBe(true);
     expect(mockState.tableFilter.next).toBe(true);
+    expect(renderTablesSpy).not.toHaveBeenCalled();
+    expect(renderSuggestionsSpy).not.toHaveBeenCalled();
   });
 
   it("updates filters and triggers render on change", () => {
-    const renderTables = vi.fn();
-    setupIngredientsFilter({ stateRef: mockState, renderTables });
+    const renderTablesSpy = vi.fn();
+    const renderSuggestionsSpy = vi.fn();
+    setupIngredientsFilter({
+      stateRef: mockState,
+      renderTables: () => {
+        renderTablesSpy();
+        renderSuggestionsSpy();
+      },
+    });
 
     const chkThis = document.getElementById("chkThisWeek");
     chkThis.checked = false;
     chkThis.dispatchEvent(new Event("change", { bubbles: true }));
     expect(mockState.tableFilter.this).toBe(false);
+    expect(renderTablesSpy).toHaveBeenCalledTimes(1);
+    expect(renderSuggestionsSpy).toHaveBeenCalledTimes(1);
 
     const chkNext = document.getElementById("chkNextWeek");
     chkNext.checked = false;
     chkNext.dispatchEvent(new Event("change", { bubbles: true }));
     expect(mockState.tableFilter.next).toBe(false);
-    expect(renderTables).toHaveBeenCalledTimes(2);
+    expect(renderTablesSpy).toHaveBeenCalledTimes(2);
+    expect(renderSuggestionsSpy).toHaveBeenCalledTimes(2);
   });
 });

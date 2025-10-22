@@ -6,7 +6,7 @@
  * @param {{CURRY:Array, SALAD:Array, SWEETS:Array, extra:Array}} nwState
  * @param {Record<string, Array<{id:string, needs?:Record<string,number>}>>} recipesByCat
  * @param {Array<{id:string, name?:string, emoji?:string}>} ingredients
- * @returns {Record<string, {ingId:string, name:string, emoji:string, qty:number}>}
+ * @returns {Map<string, {ingId:string, name:string, emoji:string, qty:number}>}
  */
 export function computeNextWeekTotals(nwState = {}, recipesByCat = {}, ingredients = []) {
   const byKey = { CURRY: "curry", SALAD: "salad", SWEETS: "dessert" };
@@ -14,16 +14,17 @@ export function computeNextWeekTotals(nwState = {}, recipesByCat = {}, ingredien
   const sumCat = (catKey, arr) => {
     const list = recipesByCat[catKey] || [];
     const rmap = new Map(list.map((r) => [r.id, r]));
-    const acc = {};
+    const totals = new Map();
     (arr || []).forEach(({ recipe, qty }) => {
       const r = rmap.get(recipe);
       const q = Number(qty) || 0;
       if (!r || !q) return;
       Object.entries(r.needs || {}).forEach(([ingId, need]) => {
-        acc[ingId] = (acc[ingId] || 0) + need * q;
+        const current = totals.get(ingId) || 0;
+        totals.set(ingId, current + need * q);
       });
     });
-    return acc;
+    return totals;
   };
 
   const catTotals = {
@@ -32,38 +33,45 @@ export function computeNextWeekTotals(nwState = {}, recipesByCat = {}, ingredien
     SWEETS: sumCat(byKey.SWEETS, nwState.SWEETS),
   };
 
-  const merged = {};
+  const merged = new Map();
   for (const cat of ["CURRY", "SALAD", "SWEETS"]) {
-    for (const [id, q] of Object.entries(catTotals[cat])) {
-      merged[id] = Math.max(merged[id] || 0, q);
-    }
+    const totals = catTotals[cat];
+    totals?.forEach((qty, ingId) => {
+      const current = merged.get(ingId) || 0;
+      const numeric = Number(qty) || 0;
+      if (numeric <= 0) return;
+      merged.set(ingId, Math.max(current, numeric));
+    });
   }
 
   (nwState.extra || []).forEach(({ ingId, qty }) => {
-    const q = Number(qty) || 0;
-    if (q > 0) merged[ingId] = (merged[ingId] || 0) + q;
+    const numeric = Number(qty) || 0;
+    if (numeric <= 0) return;
+    merged.set(ingId, (merged.get(ingId) || 0) + numeric);
   });
 
-  const out = {};
+  const result = new Map();
+
   ingredients.forEach((meta) => {
-    const qty = Number(merged[meta.id]) || 0;
-    if (qty <= 0) return;
-    out[meta.id] = {
+    const qty = Number(merged.get(meta.id)) || 0;
+    if (qty <= 0) {
+      merged.delete(meta.id);
+      return;
+    }
+    result.set(meta.id, {
       ingId: meta.id,
       name: meta.name || meta.id,
       emoji: meta.emoji || "",
       qty,
-    };
-    delete merged[meta.id];
+    });
+    merged.delete(meta.id);
   });
 
-  // ingredients に存在しない id が merged に残っている場合
-  Object.entries(merged).forEach(([id, qty]) => {
-    if ((Number(qty) || 0) <= 0) return;
-    if (!out[id]) {
-      out[id] = { ingId: id, name: id, emoji: "", qty: Number(qty) || 0 };
-    }
+  merged.forEach((qty, ingId) => {
+    const numeric = Number(qty) || 0;
+    if (numeric <= 0) return;
+    result.set(ingId, { ingId, name: ingId, emoji: "", qty: numeric });
   });
 
-  return out;
+  return result;
 }

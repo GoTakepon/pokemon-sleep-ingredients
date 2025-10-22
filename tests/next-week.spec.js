@@ -34,10 +34,13 @@ describe("computeNextWeekTotals", () => {
 
     const result = computeNextWeekTotals(nextState, recipesByCat, ingredients);
 
-    // curry: use max per ingredient (2 vs 4)
-    expect(result.ing1.qty).toBe(4);
-    expect(result.ing2.qty).toBe(1); // from c1
-    expect(result.ing3.qty).toBe(3); // from salad
+    const ing1 = result.get("ing1");
+    const ing2 = result.get("ing2");
+    const ing3 = result.get("ing3");
+
+    expect(ing1?.qty).toBe(4);
+    expect(ing2?.qty).toBe(1);
+    expect(ing3?.qty).toBe(3);
   });
 
   it("adds extra ingredients", () => {
@@ -52,8 +55,8 @@ describe("computeNextWeekTotals", () => {
     };
 
     const result = computeNextWeekTotals(nextState, recipesByCat, ingredients);
-    expect(result.ing1.qty).toBe(2);
-    expect(result.newIng.qty).toBe(1);
+    expect(result.get("ing1")?.qty).toBe(2);
+    expect(result.get("newIng")?.qty).toBe(1);
   });
 
   it("ignores zero quantities", () => {
@@ -69,10 +72,6 @@ describe("computeNextWeekTotals", () => {
     };
 
     const result = computeNextWeekTotals(nextState, recipesByCat, ingredients);
-    expect(Object.keys(result).length).toBe(0);
+    expect(result.size).toBe(0);
   });
 });
-
-function maxOf(...values) {
-  return Math.max(...values);
-}

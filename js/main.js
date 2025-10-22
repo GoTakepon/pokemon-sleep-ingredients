@@ -14,7 +14,7 @@ import { bindMenuCardOpsDelegation } from "./ui/card-ops.js";
 import { setupNextWeekSelects, setupNextExtraSelect } from "./ui/next-week-selects.js";
 import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
 
-const APP_VERSION = '20251022-1334'; // update-version.js と連動
+const APP_VERSION = '20251022-1404'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -238,15 +238,17 @@ function renderTables() {
   const ingredients = state.data.ingredients || [];
 
   const thisTotals = computeThisWeekTotals(state.chosen, findRecipeById);
-  const nextTotalsRaw = computeNextWeekTotals(
+  const nextTotalsMap = computeNextWeekTotals(
     state.next,
     state.data.recipes || {},
     ingredients,
-  ) || {};
-  const nextMap = new Map(
-    Object.entries(nextTotalsRaw).map(([id, info]) => [id, Number(info?.qty) || 0])
   );
-  const nextTotals = { map: nextMap, used: new Set(nextMap.keys()) };
+  const nextTotals = {
+    map: new Map(
+      Array.from(nextTotalsMap.entries()).map(([id, info]) => [id, Number(info?.qty) || 0])
+    ),
+    used: new Set(nextTotalsMap.keys()),
+  };
 
   const { usedRows, otherRows, sums } = buildTableRows({
     thisTotals,
@@ -307,8 +309,12 @@ function renderSuggestionsTable() {
   // 今週＝選択済みレシピの needs を合算 (キー集合だけ欲しい)
   const thisWeekIds = collectThisWeekIngredientIds(state.chosen, findRecipeById);
   // 次週＝computeNextWeekTotals のキー
-const nextTotals = computeNextWeekTotals(state.next, state.data.recipes || {}, state.data.ingredients || []) || {};
-  const nextWeekIds = new Set(Object.keys(nextTotals));
+  const nextTotalsMap = computeNextWeekTotals(
+    state.next,
+    state.data.recipes || {},
+    state.data.ingredients || [],
+  );
+  const nextWeekIds = new Set(nextTotalsMap.keys());
 
   const rows = [];
   for (const r of candidates) {

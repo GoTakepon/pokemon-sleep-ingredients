@@ -1,6 +1,10 @@
 // js/render/tables.js
 // テーブルおよびおすすめ表示に関する描画ユーティリティ
 
+import { computeNextWeekTotals as computeNextWeekTotalsCore } from "../logic/next-week.js";
+
+export { computeNextWeekTotalsCore as computeNextWeekTotals };
+
 /**
  * 所持食材のマップを作成する。
  * @param {Array} ingredients
@@ -13,61 +17,6 @@ export function buildInventoryMap(ingredients = [], have = {}) {
     map.set(ing.id, Number(have[ing.id] || 0));
   }
   return map;
-}
-
-/**
- * 次週タブ用の集計を行う。
- * @param {object} nwState
- * @param {object} recipesByCat
- * @param {Array} ingredients
- * @returns {Record<string, {ingId: string, name: string, emoji: string, qty: number}>}
- */
-export function computeNextWeekTotals(nwState = {}, recipesByCat = {}, ingredients = []) {
-  const byKey = { CURRY: "curry", SALAD: "salad", SWEETS: "dessert" };
-
-  const sumCat = (catKey, arr) => {
-    const list = recipesByCat[catKey] || [];
-    const rmap = new Map(list.map(r => [r.id, r]));
-    const acc = {};
-
-    (arr || []).forEach(({ recipe, qty }) => {
-      const q = Number(qty) || 0;
-      if (!q) return;
-      const r = rmap.get(recipe);
-      if (!r) return;
-
-      for (const [ingId, need] of Object.entries(r.needs || {})) {
-        acc[ingId] = (acc[ingId] || 0) + need * q;
-      }
-    });
-    return acc;
-  };
-
-  const catTotals = {
-    CURRY: sumCat(byKey.CURRY, nwState.CURRY),
-    SALAD: sumCat(byKey.SALAD, nwState.SALAD),
-    SWEETS: sumCat(byKey.SWEETS, nwState.SWEETS),
-  };
-
-  const merged = {};
-  for (const cat of ["CURRY", "SALAD", "SWEETS"]) {
-    for (const [id, q] of Object.entries(catTotals[cat] || {})) {
-      merged[id] = Math.max(merged[id] || 0, q);
-    }
-  }
-
-  (nwState.extra || []).forEach(({ ingId, qty }) => {
-    const q = Number(qty) || 0;
-    if (q > 0) merged[ingId] = (merged[ingId] || 0) + q;
-  });
-
-  const out = {};
-  for (const [id, q] of Object.entries(merged)) {
-    if ((Number(q) || 0) <= 0) continue;
-    const meta = ingredients.find(i => i.id === id) || {};
-    out[id] = { ingId: id, name: meta.name || id, emoji: meta.emoji || "", qty: q };
-  }
-  return out;
 }
 
 function totalNeeds(recipe) {
@@ -109,10 +58,12 @@ export function renderTables({ state, findRecipeById }) {
   const useNext = !!state.tableFilter?.next;
 
   const thisTotals = computeThis();
-  const totalsObj = computeNextWeekTotals(state.next, recipesByCat, ingredients) || {};
+  const totalsMap = computeNextWeekTotalsCore(state.next, recipesByCat, ingredients);
   const nextTotals = {
-    map: new Map(Object.entries(totalsObj).map(([id, info]) => [id, Number(info?.qty || 0)])),
-    used: new Set(Object.keys(totalsObj)),
+    map: new Map(
+      Array.from(totalsMap.entries()).map(([id, info]) => [id, Number(info?.qty) || 0])
+    ),
+    used: new Set(totalsMap.keys()),
   };
 
   const targetMap = new Map();
@@ -203,12 +154,8 @@ export function renderSuggestionsTable({ state, els, findRecipeById, em }) {
     }
   }
 
-  const nextTotals = computeNextWeekTotals(state.next, recipesByCat, ingredients) || {};
-  const nextWeekIds = new Set(
-    Object.values(nextTotals)
-      .filter(v => (typeof v === "object" ? (Number(v.qty) || 0) > 0 : (Number(v) || 0) > 0))
-      .map(v => (typeof v === "object" ? v.ingId : v.id))
-  );
+  const nextTotals = computeNextWeekTotalsCore(state.next, recipesByCat, ingredients);
+  const nextWeekIds = new Set(nextTotals.keys());
 
   const rows = [];
   for (const r of candidates) {

@@ -207,6 +207,25 @@ body{
   margin-bottom: 6px;
 }
 
+.table-gather .gather-input{
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.table-gather th:first-child,
+.table-gather td:first-child{
+  min-width: 260px;
+}
+
+.table-gather th:not(:first-child),
+.table-gather td:not(:first-child){
+  width: 90px;
+}
+
 .footnote{
   margin-top: 12px;
   font-size: 0.85rem;

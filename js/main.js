@@ -20,8 +20,13 @@ import {
   normalizeMultiplier,
 } from "./logic/energy.js";
 import { getRecipeLevelBonus } from "./data/recipe-level-bonus.js";
+import {
+  GATHER_COLUMNS,
+  normalizeGatherArray,
+  normalizeGatherValue,
+} from "./logic/gather.js";
 
-const APP_VERSION = '20251022-1616'; // update-version.js と連動
+const APP_VERSION = '20251022-1646'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -46,6 +51,7 @@ const els = {
   fieldBonus: document.getElementById("fieldBonusInput"),
   eventBonus: document.getElementById("eventBonusInput"),
   energyTable: document.getElementById("energyTable"),
+  gatherTable: document.getElementById("gatherTable"),
 };
 
 /* ----------------- State ----------------- */
@@ -83,6 +89,19 @@ const storedEnergyConfig = (() => {
   }
 })();
 
+const storedGatherRates = (() => {
+  try {
+    const raw = localStorage.getItem("gatherRates");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch (err) {
+    console.warn("[gatherRates] load failed:", err);
+    return null;
+  }
+})();
+
 const state = {
   have:   JSON.parse(localStorage.getItem("have")   || "{}"),
   chosen: JSON.parse(localStorage.getItem("chosen") || "[]"), // 今週
@@ -100,6 +119,7 @@ const state = {
     eventBonusMultiplier: storedEnergyConfig?.eventBonusMultiplier ?? 1,
     levels: storedEnergyConfig?.levels || {},
   },
+  gatherRates: storedGatherRates || {},
 };
 
 state.energyConfig.fieldBonusPercent = normalizePercent(state.energyConfig.fieldBonusPercent ?? 0);
@@ -107,12 +127,16 @@ state.energyConfig.eventBonusMultiplier = normalizeMultiplier(state.energyConfig
 if (!state.energyConfig.levels || typeof state.energyConfig.levels !== "object") {
   state.energyConfig.levels = {};
 }
+if (!state.gatherRates || typeof state.gatherRates !== "object") {
+  state.gatherRates = {};
+}
 
 function save() {
   localStorage.setItem("have", JSON.stringify(state.have));
   localStorage.setItem("chosen", JSON.stringify(state.chosen));
   localStorage.setItem("next", JSON.stringify(state.next)); // ★追加
   localStorage.setItem("energyConfig", JSON.stringify(state.energyConfig));
+  localStorage.setItem("gatherRates", JSON.stringify(state.gatherRates));
 }
 
 function markNextDirty() {
@@ -153,44 +177,49 @@ function buildNextWeekOptions() {
 /* ----------------- Tabs ----------------- */
 function setupTabs() {
   const btns = document.querySelectorAll('.tabs .tab');
-  const panelThis = document.getElementById('tab_this_week');
-  const panelNext = document.getElementById('tab_next_week');
-  if (!btns.length || !panelThis || !panelNext) return; // ガード
+  const panels = {
+    this: document.getElementById('tab_this_week'),
+    next: document.getElementById('tab_next_week'),
+    gather: document.getElementById('tab_gather'),
+  };
+  if (!btns.length || !panels.this) return;
 
   const activate = (key) => {
-    // タブ見た目
-    btns.forEach(b => b.classList.toggle('is-active', b.dataset.tab === key));
-    // パネル表示
-    const showThis = key === 'this';
-    panelThis.hidden = !showThis;
-    panelNext.hidden = showThis;
-    panelThis.classList.toggle('is-active', showThis);
-    panelNext.classList.toggle('is-active', !showThis);
+    btns.forEach((btn) => {
+      const active = btn.dataset.tab === key;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
 
-    // 状態保存（再読込復元用）
+    Object.entries(panels).forEach(([panelKey, panel]) => {
+      if (!panel) return;
+      const active = panelKey === key;
+      panel.hidden = !active;
+      panel.classList.toggle('is-active', active);
+    });
+
     localStorage.setItem('activeTab', key);
 
-    // パネルごとの再描画
     if (key === 'next') {
-      // 次週は切替ごとに再計算・再描画
       renderNextChosen?.();
       renderTables?.();
-      renderSuggestionsTable?.();   // ★ 追加
+      renderSuggestionsTable?.();
+      renderEnergyTable(els.cat?.value || null);
+    } else if (key === 'gather') {
+      renderGatherTable();
     } else {
-      // 今週側は必要に応じて（既存のレンダ関数名に合わせて）
       renderTables?.();
-      renderSuggestionsTable?.();   // ★ 追加（安全のため）
+      renderSuggestionsTable?.();
     }
   };
 
-  // クリックで切替
-  btns.forEach(btn => {
+  btns.forEach((btn) => {
     btn.addEventListener('click', () => activate(btn.dataset.tab));
   });
 
-  // 初期表示（保存があれば復元、なければ 'this'）
-  const saved = localStorage.getItem('activeTab') || 'this';
-  activate(saved);
+  const saved = localStorage.getItem('activeTab');
+  const defaultKey = saved && panels[saved] ? saved : 'this';
+  activate(defaultKey);
 }
 
 /* ----------------- Select builders ----------------- */
@@ -317,12 +346,30 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString("ja-JP");
 }
 
+function getGatherRates(ingId) {
+  return normalizeGatherArray(state.gatherRates?.[ingId], GATHER_COLUMNS);
+}
+
+function setGatherRate(ingId, index, value) {
+  if (!ingId) return;
+  const idx = Number(index);
+  if (!Number.isInteger(idx) || idx < 0 || idx >= GATHER_COLUMNS) return;
+  const arr = getGatherRates(ingId);
+  const normalized = normalizeGatherValue(value);
+  if (arr[idx] === normalized) return;
+  arr[idx] = normalized;
+  state.gatherRates[ingId] = arr;
+  save();
+  renderGatherTable();
+}
+
 /* ----------------- Render ----------------- */
 function refresh() {
   renderMenuList();
   renderNextChosen();
   rerenderTablesAndSuggestions();
-  renderEnergyTable();
+  renderEnergyTable(els.cat?.value || null);
+  renderGatherTable();
 }
 
 function renderNextChosen() {
@@ -487,6 +534,48 @@ function renderEnergyTable(selectedCategory = null) {
       </tr>
     </thead>
     <tbody>${tbody}</tbody>
+  `;
+}
+
+function renderGatherTable() {
+  const table = els.gatherTable || document.getElementById("gatherTable");
+  if (!table || !state?.data?.ingredients) return;
+
+  const headerCols = Array.from({ length: GATHER_COLUMNS }, (_, idx) => `<th class="num">${idx + 1}</th>`).join("");
+  const rows = (state.data.ingredients || []).map((ing) => {
+    const rates = getGatherRates(ing.id);
+    const inputs = rates.map((val, idx) => `
+      <td class="num">
+        <input
+          type="number"
+          min="0"
+          step="0.1"
+          class="gather-input"
+          data-ing-id="${ing.id}"
+          data-index="${idx}"
+          value="${val}"
+        >
+      </td>
+    `).join("");
+    return `
+      <tr>
+        <td class="cell-ing">
+          <span class="em">${ing.emoji || ""}</span>
+          <span class="name">${ing.name || ing.id}</span>
+        </td>
+        ${inputs}
+      </tr>
+    `;
+  }).join("");
+
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>食材名</th>
+        ${headerCols}
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
   `;
 }
 
@@ -845,6 +934,20 @@ function setupEnergyControls() {
   }
 }
 
+function setupGatherTable() {
+  const table = els.gatherTable || document.getElementById("gatherTable");
+  if (!table) return;
+  table.addEventListener("change", (e) => {
+    const input = e.target.closest(".gather-input");
+    if (!input) return;
+    const ingId = input.dataset.ingId;
+    const idx = input.dataset.index;
+    const normalized = normalizeGatherValue(input.value);
+    input.value = String(normalized);
+    setGatherRate(ingId, idx, normalized);
+  });
+}
+
 /*
 // 今週：選んだすべての料理 × それぞれの数量 をそのまま合算
 */
@@ -956,6 +1059,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     });
     setupEnergyControls();
+    setupGatherTable();
     refresh();
   }).catch(err => console.error("Init failed:", err));
 });

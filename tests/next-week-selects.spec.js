@@ -27,6 +27,38 @@ describe("setupNextWeekSelects", () => {
 
     const onAddRecipe = vi.fn();
     const renderNextChosen = vi.fn();
+    const rerenderAll = vi.fn();
+    const renderTables = vi.fn();
+    const renderSuggestionsTable = vi.fn();
+    const save = vi.fn();
+
+    setupNextWeekSelects({
+      onAddRecipe,
+      renderNextChosen,
+      rerenderAll,
+      renderTables,
+      renderSuggestionsTable,
+      save,
+    });
+
+    curry.value = "r1";
+    curry.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(onAddRecipe).toHaveBeenCalledWith("CURRY", "r1");
+    expect(renderNextChosen).toHaveBeenCalled();
+    expect(rerenderAll).toHaveBeenCalled();
+    expect(renderTables).not.toHaveBeenCalled();
+    expect(renderSuggestionsTable).not.toHaveBeenCalled();
+    expect(save).toHaveBeenCalled();
+    expect(curry.value).toBe("");
+  });
+
+  it("falls back to individual render functions when no rerenderAll provided", () => {
+    const curry = document.getElementById("nwRecCurry");
+    curry.innerHTML = `<option value=""></option><option value="r1">r1</option>`;
+
+    const onAddRecipe = vi.fn();
+    const renderNextChosen = vi.fn();
     const renderTables = vi.fn();
     const renderSuggestionsTable = vi.fn();
     const save = vi.fn();
@@ -42,12 +74,8 @@ describe("setupNextWeekSelects", () => {
     curry.value = "r1";
     curry.dispatchEvent(new Event("change", { bubbles: true }));
 
-    expect(onAddRecipe).toHaveBeenCalledWith("CURRY", "r1");
-    expect(renderNextChosen).toHaveBeenCalled();
     expect(renderTables).toHaveBeenCalled();
     expect(renderSuggestionsTable).toHaveBeenCalled();
-    expect(save).toHaveBeenCalled();
-    expect(curry.value).toBe("");
   });
 });
 
@@ -55,6 +83,38 @@ describe("setupNextExtraSelect", () => {
   beforeEach(createDom);
 
   it("handles extra select changes", () => {
+    const extra = document.getElementById("nwExtraSelect");
+    extra.innerHTML = `<option value=""></option><option value="ing1">Ing 1</option>`;
+
+    const onAddExtra = vi.fn();
+    const renderNextChosen = vi.fn();
+    const rerenderAll = vi.fn();
+    const renderTables = vi.fn();
+    const renderSuggestionsTable = vi.fn();
+    const save = vi.fn();
+
+    setupNextExtraSelect({
+      onAddExtra,
+      renderNextChosen,
+      rerenderAll,
+      renderTables,
+      renderSuggestionsTable,
+      save,
+    });
+
+    extra.value = "ing1";
+    extra.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(onAddExtra).toHaveBeenCalledWith("ing1");
+    expect(renderNextChosen).toHaveBeenCalled();
+    expect(rerenderAll).toHaveBeenCalled();
+    expect(renderTables).not.toHaveBeenCalled();
+    expect(renderSuggestionsTable).not.toHaveBeenCalled();
+    expect(save).toHaveBeenCalled();
+    expect(extra.value).toBe("");
+  });
+
+  it("fallback works for extra when rerenderAll missing", () => {
     const extra = document.getElementById("nwExtraSelect");
     extra.innerHTML = `<option value=""></option><option value="ing1">Ing 1</option>`;
 
@@ -75,11 +135,7 @@ describe("setupNextExtraSelect", () => {
     extra.value = "ing1";
     extra.dispatchEvent(new Event("change", { bubbles: true }));
 
-    expect(onAddExtra).toHaveBeenCalledWith("ing1");
-    expect(renderNextChosen).toHaveBeenCalled();
     expect(renderTables).toHaveBeenCalled();
     expect(renderSuggestionsTable).toHaveBeenCalled();
-    expect(save).toHaveBeenCalled();
-    expect(extra.value).toBe("");
   });
 });

@@ -3,6 +3,7 @@ const noop = () => {};
 export function setupNextWeekSelects({
   onAddRecipe = noop,
   renderNextChosen = noop,
+  rerenderAll = null,
   renderTables = noop,
   renderSuggestionsTable = noop,
   save = noop,
@@ -22,8 +23,11 @@ export function setupNextWeekSelects({
       onAddRecipe(CAT, recipeId);
       sel.selectedIndex = 0;
       renderNextChosen();
-      renderTables();
-      renderSuggestionsTable();
+      if (typeof rerenderAll === "function") rerenderAll();
+      else {
+        renderTables();
+        renderSuggestionsTable();
+      }
       save();
     });
   });
@@ -32,6 +36,7 @@ export function setupNextWeekSelects({
 export function setupNextExtraSelect({
   onAddExtra = noop,
   renderNextChosen = noop,
+  rerenderAll = null,
   renderTables = noop,
   renderSuggestionsTable = noop,
   save = noop,
@@ -45,8 +50,11 @@ export function setupNextExtraSelect({
     onAddExtra(ingId);
     sel.selectedIndex = 0;
     renderNextChosen();
-    renderTables();
-    renderSuggestionsTable();
+    if (typeof rerenderAll === "function") rerenderAll();
+    else {
+      renderTables();
+      renderSuggestionsTable();
+    }
     save();
   });
 }

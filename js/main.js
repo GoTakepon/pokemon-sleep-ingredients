@@ -14,7 +14,7 @@ import { bindMenuCardOpsDelegation } from "./ui/card-ops.js";
 import { setupNextWeekSelects, setupNextExtraSelect } from "./ui/next-week-selects.js";
 import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
 
-const APP_VERSION = '20251022-1318'; // update-version.js と連動
+const APP_VERSION = '20251022-1334'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -155,7 +155,7 @@ function addNextRecipe(cat, recipeId) {
   const arr = state.next[cat] || (state.next[cat] = []);
   const hit = arr.find(x => x.recipe === recipeId);
   if (hit) hit.qty += 1; else arr.push({ recipe: recipeId, qty: 1 });
-  save(); renderNextChosen(); renderTables();
+  save(); renderNextChosen(); rerenderTablesAndSuggestions();
 }
 
 /* ----------------- Menu actions ----------------- */
@@ -203,11 +203,9 @@ function em(ingId) {
 
 /* ----------------- Render ----------------- */
 function refresh() {
-  renderMenuList();          // 今週
-  renderSuggestionsTable();// 今週
-  // 次週（タブ未表示でも下準備してOK）
+  renderMenuList();
   renderNextChosen();
-  renderTables();
+  rerenderTablesAndSuggestions();
 }
 
 function renderNextChosen() {
@@ -227,6 +225,11 @@ function renderNextChosen() {
 
   // ▼ 個別食材カードも一緒に描画
   renderExtraCards();
+}
+
+function rerenderTablesAndSuggestions() {
+  renderTables();
+  renderSuggestionsTable();
 }
 
 // 今週/次週チェックに基づき「使用食材／その他の食材」の2表を1回で描画
@@ -622,8 +625,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupNextWeekSelects({
       onAddRecipe: addNextRecipe,
       renderNextChosen,
-      renderTables,
-      renderSuggestionsTable,
+      rerenderAll: rerenderTablesAndSuggestions,
       save,
       elements: {
         CURRY: els.nwRecCurry,
@@ -634,8 +636,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupNextExtraSelect({
       onAddExtra: incNextExtra,
       renderNextChosen,
-      renderTables,
-      renderSuggestionsTable,
+      rerenderAll: rerenderTablesAndSuggestions,
       save,
       element: els.nwExtraSelect,
     });
@@ -673,8 +674,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupIngredientsFilter({
       stateRef: state,
       renderTables: () => {
-        renderTables();
-        renderSuggestionsTable();
+        rerenderTablesAndSuggestions();
       },
     });
     refresh();

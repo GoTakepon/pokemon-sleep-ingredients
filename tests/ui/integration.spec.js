@@ -108,16 +108,20 @@ describe("UI integration: card ops + selects", () => {
     setupNextWeekSelects({
       onAddRecipe: incNextRecipe,
       renderNextChosen: mockRender.renderNextChosen,
-      renderTables: mockRender.renderTables,
-      renderSuggestionsTable: mockRender.renderSuggestionsTable,
+      rerenderAll: () => {
+        mockRender.renderTables();
+        mockRender.renderSuggestionsTable();
+      },
       save: mockSave,
     });
 
     setupNextExtraSelect({
       onAddExtra: incNextExtra,
       renderNextChosen: mockRender.renderNextChosen,
-      renderTables: mockRender.renderTables,
-      renderSuggestionsTable: mockRender.renderSuggestionsTable,
+      rerenderAll: () => {
+        mockRender.renderTables();
+        mockRender.renderSuggestionsTable();
+      },
       save: mockSave,
     });
   });

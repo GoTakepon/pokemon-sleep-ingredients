@@ -1,9 +1,11 @@
 // js/state/store.js
 // アプリ全体で共有する状態と永続化ヘルパー
 
+const storage = ensureStorage();
+
 function safeParse(key, fallbackFactory) {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = storage.getItem(key);
     if (!raw) return fallbackFactory();
     const parsed = JSON.parse(raw);
     return (typeof parsed === "object" && parsed !== null) ? parsed : fallbackFactory();
@@ -43,9 +45,9 @@ export function resetNextIfMissing() {
 }
 
 export function saveState() {
-  localStorage.setItem("have", JSON.stringify(state.have));
-  localStorage.setItem("chosen", JSON.stringify(state.chosen));
-  localStorage.setItem("next", JSON.stringify(state.next));
+  storage.setItem("have", JSON.stringify(state.have));
+  storage.setItem("chosen", JSON.stringify(state.chosen));
+  storage.setItem("next", JSON.stringify(state.next));
 }
 
 function buildIndexes() {
@@ -181,4 +183,20 @@ export function removeNextExtra(ingId) {
   resetNextIfMissing();
   state.next.extra = (state.next.extra || []).filter((e) => e.ingId !== ingId);
   saveState();
+}
+
+function ensureStorage() {
+  if (typeof globalThis.localStorage !== "undefined") return globalThis.localStorage;
+  const store = new Map();
+  return {
+    getItem(key) {
+      return store.has(key) ? store.get(key) : null;
+    },
+    setItem(key, value) {
+      store.set(key, String(value));
+    },
+    removeItem(key) {
+      store.delete(key);
+    }
+  };
 }

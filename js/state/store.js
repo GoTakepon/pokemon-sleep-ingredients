@@ -30,7 +30,12 @@ export const state = {
   next: safeParse("next", () => createEmptyNext()),
   data: null,
   index: { recipeById: new Map(), ingredientById: new Map() },
-  tableFilter: { this: true, next: true },
+  tableFilter: safeParse("tableFilter", () => ({ this: true, next: true })),
+};
+
+state.tableFilter = {
+  this: state.tableFilter?.this !== undefined ? !!state.tableFilter.this : true,
+  next: state.tableFilter?.next !== undefined ? !!state.tableFilter.next : true,
 };
 
 export function resetNextIfMissing() {
@@ -48,6 +53,7 @@ export function saveState() {
   storage.setItem("have", JSON.stringify(state.have));
   storage.setItem("chosen", JSON.stringify(state.chosen));
   storage.setItem("next", JSON.stringify(state.next));
+  storage.setItem("tableFilter", JSON.stringify(state.tableFilter));
 }
 
 function buildIndexes() {

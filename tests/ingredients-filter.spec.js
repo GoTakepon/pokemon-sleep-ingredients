@@ -6,11 +6,12 @@ const createDom = ({ thisChecked = true, nextChecked = true } = {}) => {
   const dom = new JSDOM(`<!doctype html><html><body>
     <label><input type="checkbox" id="chkThisWeek" ${thisChecked ? 'checked' : ''}></label>
     <label><input type="checkbox" id="chkNextWeek" ${nextChecked ? 'checked' : ''}></label>
-  </body></html>`);
+  </body></html>`, { url: "https://example.org" });
   globalThis.window = dom.window;
   globalThis.document = dom.window.document;
   globalThis.HTMLElement = dom.window.HTMLElement;
   globalThis.Event = dom.window.Event;
+  globalThis.localStorage = dom.window.localStorage;
 };
 
 describe("setupIngredientsFilter", () => {
@@ -19,6 +20,7 @@ describe("setupIngredientsFilter", () => {
   beforeEach(() => {
     mockState = {};
     createDom();
+    window.localStorage.clear();
   });
 
   it("initializes state.tableFilter based on checkbox state", () => {
@@ -30,11 +32,15 @@ describe("setupIngredientsFilter", () => {
         renderTablesSpy();
         renderSuggestionsSpy();
       },
+      storage: window.localStorage,
     });
     expect(mockState.tableFilter.this).toBe(true);
     expect(mockState.tableFilter.next).toBe(true);
+    expect(document.getElementById("chkThisWeek").checked).toBe(true);
+    expect(document.getElementById("chkNextWeek").checked).toBe(true);
     expect(renderTablesSpy).not.toHaveBeenCalled();
     expect(renderSuggestionsSpy).not.toHaveBeenCalled();
+    expect(JSON.parse(window.localStorage.getItem("tableFilter"))).toEqual({ this: true, next: true });
   });
 
   it("updates filters and triggers render on change", () => {
@@ -46,6 +52,7 @@ describe("setupIngredientsFilter", () => {
         renderTablesSpy();
         renderSuggestionsSpy();
       },
+      storage: window.localStorage,
     });
 
     const chkThis = document.getElementById("chkThisWeek");
@@ -61,5 +68,23 @@ describe("setupIngredientsFilter", () => {
     expect(mockState.tableFilter.next).toBe(false);
     expect(renderTablesSpy).toHaveBeenCalledTimes(2);
     expect(renderSuggestionsSpy).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(window.localStorage.getItem("tableFilter"))).toEqual({ this: false, next: false });
+  });
+
+  it("restores persisted filter values on init", () => {
+    window.localStorage.setItem("tableFilter", JSON.stringify({ this: false, next: true }));
+    mockState.tableFilter = { this: true, next: false };
+
+    setupIngredientsFilter({
+      stateRef: mockState,
+      renderTables: () => {},
+      storage: window.localStorage,
+    });
+
+    expect(mockState.tableFilter.this).toBe(false);
+    expect(mockState.tableFilter.next).toBe(true);
+    expect(document.getElementById("chkThisWeek").checked).toBe(false);
+    expect(document.getElementById("chkNextWeek").checked).toBe(true);
+    expect(JSON.parse(window.localStorage.getItem("tableFilter"))).toEqual({ this: false, next: true });
   });
 });

@@ -14,7 +14,7 @@ import { bindMenuCardOpsDelegation } from "./ui/card-ops.js";
 import { setupNextWeekSelects, setupNextExtraSelect } from "./ui/next-week-selects.js";
 import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
 
-const APP_VERSION = '20251022-1404'; // update-version.js と連動
+const APP_VERSION = '20251022-1501'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -39,6 +39,23 @@ const els = {
 };
 
 /* ----------------- State ----------------- */
+const storedTableFilter = (() => {
+  try {
+    const raw = localStorage.getItem("tableFilter");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") {
+      return {
+        this: parsed.this !== undefined ? !!parsed.this : undefined,
+        next: parsed.next !== undefined ? !!parsed.next : undefined,
+      };
+    }
+  } catch (err) {
+    console.warn("[tableFilter] load failed:", err);
+  }
+  return null;
+})();
+
 const state = {
   have:   JSON.parse(localStorage.getItem("have")   || "{}"),
   chosen: JSON.parse(localStorage.getItem("chosen") || "[]"), // 今週
@@ -47,6 +64,10 @@ const state = {
           })), // 次週 {CURRY:[{recipe,qty}],... , extra:[{ingId,qty}]}
   data: null,
   nextVersion: 0,
+  tableFilter: {
+    this: storedTableFilter?.this ?? true,
+    next: storedTableFilter?.next ?? true,
+  },
 };
 
 function save() {

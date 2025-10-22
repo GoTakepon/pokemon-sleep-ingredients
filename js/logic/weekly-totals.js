@@ -38,6 +38,7 @@ export function buildTableRows({
   tableFilter,
   inventoryMap,
   ingredients,
+  computeShortageHours,
 }) {
   const targetMap = new Map();
   const addAll = (source) => source?.forEach?.((value, key) => {
@@ -69,12 +70,17 @@ export function buildTableRows({
       : inNext ? "wk-next"
       : "";
 
+    const shortageDisplay = (diff < 0 && computeShortageHours)
+      ? computeShortageHours(id, tar - cur)
+      : "-";
+
     const rowHtml = `
       <tr class="${rowCls}">
         <td>${ing.emoji || ""} ${ing.name || id}</td>
         <td class="num">${cur}</td>
         <td class="num">${tar}</td>
         <td class="num ${diff < 0 ? "neg" : diff > 0 ? "pos" : ""}">${diff}</td>
+        <td class="num">${shortageDisplay}</td>
       </tr>`;
 
     if (tar > 0) {

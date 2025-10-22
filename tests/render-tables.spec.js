@@ -8,7 +8,6 @@ import {
 
 function createDom() {
   const dom = new JSDOM(`<!doctype html><html><body>
-    <div id="tableFilterStatus" class="filter-status"></div>
     <table id="usedTable"></table>
     <table id="otherTable"></table>
     <table id="recommendTable"></table>
@@ -50,6 +49,13 @@ function createState() {
     },
     tableFilter: { this: true, next: true },
     nextVersion: 0,
+    gatherRates: {
+      ing1: [2, 1, 0],
+      ing2: [0, 0, 0],
+      ing3: [1, 0, 0],
+      ing4: [0, 0, 0],
+    },
+    gatherPokemonCount: 2,
   };
 }
 
@@ -87,9 +93,8 @@ describe("renderTables", () => {
     const targetCell = ing2Row?.querySelectorAll("td")[2];
     expect(targetCell?.textContent).toBe("4.5");
 
-    const statusText = document.getElementById("tableFilterStatus")?.textContent || "";
-    expect(statusText).toContain("今週 ON");
-    expect(statusText).toContain("次週 ON");
+    const shortageCell = ing1Row?.querySelectorAll("td")[4];
+    expect(shortageCell?.textContent).not.toBeUndefined();
 
     const otherRow = document.querySelector("#otherTable tbody tr");
     expect(otherRow?.textContent).toContain("Dill");

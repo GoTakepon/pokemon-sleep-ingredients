@@ -62,6 +62,7 @@ describe("buildTableRows", () => {
       tableFilter: { this: true, next: true },
       inventoryMap: inventory,
       ingredients,
+      computeShortageHours: () => "-",
     });
 
     expect(result.usedRows.length).toBeGreaterThan(0);
@@ -84,6 +85,7 @@ describe("buildTableRows", () => {
       tableFilter: { this: true, next: false },
       inventoryMap: inventory,
       ingredients,
+      computeShortageHours: () => "-",
     });
 
     expect(result.sums.used.cur).toBe(5);

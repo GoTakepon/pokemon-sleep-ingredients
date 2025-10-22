@@ -26,7 +26,7 @@ import {
   normalizeGatherValue,
 } from "./logic/gather.js";
 
-const APP_VERSION = '20251023-0233'; // update-version.js と連動
+const APP_VERSION = '20251023-0727'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -359,19 +359,6 @@ function setEventBonusMultiplier(value) {
   clearProposalResults();
 }
 
-function renderFilterStatusIndicator({ this: showThis, next: showNext }) {
-  const statusEl = document.getElementById("tableFilterStatus");
-  if (!statusEl) return;
-  const buildPill = (label, isOn) => `
-    <span class="status-pill ${isOn ? "is-on" : "is-off"}">${label} ${isOn ? "ON" : "OFF"}</span>
-  `;
-  statusEl.innerHTML = `
-    <span class="status-label">表示中:</span>
-    ${buildPill("今週", !!showThis)}
-    ${buildPill("次週", !!showNext)}
-  `;
-}
-
 function formatNumber(value) {
   return Number(value || 0).toLocaleString("ja-JP");
 }
@@ -385,6 +372,16 @@ function formatHours(value) {
 function formatEnergyPerHour(value) {
   if (!Number.isFinite(value) || value <= 0) return "—";
   return formatNumber(Math.round(value));
+}
+
+function computeShortageHoursDisplay(ingId, shortageQty) {
+  if (!shortageQty || shortageQty <= 0) return "-";
+  const hours = computeIngredientHours(ingId, shortageQty, {
+    usePokemonCount: true,
+    pokemonCount: state.gatherPokemonCount,
+  });
+  if (!Number.isFinite(hours) || hours <= 0) return "-";
+  return formatHours(hours);
 }
 
 function getGatherRates(ingId) {
@@ -536,8 +533,6 @@ function renderNextChosen() {
     });
   });
 
-  // ▼ 個別食材カードも一緒に描画
-  renderExtraCards();
 }
 
 function rerenderTablesAndSuggestions() {
@@ -553,7 +548,6 @@ function renderTables() {
   const useThis = state.tableFilter?.this !== undefined ? !!state.tableFilter.this : true;
   const useNext = state.tableFilter?.next !== undefined ? !!state.tableFilter.next : true;
   const tableFilter = { this: useThis, next: useNext };
-  renderFilterStatusIndicator(tableFilter);
 
   const thisTotals = computeThisWeekTotals(state.chosen, findRecipeById);
   const nextTotalsMap = computeNextWeekTotals(
@@ -575,16 +569,17 @@ function renderTables() {
     tableFilter,
     inventoryMap: invMap,
     ingredients,
+    computeShortageHours: (ingId, shortage) => computeShortageHoursDisplay(ingId, shortage),
   });
 
   const writeTable = (tableId, rows, sumsObj) => {
     const el = document.getElementById(tableId);
     if (!el) return;
-    const body = rows.length ? rows.join("") : `<tr><td class="muted" colspan="4">（なし）</td></tr>`;
+    const body = rows.length ? rows.join("") : `<tr><td class="muted" colspan="5">（なし）</td></tr>`;
     const footDiff = sumsObj.cur - sumsObj.tar;
     el.innerHTML = `
       <thead>
-        <tr><th>食材名</th><th class="num">現在</th><th class="num">目標</th><th class="num">差分</th></tr>
+        <tr><th>食材名</th><th class="num">現在</th><th class="num">目標</th><th class="num">差分</th><th class="num">補充所要時間 (h)</th></tr>
       </thead>
       <tbody>${body}</tbody>
       <tfoot>
@@ -593,6 +588,7 @@ function renderTables() {
           <th class="num">${sumsObj.cur}</th>
           <th class="num">${sumsObj.tar}</th>
           <th class="num ${footDiff < 0 ? 'neg' : footDiff > 0 ? 'pos' : ''}">${footDiff}</th>
+          <th class="num">-</th>
         </tr>
       </tfoot>`;
   };
@@ -991,30 +987,7 @@ function renderMenuList() {
 
 // ▼ 個別食材は「選んだら即カード化」へ（Addボタン/数量入力は使わない）
 function renderExtraCards() {
-  const mountEl = document.getElementById("nwExtraList");
-  if (!mountEl) return;
-
-  const items = (state.next.extra || []).map(e => {
-    const meta = state.data.ingredients.find(i => i.id === e.ingId) || {};
-    const title = `${meta.emoji || ""} ${meta.name || ""}`.trim();
-
-    return `
-      <div class="menu-card" data-ctx="NEXT" data-cat="extra" data-id="${e.ingId}">
-        <div class="header-line">
-          <div class="title">${title}</div>
-          <div class="qty-ops">
-            <button class="op-btn op-minus btn btn-primary">−</button>
-            <input class="qty-input" type="number" min="0" value="${e.qty}">
-            <button class="op-btn op-plus  btn btn-primary">＋</button>
-            <button class="op-btn op-remove btn btn-ghost">×</button>
-          </div>
-        </div>
-      </div>`;
-  });
-
-  mountEl.innerHTML = items.length
-    ? items.join("")
-    : `<div class="empty muted">（なし）</div>`;
+  // 個別食材の描画は一時停止（機能は保持）
 }
 
 function displayAppVersion() {

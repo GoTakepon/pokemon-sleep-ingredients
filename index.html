@@ -7,13 +7,13 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251023-0233">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251023-0233">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251023-0233">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251023-0233">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251023-0233">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251023-0233">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251023-0233">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251023-0727">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251023-0727">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251023-0727">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251023-0727">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251023-0727">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251023-0727">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251023-0727">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
 </head>
@@ -23,26 +23,9 @@
       現在のバージョン: <span id="appVersion">-</span>
     </div>
 
-    <!-- ① OCR -->
-    <section class="section">
-      <header class="section-header">
-        <span class="dot dot-green"></span>
-        <h2 class="section-title">OCRテキストを貼り付け</h2>
-      </header>
-
-      <div class="card">
-        <textarea id="ocrInput" class="textarea" placeholder="Paste OCR text here..."></textarea>
-        <div class="row row-gap">
-          <button id="parseBtn" class="btn btn-primary">解析</button>
-          <button id="clearDataBtn" class="btn btn-ghost">データをクリア</button>
-        </div>
-        <p class="hint">Data is saved in browser localStorage automatically.</p>
-      </div>
-    </section>
-
     <!-- タブナビ -->
     <nav class="tabs" role="tablist" aria-label="期間切替">
-      <button type="button" class="tab is-active" data-tab="this" aria-selected="true">今週の目標料理</button>
+      <button type="button" class="tab is-active" data-tab="this" aria-selected="true">食材バッグ管理</button>
       <button type="button" class="tab" data-tab="next" aria-selected="false">料理エナジー計算</button>
       <button type="button" class="tab" data-tab="gather" aria-selected="false">食材集め能力</button>
     </nav>
@@ -50,11 +33,28 @@
     <!-- ▼ 今週タブ（メインタブ） -->
     <section id="tab_this_week" class="tab-panel is-active">
 
+      <!-- OCR入力 -->
+      <section class="section">
+        <header class="section-header">
+          <span class="dot dot-green"></span>
+          <h2 class="section-title">OCRから食材バッグを更新</h2>
+        </header>
+
+        <div class="card">
+          <textarea id="ocrInput" class="textarea" placeholder="Paste OCR text here..."></textarea>
+          <div class="row row-gap">
+            <button id="parseBtn" class="btn btn-primary">OCR解析を実行</button>
+            <button id="clearDataBtn" class="btn btn-ghost">バッグ情報をリセット</button>
+          </div>
+          <p class="hint">入力内容はブラウザのローカルストレージに自動保存されます。</p>
+        </div>
+      </section>
+
       <!-- ② 今週の目標料理を追加 -->
       <section class="section">
         <header class="section-header">
           <span class="dot dot-green"></span>
-          <h2 class="section-title">② 今週の目標料理を追加</h2>
+          <h2 class="section-title">食材バッグに合わせて料理を追加</h2>
           <button class="collapse-toggle" data-target="#panel_this_week" aria-expanded="true">表示/非表示</button>
         </header>
 
@@ -71,11 +71,11 @@
       </section>
 
 
-      <!-- ③ 次週の目標料理を追加 -->
+      <!-- 次週の目標料理を追加 -->
       <section class="section">
         <header class="section-header">
           <span class="dot dot-green"></span>
-          <h2 class="section-title">③ 次週の目標料理を追加</h2>
+          <h2 class="section-title">次週の計画</h2>
           <button class="collapse-toggle" data-target="#panel_next_week" aria-expanded="false">表示/非表示</button>
         </header>
         <div id="panel_next_week" class="card">
@@ -100,23 +100,22 @@
           </div>
           <div id="nwListSweets" class="menu-list"></div>
 
-          <!-- 個別食材 -->
+          <!-- 個別食材（現在非表示。復活時は以下のブロックを戻す）
           <div class="form-row mt-lg">
             <label class="label" for="nwExtraSelect">個別食材：</label>
             <select id="nwExtraSelect" class="select select-wide"></select>
           </div>
           <div id="nwExtraList" class="menu-list"></div>
+          -->
         </div>
       </section>
 
 
-      <!-- ④ 食材一覧 -->
+      <!-- 食材一覧 -->
       <section class="section">
         <header class="section-header">
           <span class="dot dot-green"></span>
-          <h2 class="section-title">
-            ④ 食材一覧
-          </h2>
+          <h2 class="section-title">食材バッグ一覧</h2>
           <div class="table-filters">
             <label><input type="checkbox" id="chkThisWeek" checked> 今週</label>
             <label><input type="checkbox" id="chkNextWeek"> 次週</label>
@@ -125,7 +124,6 @@
 
         <div class="card">
           <h3 class="sub-title">目標料理の使用食材</h3>
-          <div id="tableFilterStatus" class="filter-status" aria-live="polite"></div>
           <div class="table-wrapper">
             <table id="usedTable" class="table"></table>
           </div>
@@ -138,11 +136,11 @@
       </section>
 
 
-      <!-- ⑤ おすすめレシピ -->
+      <!-- おすすめレシピ -->
       <section class="section">
         <header class="section-header">
           <span class="dot dot-green"></span>
-          <h2 class="section-title">⑤ おすすめレシピ（未選択・今週の料理）</h2>
+          <h2 class="section-title">おすすめレシピ（未選択・今週の料理）</h2>
         </header>
 
         <div class="card">
@@ -191,7 +189,7 @@
           <h2 class="section-title">食材集め能力（24hあたり）</h2>
         </header>
         <div class="card">
-          <p class="muted">各食材が24時間で集められる個数を入力してください。食材タイプ・きのみポケ・その他常駐の3枠を入力できます。</p>
+          <p class="muted">各食材が24時間で集められる個数を記録します。食材タイプ・きのみポケ・その他常駐の3枠を入力してください。</p>
           <div class="table-wrapper">
             <table id="gatherTable" class="table table-gather"></table>
           </div>
@@ -220,7 +218,7 @@
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251023-0233" type="module"></script>
+  <script src="./js/main.js?v=20251023-0727" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

@@ -5,19 +5,6 @@ import { computeNextWeekTotals as computeNextWeekTotalsCore } from "../logic/nex
 
 export { computeNextWeekTotalsCore as computeNextWeekTotals };
 
-function renderFilterStatusIndicator({ this: showThis, next: showNext }) {
-  const statusEl = document.getElementById("tableFilterStatus");
-  if (!statusEl) return;
-  const pill = (label, isOn) => `
-    <span class="status-pill ${isOn ? "is-on" : "is-off"}">${label} ${isOn ? "ON" : "OFF"}</span>
-  `;
-  statusEl.innerHTML = `
-    <span class="status-label">表示中:</span>
-    ${pill("今週", !!showThis)}
-    ${pill("次週", !!showNext)}
-  `;
-}
-
 /**
  * 所持食材のマップを作成する。
  * @param {Array} ingredients
@@ -47,6 +34,26 @@ function shortageSum(recipe, invMap) {
   return lack;
 }
 
+function formatHours(value) {
+  if (!Number.isFinite(value) || value <= 0) return "-";
+  if (value >= 100) return Math.round(value).toString();
+  return (Math.round(value * 10) / 10).toFixed(1);
+}
+
+function computeShortageHoursDisplay(state, ingId, shortageQty) {
+  if (!shortageQty || shortageQty <= 0) return "-";
+  const rates = (state.gatherRates?.[ingId] || []).map((val) => Math.max(0, Number(val) || 0));
+  const count = Math.max(1, Number(state.gatherPokemonCount) || 1);
+  const dailyRate = rates
+    .slice()
+    .sort((a, b) => b - a)
+    .slice(0, count)
+    .reduce((sum, val) => sum + val, 0);
+  if (dailyRate <= 0) return "-";
+  const hours = (shortageQty / dailyRate) * 24;
+  return formatHours(hours);
+}
+
 export function renderTables({ state, findRecipeById }) {
   const recipesByCat = state.data?.recipes || {};
   const ingredients = state.data?.ingredients || [];
@@ -69,7 +76,6 @@ export function renderTables({ state, findRecipeById }) {
 
   const useThis = !!state.tableFilter?.this;
   const useNext = !!state.tableFilter?.next;
-  renderFilterStatusIndicator({ this: useThis, next: useNext });
 
   const thisTotals = computeThis();
   const totalsMap = computeNextWeekTotalsCore(
@@ -111,12 +117,17 @@ export function renderTables({ state, findRecipeById }) {
       : inNext ? "wk-next"
       : "";
 
+    const shortageDisplay = (diff < 0)
+      ? computeShortageHoursDisplay(state, id, tar - cur)
+      : "-";
+
     const rowHtml = `
       <tr class="${rowCls}">
         <td>${ing.emoji || ""} ${ing.name || id}</td>
         <td class="num">${cur}</td>
         <td class="num">${tar}</td>
         <td class="num ${diff < 0 ? "neg" : diff > 0 ? "pos" : ""}">${diff}</td>
+        <td class="num">${shortageDisplay}</td>
       </tr>`;
 
     if (tar > 0) {
@@ -131,11 +142,11 @@ export function renderTables({ state, findRecipeById }) {
   const writeTable = (tableId, rows, sums) => {
     const el = document.getElementById(tableId);
     if (!el) return;
-    const body = rows.length ? rows.join("") : `<tr><td class="muted" colspan="4">（なし）</td></tr>`;
+    const body = rows.length ? rows.join("") : `<tr><td class="muted" colspan="5">（なし）</td></tr>`;
     const footDiff = sums.cur - sums.tar;
     el.innerHTML = `
       <thead>
-        <tr><th>食材名</th><th class="num">現在</th><th class="num">目標</th><th class="num">差分</th></tr>
+        <tr><th>食材名</th><th class="num">現在</th><th class="num">目標</th><th class="num">差分</th><th class="num">補充所要時間 (h)</th></tr>
       </thead>
       <tbody>${body}</tbody>
       <tfoot>
@@ -144,6 +155,7 @@ export function renderTables({ state, findRecipeById }) {
           <th class="num">${sums.cur}</th>
           <th class="num">${sums.tar}</th>
           <th class="num ${footDiff < 0 ? "neg" : footDiff > 0 ? "pos" : ""}">${footDiff}</th>
+          <th class="num">-</th>
         </tr>
       </tfoot>`;
   };
@@ -151,7 +163,6 @@ export function renderTables({ state, findRecipeById }) {
   writeTable("usedTable", usedRows, { cur: sumCurU, tar: sumTarU });
   writeTable("otherTable", otherRows, { cur: sumCurO, tar: sumTarO });
 }
-
 export function renderSuggestionsTable({ state, els, findRecipeById, em }) {
   const table = document.getElementById("recommendTable");
   if (!table) return;

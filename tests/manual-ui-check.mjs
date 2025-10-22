@@ -3,13 +3,22 @@ import { JSDOM } from "jsdom";
 import {
   state,
   setData,
+  incChosen,
+  decChosen,
+  setChosenQty,
+  removeChosen,
+  incNextRecipe,
+  decNextRecipe,
+  setNextRecipeQty,
+  removeNextRecipe,
+  incNextExtra,
+  decNextExtra,
+  setNextExtraQty,
+  removeNextExtra,
 } from "../js/state/store.js";
 
-import {
-  setupMenuCardOps,
-  setupNextWeekSelects,
-  setupNextExtraSelect,
-} from "../js/ui/init.js";
+import { bindMenuCardOpsDelegation } from "../js/ui/card-ops.js";
+import { setupNextWeekSelects, setupNextExtraSelect } from "../js/ui/next-week-selects.js";
 
 const dom = new JSDOM(`<!doctype html><html><body>
   <div id="menuList"></div>
@@ -63,7 +72,7 @@ document.getElementById("menuList").innerHTML = `
   </div>
 `;
 
-setupMenuCardOps({
+bindMenuCardOpsDelegation({
   rootIds: [
     "menuList",
     "nwListCurry",
@@ -71,21 +80,41 @@ setupMenuCardOps({
     "nwListSweets",
     "nwExtraList"
   ],
-  renderMenuList: refresh,
-  renderNextChosen: refresh,
-  renderTables: refresh,
-  renderSuggestionsTable: refresh,
+  handlers: {
+    incChosen: (id) => { incChosen(id); refresh(); },
+    decChosen: (id) => { decChosen(id); refresh(); },
+    setChosenQty: (id, qty) => { setChosenQty(id, qty); refresh(); },
+    removeChosen: (id) => { removeChosen(id); refresh(); },
+    incNextRecipe: (cat, id) => { incNextRecipe(cat, id); refresh(); },
+    decNextRecipe: (cat, id) => { decNextRecipe(cat, id); refresh(); },
+    setNextRecipeQty: (cat, id, qty) => { setNextRecipeQty(cat, id, qty); refresh(); },
+    removeNextRecipe: (cat, id) => { removeNextRecipe(cat, id); refresh(); },
+    incNextExtra: (id) => { incNextExtra(id); refresh(); },
+    decNextExtra: (id) => { decNextExtra(id); refresh(); },
+    setNextExtraQty: (id, qty) => { setNextExtraQty(id, qty); refresh(); },
+    removeNextExtra: (id) => { removeNextExtra(id); refresh(); },
+  },
+  renderers: {
+    renderMenuList: refresh,
+    renderNextChosen: refresh,
+    renderTables: refresh,
+    renderSuggestionsTable: refresh,
+  },
 });
 
 setupNextWeekSelects({
+  onAddRecipe: (cat, id) => { incNextRecipe(cat, id); refresh(); },
   renderNextChosen: refresh,
   renderTables: refresh,
   renderSuggestionsTable: refresh,
+  save: () => {},
 });
 setupNextExtraSelect({
+  onAddExtra: (id) => { incNextExtra(id); refresh(); },
   renderNextChosen: refresh,
   renderTables: refresh,
   renderSuggestionsTable: refresh,
+  save: () => {},
 });
 
 document.querySelector("#menuList .op-minus").click();

@@ -11,9 +11,10 @@ import {
 import { computeNextWeekTotals } from "./logic/next-week.js";
 import { computeThisWeekTotals, buildTableRows } from "./logic/weekly-totals.js";
 import { bindMenuCardOpsDelegation } from "./ui/card-ops.js";
-import { computeThisWeekTotals, buildTableRows } from "./logic/weekly-totals.js";
+import { setupNextWeekSelects, setupNextExtraSelect } from "./ui/next-week-selects.js";
+import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
 
-const APP_VERSION = '20251022-0105'; // update-version.js と連動
+const APP_VERSION = '20251022-1127'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -366,29 +367,6 @@ const nextTotals = computeNextWeekTotals(state.next, state.data.recipes || {}, s
 }
 
 
-function setupNextWeekSelects() {
-  const selMap = {
-    CURRY : document.getElementById('nwRecCurry'),
-    SALAD : document.getElementById('nwRecSalad'),
-    SWEETS: document.getElementById('nwRecSweets'),
-  };
-  Object.entries(selMap).forEach(([CAT, sel]) => {
-    if (!sel) return;
-    sel.addEventListener('change', () => {
-      const recipeId = sel.value;
-      if (!recipeId) return;
-
-      addNextRecipe(CAT, recipeId);          // ← 既存API・大文字キー
-      sel.selectedIndex = 0;                  // 「選択してください」に戻す
-
-      renderNextChosen();                     // カード再描画
-      renderTables();
-      renderSuggestionsTable();  // ★ 追加
-      save();                            // 任意：永続化しているなら
-    });
-  });
-}
-
 // 共有カード描画（THIS/NEXT 共通）
 // ※ 順序ミスを防ぐためオブジェクト引数に変更
 function renderMenuCardsShared({ ctx, items, mountEl, catKey = null }) {
@@ -435,21 +413,6 @@ function renderMenuList() {
 }
 
 // ▼ 個別食材は「選んだら即カード化」へ（Addボタン/数量入力は使わない）
-function setupNextExtraSelect() {
-  const sel = document.getElementById('nwExtraSelect');
-  if (!sel) return;
-  sel.addEventListener('change', () => {
-    const ingId = sel.value;
-    if (!ingId) return;
-    incNextExtra(ingId);     // 既存なら +1 / 新規なら {ingId, qty:1}
-    sel.selectedIndex = 0;   // 「選択してください」に戻す
-    renderNextChosen();
-    renderTables();
-    renderSuggestionsTable();    // ★ 追加
-    save();
-  });
-}
-
 function renderExtraCards() {
   const mountEl = document.getElementById("nwExtraList");
   if (!mountEl) return;
@@ -601,30 +564,6 @@ function setupCollapsers(){
   });
 }
 
-function setupIngredientsFilter(){
-  const cThis = document.getElementById('chkThisWeek');
-  const cNext = document.getElementById('chkNextWeek');
-
-  // state.tableFilter を初期化
-  state.tableFilter = {
-    this: !!cThis?.checked,
-    next: !!cNext?.checked
-  };
-
-  if (cThis) {
-    cThis.addEventListener('change', () => {
-      state.tableFilter.this = cThis.checked;
-      renderTables(); // ← renderUnifiedIngredientsではなく共通のrenderTablesに統一
-    });
-  }
-
-  if (cNext) {
-    cNext.addEventListener('change', () => {
-      state.tableFilter.next = cNext.checked;
-      renderTables();
-    });
-  }
-}
 /*
 // 今週：選んだすべての料理 × それぞれの数量 をそのまま合算
 */
@@ -680,8 +619,26 @@ document.addEventListener("DOMContentLoaded", () => {
     setupTabs();
     setupCollapsers();                 // ← 追加（折りたたみ）
     buildNextWeekOptions();   // セレクトに候補を流し込む（既存）
-    setupNextWeekSelects();   // ← 追加（選んだら即追加）
-    setupNextExtraSelect();
+    setupNextWeekSelects({
+      onAddRecipe: addNextRecipe,
+      renderNextChosen,
+      renderTables,
+      renderSuggestionsTable,
+      save,
+      elements: {
+        CURRY: els.nwRecCurry,
+        SALAD: els.nwRecSalad,
+        SWEETS: els.nwRecSweets,
+      },
+    });
+    setupNextExtraSelect({
+      onAddExtra: incNextExtra,
+      renderNextChosen,
+      renderTables,
+      renderSuggestionsTable,
+      save,
+      element: els.nwExtraSelect,
+    });
     renderNextChosen();       // ← 追加（初期描画）
     // ★ ここで一度だけイベント委譲をセット
     bindMenuCardOpsDelegation({
@@ -713,7 +670,13 @@ document.addEventListener("DOMContentLoaded", () => {
         renderSuggestionsTable,
       }
     });
-    setupIngredientsFilter();          // ← 追加（今週/次週チェック）      
+    setupIngredientsFilter({
+      stateRef: state,
+      renderTables: () => {
+        renderTables();
+        renderSuggestionsTable();
+      },
+    });
     refresh();
   }).catch(err => console.error("Init failed:", err));
 });

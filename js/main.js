@@ -14,7 +14,7 @@ import { bindMenuCardOpsDelegation } from "./ui/card-ops.js";
 import { setupNextWeekSelects, setupNextExtraSelect } from "./ui/next-week-selects.js";
 import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
 
-const APP_VERSION = '20251022-1501'; // update-version.js と連動
+const APP_VERSION = '20251022-1508'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -228,6 +228,19 @@ function em(ingId) {
   return ing?.emoji || "";
 }
 
+function renderFilterStatusIndicator({ this: showThis, next: showNext }) {
+  const statusEl = document.getElementById("tableFilterStatus");
+  if (!statusEl) return;
+  const buildPill = (label, isOn) => `
+    <span class="status-pill ${isOn ? "is-on" : "is-off"}">${label} ${isOn ? "ON" : "OFF"}</span>
+  `;
+  statusEl.innerHTML = `
+    <span class="status-label">表示中:</span>
+    ${buildPill("今週", !!showThis)}
+    ${buildPill("次週", !!showNext)}
+  `;
+}
+
 /* ----------------- Render ----------------- */
 function refresh() {
   renderMenuList();
@@ -264,6 +277,11 @@ function renderTables() {
   const invMap = buildInventoryMap();
   const ingredients = state.data.ingredients || [];
 
+  const useThis = state.tableFilter?.this !== undefined ? !!state.tableFilter.this : true;
+  const useNext = state.tableFilter?.next !== undefined ? !!state.tableFilter.next : true;
+  const tableFilter = { this: useThis, next: useNext };
+  renderFilterStatusIndicator(tableFilter);
+
   const thisTotals = computeThisWeekTotals(state.chosen, findRecipeById);
   const nextTotalsMap = computeNextWeekTotals(
     state.next,
@@ -281,7 +299,7 @@ function renderTables() {
   const { usedRows, otherRows, sums } = buildTableRows({
     thisTotals,
     nextTotals,
-    tableFilter: state.tableFilter || { this: true, next: true },
+    tableFilter,
     inventoryMap: invMap,
     ingredients,
   });

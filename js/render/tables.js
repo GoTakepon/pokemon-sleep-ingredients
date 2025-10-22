@@ -5,6 +5,19 @@ import { computeNextWeekTotals as computeNextWeekTotalsCore } from "../logic/nex
 
 export { computeNextWeekTotalsCore as computeNextWeekTotals };
 
+function renderFilterStatusIndicator({ this: showThis, next: showNext }) {
+  const statusEl = document.getElementById("tableFilterStatus");
+  if (!statusEl) return;
+  const pill = (label, isOn) => `
+    <span class="status-pill ${isOn ? "is-on" : "is-off"}">${label} ${isOn ? "ON" : "OFF"}</span>
+  `;
+  statusEl.innerHTML = `
+    <span class="status-label">表示中:</span>
+    ${pill("今週", !!showThis)}
+    ${pill("次週", !!showNext)}
+  `;
+}
+
 /**
  * 所持食材のマップを作成する。
  * @param {Array} ingredients
@@ -56,6 +69,7 @@ export function renderTables({ state, findRecipeById }) {
 
   const useThis = !!state.tableFilter?.this;
   const useNext = !!state.tableFilter?.next;
+  renderFilterStatusIndicator({ this: useThis, next: useNext });
 
   const thisTotals = computeThis();
   const totalsMap = computeNextWeekTotalsCore(

@@ -135,6 +135,37 @@ body{
   font-weight:900;
 }
 
+.filter-status{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+  margin: 6px 0 12px;
+  font-size:0.9rem;
+  color:var(--muted);
+}
+.filter-status .status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 10px;
+  border-radius:999px;
+  font-weight:700;
+  background:#f1f5f9;
+  border:1px solid var(--border);
+  color:var(--muted);
+}
+.filter-status .status-pill.is-on{
+  background:var(--primary-weak);
+  border-color:var(--primary);
+  color:var(--primary);
+}
+.filter-status .status-pill.is-off{
+  background:#fff1f2;
+  border-color:#fecdd3;
+  color:var(--danger);
+}
+
 /* ==========================
    レスポンシブ
 ========================== */

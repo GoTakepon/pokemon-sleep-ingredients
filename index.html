@@ -7,13 +7,13 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251022-1501">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251022-1501">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251022-1501">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251022-1501">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251022-1501">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251022-1501">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251022-1501">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251022-1508">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251022-1508">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251022-1508">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251022-1508">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251022-1508">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251022-1508">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251022-1508">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
 </head>
@@ -124,6 +124,7 @@
 
         <div class="card">
           <h3 class="sub-title">目標料理の使用食材</h3>
+          <div id="tableFilterStatus" class="filter-status" aria-live="polite"></div>
           <div class="table-wrapper">
             <table id="usedTable" class="table"></table>
           </div>
@@ -165,7 +166,7 @@
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251022-1501" type="module"></script>
+  <script src="./js/main.js?v=20251022-1508" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

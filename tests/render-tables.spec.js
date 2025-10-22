@@ -8,6 +8,7 @@ import {
 
 function createDom() {
   const dom = new JSDOM(`<!doctype html><html><body>
+    <div id="tableFilterStatus" class="filter-status"></div>
     <table id="usedTable"></table>
     <table id="otherTable"></table>
     <table id="recommendTable"></table>
@@ -85,6 +86,10 @@ describe("renderTables", () => {
 
     const targetCell = ing2Row?.querySelectorAll("td")[2];
     expect(targetCell?.textContent).toBe("4.5");
+
+    const statusText = document.getElementById("tableFilterStatus")?.textContent || "";
+    expect(statusText).toContain("今週 ON");
+    expect(statusText).toContain("次週 ON");
 
     const otherRow = document.querySelector("#otherTable tbody tr");
     expect(otherRow?.textContent).toContain("Dill");

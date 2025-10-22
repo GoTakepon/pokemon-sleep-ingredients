@@ -1,14 +1,36 @@
 // js/logic/next-week.js
 // 次週（NEXT）料理の目標材料数を集計するヘルパー
 
+let lastCacheKey;
+let lastRecipesRef;
+let lastIngredientsRef;
+let lastEntries;
+
 /**
  * 次週の材料需要を計算する。
  * @param {{CURRY:Array, SALAD:Array, SWEETS:Array, extra:Array}} nwState
  * @param {Record<string, Array<{id:string, needs?:Record<string,number>}>>} recipesByCat
  * @param {Array<{id:string, name?:string, emoji?:string}>} ingredients
+ * @param {number|string} [cacheKey]
  * @returns {Map<string, {ingId:string, name:string, emoji:string, qty:number}>}
  */
-export function computeNextWeekTotals(nwState = {}, recipesByCat = {}, ingredients = []) {
+export function computeNextWeekTotals(
+  nwState = {},
+  recipesByCat = {},
+  ingredients = [],
+  cacheKey = undefined,
+) {
+  const useCache = cacheKey != null;
+  if (
+    useCache &&
+    lastEntries &&
+    cacheKey === lastCacheKey &&
+    lastRecipesRef === recipesByCat &&
+    lastIngredientsRef === ingredients
+  ) {
+    return new Map(lastEntries);
+  }
+
   const byKey = { CURRY: "curry", SALAD: "salad", SWEETS: "dessert" };
 
   const sumCat = (catKey, arr) => {
@@ -72,6 +94,13 @@ export function computeNextWeekTotals(nwState = {}, recipesByCat = {}, ingredien
     if (numeric <= 0) return;
     result.set(ingId, { ingId, name: ingId, emoji: "", qty: numeric });
   });
+
+  if (useCache) {
+    lastCacheKey = cacheKey;
+    lastRecipesRef = recipesByCat;
+    lastIngredientsRef = ingredients;
+    lastEntries = Array.from(result.entries());
+  }
 
   return result;
 }

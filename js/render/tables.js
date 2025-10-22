@@ -58,7 +58,12 @@ export function renderTables({ state, findRecipeById }) {
   const useNext = !!state.tableFilter?.next;
 
   const thisTotals = computeThis();
-  const totalsMap = computeNextWeekTotalsCore(state.next, recipesByCat, ingredients);
+  const totalsMap = computeNextWeekTotalsCore(
+    state.next,
+    recipesByCat,
+    ingredients,
+    state.nextVersion,
+  );
   const nextTotals = {
     map: new Map(
       Array.from(totalsMap.entries()).map(([id, info]) => [id, Number(info?.qty) || 0])
@@ -154,7 +159,12 @@ export function renderSuggestionsTable({ state, els, findRecipeById, em }) {
     }
   }
 
-  const nextTotals = computeNextWeekTotalsCore(state.next, recipesByCat, ingredients);
+  const nextTotals = computeNextWeekTotalsCore(
+    state.next,
+    recipesByCat,
+    ingredients,
+    state.nextVersion,
+  );
   const nextWeekIds = new Set(nextTotals.keys());
 
   const rows = [];

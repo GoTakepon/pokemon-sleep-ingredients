@@ -74,4 +74,27 @@ describe("computeNextWeekTotals", () => {
     const result = computeNextWeekTotals(nextState, recipesByCat, ingredients);
     expect(result.size).toBe(0);
   });
+
+  it("reuses cached result when cache key and references are unchanged", () => {
+    const nextState = {
+      CURRY: [
+        { recipe: "c1", qty: 1 },
+      ],
+      SALAD: [],
+      SWEETS: [],
+      extra: [],
+    };
+
+    const first = computeNextWeekTotals(nextState, recipesByCat, ingredients, 1);
+    const second = computeNextWeekTotals(nextState, recipesByCat, ingredients, 1);
+
+    expect(second).not.toBe(first);
+    expect(second.get("ing1")?.qty).toBe(2);
+    expect(second.get("ing2")?.qty).toBe(1);
+
+    nextState.CURRY[0].qty = 3;
+    const third = computeNextWeekTotals(nextState, recipesByCat, ingredients, 2);
+    expect(third.get("ing1")?.qty).toBe(6);
+    expect(third.get("ing2")?.qty).toBe(3);
+  });
 });

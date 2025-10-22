@@ -46,12 +46,17 @@ const state = {
             CURRY: [], SALAD: [], SWEETS: [], extra: []
           })), // 次週 {CURRY:[{recipe,qty}],... , extra:[{ingId,qty}]}
   data: null,
+  nextVersion: 0,
 };
 
 function save() {
   localStorage.setItem("have", JSON.stringify(state.have));
   localStorage.setItem("chosen", JSON.stringify(state.chosen));
   localStorage.setItem("next", JSON.stringify(state.next)); // ★追加
+}
+
+function markNextDirty() {
+  state.nextVersion = (state.nextVersion || 0) + 1;
 }
 
 /* ----------------- Data load ----------------- */
@@ -155,6 +160,7 @@ function addNextRecipe(cat, recipeId) {
   const arr = state.next[cat] || (state.next[cat] = []);
   const hit = arr.find(x => x.recipe === recipeId);
   if (hit) hit.qty += 1; else arr.push({ recipe: recipeId, qty: 1 });
+  markNextDirty();
   save(); renderNextChosen(); rerenderTablesAndSuggestions();
 }
 
@@ -242,6 +248,7 @@ function renderTables() {
     state.next,
     state.data.recipes || {},
     ingredients,
+    state.nextVersion,
   );
   const nextTotals = {
     map: new Map(
@@ -313,6 +320,7 @@ function renderSuggestionsTable() {
     state.next,
     state.data.recipes || {},
     state.data.ingredients || [],
+    state.nextVersion,
   );
   const nextWeekIds = new Set(nextTotalsMap.keys());
 
@@ -488,27 +496,41 @@ function findNextArray(catKey) {
 function incNextRecipe(catKey, recipeId) {
   const arr = findNextArray(catKey);
   const hit = arr.find(x => x.recipe === recipeId);
-  if (hit) hit.qty += 1;
-  else arr.push({ recipe: recipeId, qty: 1 });
+  if (hit) {
+    hit.qty += 1;
+  } else {
+    arr.push({ recipe: recipeId, qty: 1 });
+  }
+  markNextDirty();
   save();
 }
 function decNextRecipe(catKey, recipeId) {
   const arr = findNextArray(catKey);
   const hit = arr.find(x => x.recipe === recipeId);
   if (!hit) return;
-  hit.qty = Math.max(0, (hit.qty || 0) - 1);
+  const prev = hit.qty || 0;
+  const nextQty = Math.max(0, prev - 1);
+  if (nextQty === prev) return;
+  hit.qty = nextQty;
+  markNextDirty();
   save();
 }
 function setNextRecipeQty(catKey, recipeId, qty) {
   const arr = findNextArray(catKey);
   const hit = arr.find(x => x.recipe === recipeId);
   if (!hit) return;
-  hit.qty = Math.max(0, Number(qty) || 0);
+  const nextQty = Math.max(0, Number(qty) || 0);
+  if (hit.qty === nextQty) return;
+  hit.qty = nextQty;
+  markNextDirty();
   save();
 }
 function removeNextRecipe(catKey, recipeId) {
   const arr = findNextArray(catKey);
-  state.next[catKey] = arr.filter(x => x.recipe !== recipeId);
+  const filtered = arr.filter(x => x.recipe !== recipeId);
+  if (filtered.length === arr.length) return;
+  state.next[catKey] = filtered;
+  markNextDirty();
   save();
 }
 
@@ -519,30 +541,44 @@ function findExtra(ingId) {
 function incNextExtra(ingId) {
   if (!state.next.extra) state.next.extra = [];
   const hit = findExtra(ingId);
-  if (hit) hit.qty += 1;
-  else state.next.extra.push({ ingId, qty: 1 });
+  if (hit) {
+    hit.qty += 1;
+  } else {
+    state.next.extra.push({ ingId, qty: 1 });
+  }
+  markNextDirty();
   save();
 }
 function decNextExtra(ingId) {
   if (!state.next.extra) return;
   const hit = findExtra(ingId);
   if (!hit) return;
-  hit.qty = Math.max(0, (hit.qty || 0) - 1);
+  const prev = hit.qty || 0;
+  const nextQty = Math.max(0, prev - 1);
+  if (nextQty === prev) return;
+  hit.qty = nextQty;
+  markNextDirty();
   save();
 }
 function setNextExtraQty(ingId, qty) {
   if (!state.next.extra) return;
   const hit = findExtra(ingId);
   if (!hit) return;
-  hit.qty = Math.max(0, Number(qty) || 0);
+  const nextQty = Math.max(0, Number(qty) || 0);
+  if (hit.qty === nextQty) return;
+  hit.qty = nextQty;
   if (hit.qty === 0) {
     state.next.extra = state.next.extra.filter(e => e.ingId !== ingId);
   }
+  markNextDirty();
   save();
 }
 function removeNextExtra(ingId) {
   if (!state.next.extra) return;
-  state.next.extra = state.next.extra.filter(e => e.ingId !== ingId);
+  const filtered = state.next.extra.filter(e => e.ingId !== ingId);
+  if (filtered.length === state.next.extra.length) return;
+  state.next.extra = filtered;
+  markNextDirty();
   save();
 }
 

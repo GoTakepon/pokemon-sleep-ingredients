@@ -7,13 +7,13 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251022-1508">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251022-1508">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251022-1508">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251022-1508">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251022-1508">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251022-1508">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251022-1508">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251022-1616">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251022-1616">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251022-1616">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251022-1616">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251022-1616">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251022-1616">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251022-1616">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
 </head>
@@ -43,7 +43,7 @@
     <!-- タブナビ -->
     <nav class="tabs" role="tablist" aria-label="期間切替">
       <button type="button" class="tab is-active" data-tab="this" aria-selected="true">今週の目標料理</button>
-      <button type="button" class="tab" data-tab="next" aria-selected="false">次週の目標料理</button>
+      <button type="button" class="tab" data-tab="next" aria-selected="false">料理エナジー計算</button>
     </nav>
 
     <!-- ▼ 今週タブ（メインタブ） -->
@@ -153,20 +153,37 @@
 
     </section> <!-- ← 今週タブをここで閉じる -->
 
-    <!-- ▼ 次週タブ（空、将来機能用） -->
+    <!-- ▼ 料理エナジー計算タブ -->
     <section id="tab_next_week" class="tab-panel" hidden>
       <section class="section">
         <header class="section-header">
-          <h2 class="section-title">（次週タブ：将来追加予定）</h2>
+          <span class="dot dot-green"></span>
+          <h2 class="section-title">料理エナジー計算</h2>
         </header>
         <div class="card">
-          <p class="muted">※ このタブは現在未使用です。</p>
+          <div class="energy-controls">
+            <label class="control">
+              <span>フィールドボーナス（%）</span>
+              <input type="number" id="fieldBonusInput" class="input" min="0" max="999" step="1">
+            </label>
+            <label class="control">
+              <span>イベントボーナス（倍率）</span>
+              <input type="number" id="eventBonusInput" class="input" min="0" step="0.01">
+            </label>
+          </div>
+          <div class="energy-meta">
+            表示カテゴリ: <span id="energyCategoryLabel">-</span>
+          </div>
+          <div class="table-wrapper">
+            <table id="energyTable" class="table table-energy"></table>
+          </div>
+          <p class="muted footnote">レシピレベルは 0〜65 の範囲で設定できます。フィールド／イベントボーナスは全レシピに共通で適用されます。</p>
         </div>
       </section>
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251022-1508" type="module"></script>
+  <script src="./js/main.js?v=20251022-1616" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

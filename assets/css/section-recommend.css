@@ -107,12 +107,14 @@
   }
 
   /* チップのベース */
-  .table-recipe .need-pods{
+  .table-recipe .need-pods,
+  .table-energy .need-pods{
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
-  .table-recipe .need-pod{
+  .table-recipe .need-pod,
+  .table-energy .need-pod{
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -129,12 +131,18 @@
     --bg-both: #ffd4a3;   /* 両方(橙系)   */
   }
 
-  .table-recipe .need-pod.is-this{ background: var(--bg-this); }
-  .table-recipe .need-pod.is-next{ background: var(--bg-next); }
-  .table-recipe .need-pod.is-both{ background: var(--bg-both); }
+  .table-recipe .need-pod.is-this,
+  .table-energy .need-pod.is-this{ background: var(--bg-this); }
+  .table-recipe .need-pod.is-next,
+  .table-energy .need-pod.is-next{ background: var(--bg-next); }
+  .table-recipe .need-pod.is-both,
+  .table-energy .need-pod.is-both{ background: var(--bg-both); }
 
   /* 絵文字と数字の並び */
-  .table-recipe .need-pod .em{ font-size: 1.05rem; line-height: 1; }
-  .table-recipe .need-pod .num{ font-variant-numeric: tabular-nums; }
-  .table-recipe .need-pod .lack{ color: #d33; font-weight: 600; margin-left: 2px; }
+  .table-recipe .need-pod .em,
+  .table-energy .need-pod .em{ font-size: 1.05rem; line-height: 1; }
+  .table-recipe .need-pod .num,
+  .table-energy .need-pod .num{ font-variant-numeric: tabular-nums; }
+  .table-recipe .need-pod .lack,
+  .table-energy .need-pod .lack{ color: #d33; font-weight: 600; margin-left: 2px; }
 }

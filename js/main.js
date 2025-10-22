@@ -13,8 +13,15 @@ import { computeThisWeekTotals, buildTableRows } from "./logic/weekly-totals.js"
 import { bindMenuCardOpsDelegation } from "./ui/card-ops.js";
 import { setupNextWeekSelects, setupNextExtraSelect } from "./ui/next-week-selects.js";
 import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
+import {
+  computeFinalEnergy,
+  normalizeLevel,
+  normalizePercent,
+  normalizeMultiplier,
+} from "./logic/energy.js";
+import { getRecipeLevelBonus } from "./data/recipe-level-bonus.js";
 
-const APP_VERSION = '20251022-1508'; // update-version.js と連動
+const APP_VERSION = '20251022-1616'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -36,6 +43,9 @@ const els = {
   nwExtraSelect: document.getElementById("nwExtraSelect"),
 //  nwExtraQty:    document.getElementById("nwExtraQty"),
 //  nwExtraAdd:    document.getElementById("nwExtraAdd"),
+  fieldBonus: document.getElementById("fieldBonusInput"),
+  eventBonus: document.getElementById("eventBonusInput"),
+  energyTable: document.getElementById("energyTable"),
 };
 
 /* ----------------- State ----------------- */
@@ -56,6 +66,23 @@ const storedTableFilter = (() => {
   return null;
 })();
 
+const storedEnergyConfig = (() => {
+  try {
+    const raw = localStorage.getItem("energyConfig");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    return {
+      fieldBonusPercent: Number(parsed.fieldBonusPercent) || 0,
+      eventBonusMultiplier: Number(parsed.eventBonusMultiplier) || 1,
+      levels: parsed.levels && typeof parsed.levels === "object" ? parsed.levels : {},
+    };
+  } catch (err) {
+    console.warn("[energyConfig] load failed:", err);
+    return null;
+  }
+})();
+
 const state = {
   have:   JSON.parse(localStorage.getItem("have")   || "{}"),
   chosen: JSON.parse(localStorage.getItem("chosen") || "[]"), // 今週
@@ -68,12 +95,24 @@ const state = {
     this: storedTableFilter?.this ?? true,
     next: storedTableFilter?.next ?? true,
   },
+  energyConfig: {
+    fieldBonusPercent: storedEnergyConfig?.fieldBonusPercent ?? 0,
+    eventBonusMultiplier: storedEnergyConfig?.eventBonusMultiplier ?? 1,
+    levels: storedEnergyConfig?.levels || {},
+  },
 };
+
+state.energyConfig.fieldBonusPercent = normalizePercent(state.energyConfig.fieldBonusPercent ?? 0);
+state.energyConfig.eventBonusMultiplier = normalizeMultiplier(state.energyConfig.eventBonusMultiplier ?? 1);
+if (!state.energyConfig.levels || typeof state.energyConfig.levels !== "object") {
+  state.energyConfig.levels = {};
+}
 
 function save() {
   localStorage.setItem("have", JSON.stringify(state.have));
   localStorage.setItem("chosen", JSON.stringify(state.chosen));
   localStorage.setItem("next", JSON.stringify(state.next)); // ★追加
+  localStorage.setItem("energyConfig", JSON.stringify(state.energyConfig));
 }
 
 function markNextDirty() {
@@ -174,6 +213,7 @@ function buildRecipeOptions() {
   buildingRecipeOptions = true;
   els.rec.innerHTML = list.map(r => `<option value="${r.id}">${r.title}</option>`).join("");
   buildingRecipeOptions = false;
+  renderEnergyTable(cat);
 }
 
 function addNextRecipe(cat, recipeId) {
@@ -228,6 +268,38 @@ function em(ingId) {
   return ing?.emoji || "";
 }
 
+function getRecipeLevel(recipeId) {
+  if (!recipeId) return 0;
+  const levels = state.energyConfig?.levels || {};
+  return normalizeLevel(levels[recipeId] ?? 0);
+}
+
+function setRecipeLevel(recipeId, level) {
+  if (!recipeId) return;
+  const normalized = normalizeLevel(level);
+  const levels = state.energyConfig.levels || (state.energyConfig.levels = {});
+  if (levels[recipeId] === normalized) return;
+  levels[recipeId] = normalized;
+  save();
+  renderEnergyTable(els.cat?.value || null);
+}
+
+function setFieldBonusPercent(value) {
+  const normalized = normalizePercent(value);
+  if (state.energyConfig.fieldBonusPercent === normalized) return;
+  state.energyConfig.fieldBonusPercent = normalized;
+  save();
+  renderEnergyTable(els.cat?.value || null);
+}
+
+function setEventBonusMultiplier(value) {
+  const normalized = normalizeMultiplier(value);
+  if (state.energyConfig.eventBonusMultiplier === normalized) return;
+  state.energyConfig.eventBonusMultiplier = normalized;
+  save();
+  renderEnergyTable(els.cat?.value || null);
+}
+
 function renderFilterStatusIndicator({ this: showThis, next: showNext }) {
   const statusEl = document.getElementById("tableFilterStatus");
   if (!statusEl) return;
@@ -241,11 +313,16 @@ function renderFilterStatusIndicator({ this: showThis, next: showNext }) {
   `;
 }
 
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString("ja-JP");
+}
+
 /* ----------------- Render ----------------- */
 function refresh() {
   renderMenuList();
   renderNextChosen();
   rerenderTablesAndSuggestions();
+  renderEnergyTable();
 }
 
 function renderNextChosen() {
@@ -326,6 +403,91 @@ function renderTables() {
 
   writeTable('usedTable', usedRows, sums.used);
   writeTable('otherTable', otherRows, sums.other);
+}
+
+function renderEnergyTable(selectedCategory = null) {
+  const table = els.energyTable || document.getElementById("energyTable");
+  if (!table || !state?.data?.recipes) return;
+
+  const fieldInput = els.fieldBonus || document.getElementById("fieldBonusInput");
+  const eventInput = els.eventBonus || document.getElementById("eventBonusInput");
+  const { fieldBonusPercent, eventBonusMultiplier, levels = {} } = state.energyConfig || {};
+
+  if (fieldInput && document.activeElement !== fieldInput) {
+    fieldInput.value = String(fieldBonusPercent ?? 0);
+  }
+  if (eventInput && document.activeElement !== eventInput) {
+    eventInput.value = String(eventBonusMultiplier ?? 1);
+  }
+
+  const recipesByCat = state.data.recipes || {};
+  const categoryLabelEl = document.getElementById("energyCategoryLabel");
+  const rows = [];
+  const filterKey = selectedCategory || els.cat?.value || Object.keys(recipesByCat)[0];
+  const targetList = filterKey ? recipesByCat[filterKey] || [] : Object.values(recipesByCat).flat();
+
+  if (categoryLabelEl) {
+    categoryLabelEl.textContent = CATEGORY_LABELS[filterKey] || filterKey || "-";
+  }
+
+  (targetList || []).forEach((recipe) => {
+    const level = normalizeLevel(levels[recipe.id] ?? 0);
+    const finalEnergy = computeFinalEnergy({
+      baseEnergy: recipe.energy,
+      level,
+      fieldBonusPercent,
+      eventBonusMultiplier,
+    });
+    const pods = Object.entries(recipe.needs || {}).map(([id, qty]) => `
+      <div class="need-pod">
+        <div class="em">${em(id)}</div>
+        <div class="num">×${qty}</div>
+      </div>
+    `).join("");
+    rows.push({
+      category: CATEGORY_LABELS[filterKey] || filterKey || "-",
+      recipe,
+      level,
+      finalEnergy,
+      pods,
+    });
+  });
+
+  rows.sort((a, b) => b.finalEnergy - a.finalEnergy || a.recipe.title.localeCompare(b.recipe.title, "ja"));
+
+  const tbody = rows.length
+    ? rows.map((row) => `
+        <tr>
+          <td class="energy-title-cell">
+            <div class="energy-title">${row.recipe.title}</div>
+            ${row.pods ? `<div class="need-pods">${row.pods}</div>` : ""}
+          </td>
+          <td>
+            <input
+              type="number"
+              min="0"
+              max="65"
+              step="1"
+              class="energy-level-input"
+              data-recipe-id="${row.recipe.id}"
+              value="${row.level}"
+            >
+          </td>
+          <td class="num">${formatNumber(row.finalEnergy)}</td>
+        </tr>
+      `).join("")
+    : `<tr><td class="muted center" colspan="3">（データなし）</td></tr>`;
+
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>料理名</th>
+        <th>レシピLv</th>
+        <th class="num">最終エナジー</th>
+      </tr>
+    </thead>
+    <tbody>${tbody}</tbody>
+  `;
 }
 
 /* ---- おすすめ（未選択・今週の料理） ---- */
@@ -648,6 +810,41 @@ function setupCollapsers(){
   });
 }
 
+function setupEnergyControls() {
+  const fieldInput = els.fieldBonus || document.getElementById("fieldBonusInput");
+  const eventInput = els.eventBonus || document.getElementById("eventBonusInput");
+  const table = els.energyTable || document.getElementById("energyTable");
+
+  if (fieldInput) {
+    fieldInput.value = String(state.energyConfig.fieldBonusPercent ?? 0);
+    fieldInput.addEventListener("change", () => {
+      const normalized = normalizePercent(fieldInput.value);
+      fieldInput.value = String(normalized);
+      setFieldBonusPercent(normalized);
+    });
+  }
+
+  if (eventInput) {
+    eventInput.value = String(state.energyConfig.eventBonusMultiplier ?? 1);
+    eventInput.addEventListener("change", () => {
+      const normalized = normalizeMultiplier(eventInput.value);
+      eventInput.value = String(normalized);
+      setEventBonusMultiplier(normalized);
+    });
+  }
+
+  if (table) {
+    table.addEventListener("change", (e) => {
+      const input = e.target.closest(".energy-level-input");
+      if (!input) return;
+      const recipeId = input.dataset.recipeId;
+      const normalized = normalizeLevel(input.value);
+      input.value = String(normalized);
+      setRecipeLevel(recipeId, normalized);
+    });
+  }
+}
+
 /*
 // 今週：選んだすべての料理 × それぞれの数量 をそのまま合算
 */
@@ -758,6 +955,7 @@ document.addEventListener("DOMContentLoaded", () => {
         rerenderTablesAndSuggestions();
       },
     });
+    setupEnergyControls();
     refresh();
   }).catch(err => console.error("Init failed:", err));
 });

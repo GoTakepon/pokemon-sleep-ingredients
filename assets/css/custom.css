@@ -166,6 +166,52 @@ body{
   color:var(--danger);
 }
 
+.energy-controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  align-items:flex-end;
+  margin: 12px 0 16px;
+}
+.energy-controls .control{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  font-weight:700;
+  color:var(--muted);
+}
+.energy-controls .input{
+  padding:6px 10px;
+  border:1px solid var(--border);
+  border-radius:6px;
+  background:#fff;
+  font-weight:600;
+  min-width:120px;
+}
+
+.energy-meta{
+  font-weight:700;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+.energy-meta span{
+  color:var(--text);
+}
+
+.energy-title-cell{
+  vertical-align: top;
+  min-width: 220px;
+}
+.energy-title{
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.footnote{
+  margin-top: 12px;
+  font-size: 0.85rem;
+}
+
 /* ==========================
    レスポンシブ
 ========================== */

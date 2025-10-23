@@ -131,6 +131,7 @@ textarea:focus,
 .table-energy,
 
 
+
 .table th,
 .table td,
 .table-recipe th,
@@ -140,7 +141,8 @@ textarea:focus,
 .table-gather th,
 .table-gather td {
   border-color: rgba(249, 208, 227, 0.55) !important;
-  padding: 12px 14px;
+  padding: 10px 12px;
+  font-size: 0.92rem;
 }
 
 .table th,

@@ -1,6 +1,6 @@
 {
-  "name": "食材管理ツール",
-  "short_name": "食材管理",
+  "name": "やどんのお手伝いツール",
+  "short_name": "やどんツール",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

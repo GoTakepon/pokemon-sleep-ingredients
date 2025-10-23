@@ -7,13 +7,13 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251023-1244">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251023-1244">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251023-1244">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251023-1244">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251023-1244">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251023-1244">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251023-1244">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251023-1304">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251023-1304">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251023-1304">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251023-1304">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251023-1304">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251023-1304">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251023-1304">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
 </head>
@@ -33,7 +33,7 @@
       <nav class="tabs" role="tablist" aria-label="機能切り替え">
         <button type="button" class="tab is-active" data-tab="this" aria-selected="true">食材バッグ管理</button>
         <button type="button" class="tab" data-tab="next" aria-selected="false">料理エナジー計算</button>
-        <button type="button" class="tab" data-tab="gather" aria-selected="false">食材集め能力</button>
+      <button type="button" class="tab" data-tab="gather" aria-selected="false">食材調達記録</button>
       </nav>
     </header>
 
@@ -202,7 +202,7 @@
       <section class="section">
         <header class="section-header">
           <span class="dot dot-green"></span>
-          <h2 class="section-title">食材集め能力（24hあたり）</h2>
+          <h2 class="section-title">食材調達記録（24hあたり）</h2>
         </header>
         <div class="card">
           <p class="muted">各食材が24時間で集められる個数を記録します。食材タイプ・きのみポケ・その他常駐の3枠を入力してください。</p>
@@ -235,7 +235,7 @@
               <input type="checkbox" id="excludeOverPotCheckbox">
               食材合計が鍋容量を超える料理は作らない
             </label>
-            <button type="button" id="calcRecipeProposalsBtn" class="btn btn-primary">料理提案を計算</button>
+            <button type="button" id="calcRecipeProposalsBtn" class="btn btn-primary">最適な献立を提案</button>
           </div>
           <div id="proposalResults" class="proposal-results"></div>
         </div>
@@ -243,7 +243,7 @@
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251023-1244" type="module"></script>
+  <script src="./js/main.js?v=20251023-1304" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

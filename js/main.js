@@ -26,7 +26,7 @@ import {
   normalizeGatherValue,
 } from "./logic/gather.js";
 
-const APP_VERSION = '20251023-1244'; // update-version.js と連動
+const APP_VERSION = '20251023-1304'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {

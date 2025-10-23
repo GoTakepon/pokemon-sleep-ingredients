@@ -7,28 +7,35 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251023-0727">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251023-0727">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251023-0727">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251023-0727">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251023-0727">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251023-0727">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251023-0727">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251023-1104">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251023-1104">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251023-1104">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251023-1104">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251023-1104">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251023-1104">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251023-1104">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
 </head>
 <body>
   <main class="container">
-    <div class="version-info">
-      現在のバージョン: <span id="appVersion">-</span>
-    </div>
-
-    <!-- タブナビ -->
-    <nav class="tabs" role="tablist" aria-label="期間切替">
-      <button type="button" class="tab is-active" data-tab="this" aria-selected="true">食材バッグ管理</button>
-      <button type="button" class="tab" data-tab="next" aria-selected="false">料理エナジー計算</button>
-      <button type="button" class="tab" data-tab="gather" aria-selected="false">食材集め能力</button>
-    </nav>
+    <header class="app-header">
+      <div class="logo-wrap">
+        <img src="./assets/logo.png" alt="Yadon Tools" class="app-logo" />
+        <div class="logo-text">
+          <h1 class="app-title">ヤドンのお手伝いツール</h1>
+          <p class="app-subtitle">Pokémon Sleep 食材管理 & 料理シミュレータ</p>
+        </div>
+      </div>
+      <div class="version-info">
+        現在のバージョン: <span id="appVersion">-</span>
+      </div>
+      <nav class="tabs" role="tablist" aria-label="機能切り替え">
+        <button type="button" class="tab is-active" data-tab="this" aria-selected="true">食材バッグ管理</button>
+        <button type="button" class="tab" data-tab="next" aria-selected="false">料理エナジー計算</button>
+        <button type="button" class="tab" data-tab="gather" aria-selected="false">食材集め能力</button>
+      </nav>
+    </header>
 
     <!-- ▼ 今週タブ（メインタブ） -->
     <section id="tab_this_week" class="tab-panel is-active">
@@ -218,7 +225,7 @@
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251023-0727" type="module"></script>
+  <script src="./js/main.js?v=20251023-1104" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

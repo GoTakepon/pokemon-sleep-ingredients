@@ -2,55 +2,317 @@
    🌸 Yadon Theme (Soft Pink)
    ============================ */
 
-/* 各セクションヘッダー */
-.section-header {
-  background-color: #fdeef4 !important;
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin-bottom: 10px;
+:root {
+  --yadon-bg-top: #ffeef6;
+  --yadon-bg-bottom: #fff8fb;
+  --yadon-surface: rgba(255, 244, 252, 0.85);
+  --yadon-border: #f6cde0;
+  --yadon-accent: #e26699;
+  --yadon-accent-strong: #c44880;
+  --yadon-deep: #712f5e;
+  --yadon-muted: #b983a3;
+  --yadon-chip-bg: rgba(255, 255, 255, 0.82);
+  --yadon-shadow: 0 14px 32px -18px rgba(173, 20, 87, 0.55);
 }
 
-/* タイトル文字 */
-.section-title {
-  color: #ad1457 !important;
+body {
+  background: linear-gradient(180deg, var(--yadon-bg-top) 0%, var(--yadon-bg-bottom) 100%);
+  color: #62364f;
+  font-family: "Zen Kaku Gothic New", "Hiragino Sans", Meiryo, sans-serif;
+}
+
+.container {
+  background: transparent;
+  backdrop-filter: blur(8px);
+}
+
+.card,
+.table-wrapper,
+.menu-list,
+.proposal-card {
+  background: var(--yadon-surface) !important;
+  border: 1px solid var(--yadon-border) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--yadon-shadow) !important;
+}
+
+textarea,
+.input,
+.select,
+.qty-input,
+.gather-input {
+  border-radius: 12px;
+  border: 1px solid var(--yadon-border);
+  background: #fff9fd;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+textarea:focus,
+.input:focus,
+.select:focus,
+.qty-input:focus,
+.gather-input:focus {
+  border-color: var(--yadon-accent);
+  box-shadow: 0 0 0 3px rgba(226, 102, 153, 0.18);
+  outline: none;
+}
+
+.btn.btn-primary {
+  background: linear-gradient(135deg, var(--yadon-accent) 0%, var(--yadon-accent-strong) 100%);
+  border: none;
+  color: #fff;
   font-weight: 700;
+  box-shadow: 0 12px 24px -14px rgba(196, 72, 128, 0.8);
 }
 
-/* テーブルヘッダ */
-.table th {
-  background-color: #fff5f8;
-  color: #ad1457;
-  font-weight: 600;
+.btn.btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+.btn.btn-ghost {
+  border: 1px solid var(--yadon-border);
+  color: var(--yadon-accent-strong);
+  background: #fff1f8;
+}
+
+.tabs {
+  background: rgba(255, 255, 255, 0.65);
+  padding: 6px 8px;
+  border-radius: 14px;
+  gap: 8px;
+  box-shadow: 0 12px 24px -28px rgba(85, 30, 69, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tab {
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: #ffe1ef;
+  color: var(--yadon-muted);
+  font-weight: 700;
+  transition: transform 0.15s ease, background 0.2s ease;
+  padding: 6px 12px;
+  font-size: clamp(0.78rem, 0.85rem, 0.92rem);
+}
+
+.tab:hover {
+  transform: translateY(-1px);
+}
+
+.tab.is-active {
+  background: #fff;
+  color: var(--yadon-accent-strong);
+  border-color: var(--yadon-border);
+  box-shadow: 0 10px 20px -16px rgba(199, 80, 130, 0.7);
+}
+
+.section-header {
+  background: linear-gradient(135deg, rgba(255, 224, 238, 0.85), rgba(255, 236, 247, 0.9));
+  border-radius: 14px;
+  padding: 12px 18px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(249, 206, 224, 0.8);
+}
+
+.section-title {
+  color: var(--yadon-accent-strong) !important;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.table {
+  border-color: var(--yadon-border);
+}
+
+.table,
+.table-recipe,
+.table-energy,
+
+
+.table th,
+.table td,
+.table-recipe th,
+.table-recipe td,
+.table-energy th,
+.table-energy td,
+.table-gather th,
+.table-gather td {
+  border-color: rgba(249, 208, 227, 0.55) !important;
+  padding: 12px 14px;
+}
+
+.table th,
+.table-recipe th,
+.table-energy th,
+.table-gather th {
+  background: linear-gradient(135deg, #fff2fa 0%, #ffe0f4 100%) !important;
+  color: var(--yadon-accent-strong) !important;
+  font-weight: 700;
   text-align: center;
-  line-height: 1.2;
-  white-space: normal;
-  word-break: keep-all;
+  line-height: 1.25;
 }
 
-/* 「不足(合計)」の2段表記 */
-.table th.num {
-  line-height: 1.1;
+.table tbody tr:nth-child(odd),
+.table-recipe tbody tr:nth-child(odd),
+.table-energy tbody tr:nth-child(odd),
+.table-gather tbody tr:nth-child(odd) {
+  background: rgba(255, 247, 252, 0.75);
 }
 
-/* ステータスバッジ */
+.table tbody tr:hover,
+.table-recipe tbody tr:hover,
+.table-energy tbody tr:hover,
+.table-gather tbody tr:hover {
+  background: rgba(255, 228, 239, 0.48);
+}
+
+.table .pos,
+.table-recipe .pos,
+.table-energy .pos,
+.table-gather .pos { color: var(--yadon-accent-strong); }
+.table .neg,
+.table-recipe .neg,
+.table-energy .neg,
+.table-gather .neg { color: #c62828; }
+.table-gather .gather-input{
+  width: 68px;
+  max-width: 90px;
+  padding: 6px 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  box-sizing: border-box;
+  background: #fff9fd;
+}
+.table-gather th:first-child,
+.table-gather td:first-child{
+  width: 45%;
+  white-space: nowrap;
+}
+.table-gather th:nth-child(2),
+.table-gather td:nth-child(2),
+.table-gather th:nth-child(3),
+.table-gather td:nth-child(3),
+.table-gather th:nth-child(4),
+.table-gather td:nth-child(4){
+  width: 18%;
+  min-width: 82px;
+  text-align: center;
+}
+.table-gather .cell-ing{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.table-gather .cell-ing .name{
+  flex:1;
+  min-width:0;
+  white-space:nowrap;
+  overflow:visible;
+  font-size:clamp(0.88rem, 2vw, 0.98rem);
+  line-height:1.15;
+}
+
 .status-ok {
-  background-color: #f8bbd0 !important;
-  color: #4a148c !important;
+  background-color: rgba(242, 187, 206, 0.9) !important;
+  color: var(--yadon-deep) !important;
 }
 
 .status-near {
-  background-color: #f48fb1 !important;
-  color: #4a148c !important;
+  background-color: rgba(240, 149, 190, 0.9) !important;
+  color: var(--yadon-deep) !important;
 }
 
-/* テーブル境界線 */
-.table {
-  border-color: #f8d9e2;
+.need-pod {
+  background: var(--yadon-chip-bg) !important;
+  border-color: rgba(233, 160, 194, 0.6) !important;
 }
 
-/* 左詰め調整 */
-.table-wrapper {
-  margin-left: 0;
-  padding-left: 0;
-  width: 100%;
+.proposal-card {
+  border-radius: 18px !important;
+  padding: 16px 18px !important;
+}
+
+.proposal-header {
+  color: var(--yadon-accent-strong);
+}
+
+.proposal-summary {
+  color: var(--yadon-deep);
+}
+
+.proposal-list li {
+  background: rgba(255, 246, 251, 0.8);
+  border-radius: 12px;
+  padding: 6px 10px;
+}
+
+.proposal-order {
+  color: var(--yadon-accent-strong);
+}
+
+.energy-title {
+  color: var(--yadon-accent-strong);
+}
+
+.hint {
+  color: var(--yadon-muted);
+}
+
+.muted {
+  color: var(--yadon-muted) !important;
+}
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  padding: 10px 14px 6px;
+  background: linear-gradient(180deg, rgba(255, 238, 246, 0.92) 0%, rgba(255, 238, 246, 0.7) 75%, rgba(255, 238, 246, 0) 100%);
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 12px 24px -22px rgba(112, 47, 94, 0.45);
+  margin-bottom: 12px;
+}
+
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(173, 20, 87, 0.25));
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-title {
+  font-size: clamp(0.95rem, 1.1rem, 1.18rem);
+  margin: 0;
+  color: var(--yadon-accent-strong);
+  letter-spacing: 0.02em;
+}
+
+.app-subtitle {
+  margin: 0;
+  color: var(--yadon-muted);
+  font-size: clamp(0.72rem, 0.82rem, 0.9rem);
+}
+
+.version-info {
+  color: var(--yadon-muted);
+  font-size: clamp(0.68rem, 0.76rem, 0.84rem);
 }

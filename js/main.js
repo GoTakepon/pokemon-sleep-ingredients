@@ -26,7 +26,7 @@ import {
   normalizeGatherValue,
 } from "./logic/gather.js";
 
-const APP_VERSION = '20251023-1104'; // update-version.js と連動
+const APP_VERSION = '20251023-1244'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -382,6 +382,66 @@ function computeShortageHoursDisplay(ingId, shortageQty) {
   });
   if (!Number.isFinite(hours) || hours <= 0) return "-";
   return formatHours(hours);
+}
+
+function serializeRecipeLevels() {
+  const levels = state.energyConfig?.levels || {};
+  const payload = { levels: {} };
+  Object.entries(levels).forEach(([id, value]) => {
+    const normalized = normalizeLevel(value);
+    if (normalized > 0) payload.levels[id] = normalized;
+  });
+  return JSON.stringify(payload, null, 2);
+}
+
+function applyRecipeLevelsData(input) {
+  if (!input) throw new Error("空のデータです");
+  const payload = input.levels ? input : { levels: input };
+  if (!payload.levels || typeof payload.levels !== "object") {
+    throw new Error("levels オブジェクトが見つかりません");
+  }
+  const next = {};
+  Object.entries(payload.levels).forEach(([id, value]) => {
+    const normalized = normalizeLevel(value);
+    if (normalized > 0) next[id] = normalized;
+  });
+  state.energyConfig.levels = next;
+  save();
+}
+
+function writeToClipboard(text) {
+  if (navigator?.clipboard?.writeText) {
+    return navigator.clipboard.writeText(text).catch(() => {});
+  }
+  return Promise.resolve();
+}
+
+function serializeGatherConfig() {
+  const rates = {};
+  Object.entries(state.gatherRates || {}).forEach(([id, arr]) => {
+    const normalized = normalizeGatherArray(arr);
+    if (normalized.some((v) => Number(v) > 0)) {
+      rates[id] = normalized;
+    }
+  });
+  return JSON.stringify({
+    pokemonCount: state.gatherPokemonCount,
+    rates,
+  }, null, 2);
+}
+
+function applyGatherConfig(data) {
+  if (!data) throw new Error("空のデータです");
+  const payload = data.rates ? data : { rates: data };
+  const nextRates = {};
+  Object.entries(payload.rates || {}).forEach(([id, arr]) => {
+    nextRates[id] = normalizeGatherArray(arr);
+  });
+  state.gatherRates = nextRates;
+  if (payload.pokemonCount !== undefined) {
+    state.gatherPokemonCount = normalizePokemonCount(payload.pokemonCount);
+  }
+  save();
 }
 
 function getGatherRates(ingId) {
@@ -1175,6 +1235,37 @@ function setupEnergyControls() {
       setRecipeLevel(recipeId, normalized);
     });
   }
+
+  const exportBtn = document.getElementById("exportRecipeLevelsBtn");
+  const importBtn = document.getElementById("importRecipeLevelsBtn");
+  const textArea = document.getElementById("recipeLevelsText");
+  if (exportBtn && textArea) {
+    exportBtn.addEventListener("click", () => {
+      const text = serializeRecipeLevels();
+      textArea.value = text;
+      textArea.focus();
+      textArea.select();
+      writeToClipboard(text);
+    });
+  }
+  if (importBtn && textArea) {
+    importBtn.addEventListener("click", () => {
+      const raw = textArea.value.trim();
+      if (!raw) {
+        alert("インポートするデータを入力してください。\nエクスポートボタンで取得したJSONを貼り付けます。");
+        return;
+      }
+      try {
+        const data = JSON.parse(raw);
+        applyRecipeLevelsData(data);
+        renderEnergyTable(els.cat?.value || null);
+        alert("レシピレベルをインポートしました。");
+      } catch (err) {
+        console.error("Import recipe levels failed", err);
+        alert(`インポートに失敗しました: ${err.message || err}`);
+      }
+    });
+  }
 }
 
 function setupGatherTable() {
@@ -1236,14 +1327,52 @@ function setupGatherTable() {
         categoryFilter: els.cat?.value || null,
         usePokemonCount: true,
         pokemonCount: state.gatherPokemonCount,
+        potCapacity: state.excludeOverPot ? state.potCapacity : null,
+        excludeMaxLevel: state.excludeMaxLevel,
       });
       const combos = computeBestRecipeCombos(stats, {
         pokemonCount: state.gatherPokemonCount,
         maxHours: 24,
         maxMeals: 3,
         maxResults: 3,
+        potCapacity: state.excludeOverPot ? state.potCapacity : null,
+        excludeMaxLevel: state.excludeMaxLevel,
       });
       renderProposalResults(combos);
+    });
+  }
+
+  const exportBtn = document.getElementById("exportGatherRatesBtn");
+  const importBtn = document.getElementById("importGatherRatesBtn");
+  const textArea = document.getElementById("gatherRatesText");
+  if (exportBtn && textArea) {
+    exportBtn.addEventListener("click", () => {
+      const text = serializeGatherConfig();
+      textArea.value = text;
+      textArea.focus();
+      textArea.select();
+      writeToClipboard(text);
+    });
+  }
+  if (importBtn && textArea) {
+    importBtn.addEventListener("click", () => {
+      const raw = textArea.value.trim();
+      if (!raw) {
+        alert("インポートするデータを入力してください。\nエクスポートボタンで取得したJSONを貼り付けます。");
+        return;
+      }
+      try {
+        const data = JSON.parse(raw);
+        applyGatherConfig(data);
+        renderGatherTable();
+        rerenderTablesAndSuggestions();
+        clearProposalResults();
+        renderEnergyTable(els.cat?.value || null);
+        alert("食材集め能力をインポートしました。");
+      } catch (err) {
+        console.error("Import gather data failed", err);
+        alert(`インポートに失敗しました: ${err.message || err}`);
+      }
     });
   }
 

@@ -266,6 +266,52 @@ textarea:focus,
 .muted {
   color: var(--yadon-muted) !important;
 }
+
+.io-section {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(249, 206, 224, 0.7);
+  background: rgba(255, 246, 252, 0.78);
+  box-shadow: 0 10px 24px -22px rgba(173, 20, 87, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.io-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--yadon-accent-strong);
+}
+
+.io-note {
+  font-size: 0.78rem;
+}
+
+.io-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.io-textarea {
+  width: 100%;
+  min-height: 110px;
+  border-radius: 12px;
+  border: 1px solid var(--yadon-border);
+  background: #fff9fd;
+  padding: 8px 10px;
+  font-family: "Courier New", monospace;
+  font-size: 0.85rem;
+}
+
+.io-textarea:focus {
+  border-color: var(--yadon-accent);
+  box-shadow: 0 0 0 3px rgba(226, 102, 153, 0.18);
+  outline: none;
+}
 .app-header {
   position: sticky;
   top: 0;

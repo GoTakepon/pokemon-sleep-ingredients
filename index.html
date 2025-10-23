@@ -7,13 +7,13 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251023-1104">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251023-1104">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251023-1104">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251023-1104">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251023-1104">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251023-1104">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251023-1104">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251023-1244">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251023-1244">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251023-1244">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251023-1244">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251023-1244">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251023-1244">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251023-1244">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
 </head>
@@ -183,6 +183,15 @@
           <div class="table-wrapper">
             <table id="energyTable" class="table table-energy"></table>
           </div>
+          <div class="io-section">
+            <h3 class="io-title">レシピレベルの共有</h3>
+            <p class="muted io-note">JSON テキストをコピーして他端末へ持ち運びできます。インポート時は貼り付け後に読み込みを実行してください。</p>
+            <div class="io-controls">
+              <button type="button" id="exportRecipeLevelsBtn" class="btn btn-ghost">エクスポート</button>
+              <button type="button" id="importRecipeLevelsBtn" class="btn btn-primary">インポート</button>
+            </div>
+            <textarea id="recipeLevelsText" class="io-textarea" placeholder="例: {\n  &quot;levels&quot;: { &quot;recipe-id&quot;: 12 }\n}"></textarea>
+          </div>
           <p class="muted footnote">レシピレベルは 0〜65 の範囲で設定できます。フィールド／イベントボーナスは全レシピに共通で適用されます。</p>
         </div>
       </section>
@@ -199,6 +208,15 @@
           <p class="muted">各食材が24時間で集められる個数を記録します。食材タイプ・きのみポケ・その他常駐の3枠を入力してください。</p>
           <div class="table-wrapper">
             <table id="gatherTable" class="table table-gather"></table>
+          </div>
+          <div class="io-section">
+            <h3 class="io-title">食材集め能力の共有</h3>
+            <p class="muted io-note">JSON テキストをエクスポート／インポートして別端末へ設定を引き継げます。</p>
+            <div class="io-controls">
+              <button type="button" id="exportGatherRatesBtn" class="btn btn-ghost">エクスポート</button>
+              <button type="button" id="importGatherRatesBtn" class="btn btn-primary">インポート</button>
+            </div>
+            <textarea id="gatherRatesText" class="io-textarea" placeholder="例: {\n  &quot;pokemonCount&quot;: 2,\n  &quot;rates&quot;: { &quot;ing-id&quot;: [1,0,0] }\n}"></textarea>
           </div>
           <div class="proposal-actions">
             <label class="control control-inline">
@@ -225,7 +243,7 @@
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251023-1104" type="module"></script>
+  <script src="./js/main.js?v=20251023-1244" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

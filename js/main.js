@@ -26,7 +26,7 @@ import {
   normalizeGatherValue,
 } from "./logic/gather.js";
 
-const APP_VERSION = '20251023-1304'; // update-version.js と連動
+const APP_VERSION = '20251023-1451'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -135,7 +135,7 @@ const state = {
   },
   gatherRates: gatherRatesPayload,
   gatherPokemonCount: normalizePokemonCount(storedPokemonCountRaw),
-  potCapacity: Number(localStorage.getItem("potCapacity") || 200),
+  potCapacity: Number(localStorage.getItem("potCapacity") || 69),
   excludeMaxLevel: localStorage.getItem("excludeMaxLevel") === "1",
   excludeOverPot: localStorage.getItem("excludeOverPot") === "1",
 };
@@ -149,7 +149,7 @@ if (!state.gatherRates || typeof state.gatherRates !== "object") {
   state.gatherRates = {};
 }
 state.gatherPokemonCount = normalizePokemonCount(state.gatherPokemonCount);
-state.potCapacity = Math.max(1, Number(state.potCapacity) || 200);
+state.potCapacity = Math.max(1, Number(state.potCapacity) || 69);
 
 function save() {
   localStorage.setItem("have", JSON.stringify(state.have));
@@ -161,7 +161,7 @@ function save() {
     __pokemonCount: state.gatherPokemonCount,
   };
   localStorage.setItem("gatherRates", JSON.stringify(gatherPayload));
-  localStorage.setItem("potCapacity", String(state.potCapacity || 200));
+  localStorage.setItem("potCapacity", String(state.potCapacity || 69));
   localStorage.setItem("excludeMaxLevel", state.excludeMaxLevel ? "1" : "0");
   localStorage.setItem("excludeOverPot", state.excludeOverPot ? "1" : "0");
 }
@@ -372,6 +372,18 @@ function formatHours(value) {
 function formatEnergyPerHour(value) {
   if (!Number.isFinite(value) || value <= 0) return "—";
   return formatNumber(Math.round(value));
+}
+
+function formatSlotCount(value) {
+  if (!Number.isFinite(value) || value <= 0) return "—";
+  const rounded = Math.round(value * 100) / 100;
+  return rounded.toString();
+}
+
+function formatEnergyPerSlot(value) {
+  if (!Number.isFinite(value) || value <= 0) return "—";
+  const rounded = Math.round(value);
+  return formatNumber(rounded);
 }
 
 function computeShortageHoursDisplay(ingId, shortageQty) {
@@ -864,14 +876,32 @@ function computeBestRecipeCombos(
     }
   }
 
-  const results = Array.from(combosMap.values());
-  results.sort((a, b) =>
+  const sorted = Array.from(combosMap.values()).sort((a, b) =>
     b.totalEnergy - a.totalEnergy ||
     b.efficiency - a.efficiency ||
     a.recipes.length - b.recipes.length
-  );
+  ).slice(0, maxResults);
 
-  return results.slice(0, maxResults);
+  return sorted.map((combo) => {
+    const entries = combo.recipes.map((stat) => ({
+      recipe: stat.recipe,
+      title: stat.title,
+      hoursRequired: stat.hoursRequired,
+      finalEnergy: stat.finalEnergy,
+    }));
+    const slotCount = (Number.isFinite(combo.totalHours) && combo.totalHours > 0)
+      ? combo.totalHours / 24
+      : null;
+    const energyPerSlot = slotCount && slotCount > 0
+      ? combo.totalEnergy / slotCount
+      : null;
+    return {
+      ...combo,
+      recipes: entries,
+      slotCount,
+      energyPerSlot,
+    };
+  });
 }
 
 function totalNeeds(recipe) {
@@ -897,24 +927,46 @@ function renderProposalResults(combos) {
   }
 
   container.innerHTML = combos.map((combo, idx) => {
+    const entries = combo.recipes || [];
     const totalHours = formatHours(combo.totalHours);
     const totalEnergy = formatNumber(combo.totalEnergy);
-    const efficiency = formatEnergyPerHour(combo.efficiency);
-    const list = combo.recipes.map((r, mealIdx) => `
-      <li>
-        <span class="proposal-order">${mealIdx + 1}</span>
-        <span class="proposal-recipe">${r.title}</span>
-        <span class="proposal-hours">${formatHours(r.hoursRequired)}h</span>
-        <span class="proposal-energy">${formatNumber(r.finalEnergy)}</span>
-      </li>
+    const slotCount = formatSlotCount(combo.slotCount);
+    const energyPerSlot = formatEnergyPerSlot(combo.energyPerSlot);
+    const rows = entries.map((r, mealIdx) => `
+      <tr>
+        <td class="num">${mealIdx + 1}</td>
+        <td class="proposal-recipe-cell">${r.title}</td>
+        <td class="num">${formatHours(r.hoursRequired)}</td>
+        <td class="num">${formatNumber(r.finalEnergy)}</td>
+      </tr>
     `).join("");
     return `
       <div class="proposal-card">
         <div class="proposal-header">
           <span class="proposal-rank">提案 ${idx + 1}</span>
-          <span class="proposal-summary">合計 ${totalEnergy} / ${totalHours}h / エナジー/時 ${efficiency}</span>
         </div>
-        <ul class="proposal-list">${list}</ul>
+        <table class="table proposal-table">
+          <thead>
+            <tr>
+              <th class="num">順番</th>
+              <th class="left">料理名</th>
+              <th class="num">所要時間 (h)</th>
+              <th class="num">エナジー</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+          <tfoot>
+            <tr>
+              <th colspan="2">合計</th>
+              <th class="num">${totalHours}</th>
+              <th class="num">${totalEnergy}</th>
+            </tr>
+          </tfoot>
+        </table>
+        <div class="proposal-summary">
+          <span>稼働枠数 (合計時間 ÷ 24h): ${slotCount}</span>
+          <span>1枠あたりエナジー: ${energyPerSlot}</span>
+        </div>
       </div>
     `;
   }).join("");
@@ -1291,10 +1343,9 @@ function setupGatherTable() {
 
   const potInput = els.potCapacity || document.getElementById("potCapacityInput");
   if (potInput) {
-    potInput.value = String(state.potCapacity || 200);
+    potInput.value = String(state.potCapacity || 69);
     potInput.addEventListener("change", () => {
-      const val = Math.max(1, Number(potInput.value) || 200);
-      state.potCapacity = val;
+      const val = Math.max(1, Number(potInput.value) || 69);      state.potCapacity = val;
       save();
       clearProposalResults();
     });

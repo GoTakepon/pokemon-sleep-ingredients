@@ -244,17 +244,38 @@ textarea:focus,
 }
 
 .proposal-summary {
+  margin-top: 8px;
   color: var(--yadon-deep);
+  font-weight: 700;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.proposal-list li {
-  background: rgba(255, 246, 251, 0.8);
-  border-radius: 12px;
-  padding: 6px 10px;
+.table.proposal-table {
+  width: 100%;
+  margin-top: 6px;
 }
 
-.proposal-order {
-  color: var(--yadon-accent-strong);
+.table.proposal-table th:first-child,
+.table.proposal-table td:first-child {
+  width: 64px;
+  text-align: center;
+}
+
+.table.proposal-table th:nth-child(2),
+.table.proposal-table td:nth-child(2) {
+  text-align: left;
+}
+
+.table.proposal-table tfoot th {
+  text-align: center;
+}
+
+.proposal-recipe-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .energy-title {

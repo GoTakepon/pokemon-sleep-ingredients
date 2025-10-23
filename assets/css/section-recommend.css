@@ -5,38 +5,7 @@
   /* セクション枠は共通の雰囲気を維持しつつ、詰め気味 */
   #section-recommend .section-header { margin-bottom: 8px; }
 
-  /* テーブル本体：関数が出力する #recommendTable をそのまま装飾 */
-  #recommendTable,
-  .reco-table {
-    width: 100%;
-    border-collapse: collapse;
-    border: 1px solid var(--border, #e5e7eb);
-    border-radius: 12px;
-    overflow: hidden;
-    background: #fff;
-    box-shadow: 0 1px 2px rgba(0,0,0,.05);
-  }
-
-  #recommendTable th,
-  #recommendTable td {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border, #e5e7eb);
-    vertical-align: middle;
-  }
-  #recommendTable th {
-    background: #f8fafc;
-    font-weight: 900;
-    text-align: left;
-    font-size: .95rem;
-  }
-  #recommendTable tr:last-child td { border-bottom: none; }
-
-  /* 料理名 */
-  .sugg-title {
-    font-weight: 900;
-    margin-bottom: 4px;
-    font-size: .96rem;
-  }
+  /* テーブルは共通スタイルを使用 */
 
   /* 食材の並び：必ず横並び1行／必要なら横スクロール（折返し無し） */
   .need-pods{

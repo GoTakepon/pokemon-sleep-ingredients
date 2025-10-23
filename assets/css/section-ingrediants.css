@@ -12,134 +12,41 @@
     color: var(--text, #0f172a);
   }
 
-  /* テーブルのベース */
-  .table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #fff;
-    border: 1px solid var(--border, #e5e7eb);
-    border-radius: var(--radius-md, 10px);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,.04));
-  }
+  /* テーブル専用スタイルは theme-yadon.css で共通化 */
 
-  .table th,
-  .table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border, #e5e7eb);
-    vertical-align: middle;
-  }
-
-  .table tr:last-child td {
-    border-bottom: none;
-  }
-
-  /* ヘッダー行を少しコンパクトに */
-  .table thead th {
-    background: #f8fafc;
-    font-weight: 900;
-    color: #0f172a;
-    font-size: 0.92rem;
-  }
-
-  /* 本文セルのデフォルトサイズ */
-  .table tbody td {
-    font-size: 0.92rem;
-    text-align: center;
-  }
-
-  /* 1列目＝食材名セルを1行固定＆少し小さめに */
+  /* 食材名セルの書式（1列目） */
   #usedTable td:first-child,
   #otherTable td:first-child {
     text-align: left;
-    white-space: nowrap;     /* ★ 2行に折り返さない */
-    font-size: 0.90rem;      /* ほんの少し小さくして収まりを良く */
+    white-space: nowrap;
+    font-size: 0.9rem;
     font-weight: 700;
   }
 
-  /* 食材名セル内の絵文字を控えめサイズに（クラスがあれば優先） */
   #usedTable td:first-child .emoji,
   #otherTable td:first-child .emoji {
     font-size: 1.1rem;
     margin-right: 6px;
   }
 
-  /* 合計行の強調 */
-  .table .sum-row td {
-    background: #f3f6ff;
-    font-weight: 900;
-  }
-
-  /* 差分の色分け（既存のカラートークンを尊重） */
+  /* 差分の色分け */
   .diff-pos { color: var(--pos, #2563eb); font-weight: 900; }
   .diff-neg { color: var(--neg, #ef4444); font-weight: 900; }
 
-  /* モバイル最適化 */
   @media (max-width: 520px) {
     .sub-title {
       font-size: 0.98rem;
       margin: 8px 0 6px;
     }
-    .table th,
-    .table td {
-      padding: 8px 8px;
-      font-size: 0.88rem;
-    }
     #usedTable td:first-child,
     #otherTable td:first-child {
-      font-size: 0.80rem;   /* さらに微縮小して折り返しを防ぐ */
+      font-size: 0.8rem;
     }
     #usedTable td:first-child .emoji,
     #otherTable td:first-child .emoji {
       font-size: 1.05rem;
       margin-right: 6px;
     }
-
-      /* --- テーブルヘッダーの折り返し防止と列幅調整 --- */
-    .table thead th {
-      white-space: nowrap;        /* 改行しない */
-      text-align: center;
-      padding: 10px 8px;
-    }
-
-    /* 各列の幅を安定させる（目安値） */
-    #usedTable th:nth-child(1),
-    #otherTable th:nth-child(1) {
-      width: 45%;   /* 食材名列を広く確保 */
-      text-align: left;
-    }
-
-    #usedTable th:nth-child(2),
-    #otherTable th:nth-child(2),
-    #usedTable th:nth-child(3),
-    #otherTable th:nth-child(3),
-    #usedTable th:nth-child(4),
-    #otherTable th:nth-child(4) {
-      width: 18%;   /* 残り3列を均等に */
-    }
-
-    /* モバイルでもヘッダーが1行に収まるよう微調整 */
-    @media (max-width: 520px) {
-      #usedTable th,
-      #otherTable th {
-        font-size: 0.82rem;
-        padding: 8px 6px;
-      }
-
-      #usedTable th:nth-child(1),
-      #otherTable th:nth-child(1) {
-        width: 44%;
-      }
-
-      #usedTable th:nth-child(2),
-      #otherTable th:nth-child(2),
-      #usedTable th:nth-child(3),
-      #otherTable th:nth-child(3),
-      #usedTable th:nth-child(4),
-      #otherTable th:nth-child(4) {
-        width: 18%;
-      }
-    }           
   }
 
   /* ヘッダー右のチェックボックス */

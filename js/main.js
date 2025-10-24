@@ -26,7 +26,7 @@ import {
   normalizeGatherValue,
 } from "./logic/gather.js";
 
-const APP_VERSION = '20251024-0922'; // update-version.js と連動
+const APP_VERSION = '20251024-1450'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -403,9 +403,11 @@ function computeShortageHoursDisplay(ingId, shortageQty) {
 function serializeRecipeLevels() {
   const levels = state.energyConfig?.levels || {};
   const payload = { levels: {} };
-  Object.entries(levels).forEach(([id, value]) => {
-    const normalized = normalizeLevel(value);
-    if (normalized > 0) payload.levels[id] = normalized;
+  Object.entries(state.data?.recipes || {}).forEach(([_, list]) => {
+    (list || []).forEach((recipe) => {
+      const normalized = normalizeLevel(levels?.[recipe.id] ?? 0);
+      if (normalized > 0) payload.levels[recipe.id] = normalized;
+    });
   });
   return JSON.stringify(payload, null, 2);
 }
@@ -416,7 +418,7 @@ function applyRecipeLevelsData(input) {
   if (!payload.levels || typeof payload.levels !== "object") {
     throw new Error("levels オブジェクトが見つかりません");
   }
-  const next = {};
+  const next = { ...(state.energyConfig.levels || {}) };
   Object.entries(payload.levels).forEach(([id, value]) => {
     const normalized = normalizeLevel(value);
     if (normalized > 0) next[id] = normalized;
@@ -1314,7 +1316,7 @@ function setupEnergyControls() {
       try {
         const data = JSON.parse(raw);
         applyRecipeLevelsData(data);
-        renderEnergyTable(els.cat?.value || null);
+        renderEnergyTable();
         alert("レシピレベルをインポートしました。");
       } catch (err) {
         console.error("Import recipe levels failed", err);

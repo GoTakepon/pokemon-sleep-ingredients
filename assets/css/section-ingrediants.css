@@ -57,11 +57,6 @@
   }
   .section-header .ingr-filter input { transform: translateY(1px); }
 
-  /* 行ハイライト：今週/次週/両方（濃く） */
-  .table tbody tr.wk-this  { background: #ffd6de; } /* 旧 #ffecef */
-  .table tbody tr.wk-next  { background: #ffefb3; } /* 旧 #fff7d6 */
-  .table tbody tr.wk-both  { background: #ffe0b8; } /* 旧 #ffeed9 */
-
   /* 折りたたみトグル（簡易） */
   .collapse-toggle{
     margin-left: auto;

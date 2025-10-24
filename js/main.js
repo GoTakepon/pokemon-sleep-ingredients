@@ -26,7 +26,7 @@ import {
   normalizeGatherValue,
 } from "./logic/gather.js";
 
-const APP_VERSION = '20251023-1451'; // update-version.js と連動
+const APP_VERSION = '20251024-0922'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -374,6 +374,10 @@ function formatEnergyPerHour(value) {
   return formatNumber(Math.round(value));
 }
 
+function formatRemainingHours(value) {
+  return formatHours(value);
+}
+
 function formatSlotCount(value) {
   if (!Number.isFinite(value) || value <= 0) return "—";
   const rounded = Math.round(value * 100) / 100;
@@ -393,7 +397,7 @@ function computeShortageHoursDisplay(ingId, shortageQty) {
     pokemonCount: state.gatherPokemonCount,
   });
   if (!Number.isFinite(hours) || hours <= 0) return "-";
-  return formatHours(hours);
+  return formatRemainingHours(hours);
 }
 
 function serializeRecipeLevels() {
@@ -651,7 +655,7 @@ function renderTables() {
     const footDiff = sumsObj.cur - sumsObj.tar;
     el.innerHTML = `
       <thead>
-        <tr><th>食材名</th><th class="num">現在</th><th class="num">目標</th><th class="num">差分</th><th class="num">補充所要時間 (h)</th></tr>
+        <tr><th>食材名</th><th class="num">現在</th><th class="num">目標</th><th class="num">差分</th><th class="num">残時間 (h)</th></tr>
       </thead>
       <tbody>${body}</tbody>
       <tfoot>

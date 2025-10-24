@@ -100,13 +100,6 @@
     --bg-both: #ffd4a3;   /* 両方(橙系)   */
   }
 
-  .table-recipe .need-pod.is-this,
-  .table-energy .need-pod.is-this{ background: var(--bg-this); }
-  .table-recipe .need-pod.is-next,
-  .table-energy .need-pod.is-next{ background: var(--bg-next); }
-  .table-recipe .need-pod.is-both,
-  .table-energy .need-pod.is-both{ background: var(--bg-both); }
-
   /* 絵文字と数字の並び */
   .table-recipe .need-pod .em,
   .table-energy .need-pod .em{ font-size: 1.05rem; line-height: 1; }

@@ -12,6 +12,11 @@
   --yadon-deep: #712f5e;
   --yadon-muted: #b983a3;
   --yadon-chip-bg: rgba(255, 255, 255, 0.82);
+  --yadon-chip-this: #ffe4eb;
+  --yadon-chip-next: #fff3d9;
+  --yadon-chip-both: #ffe9d1;
+  --yadon-diff-pos: #3f70c0;
+  --yadon-diff-neg: #d45e7a;
   --yadon-shadow: 0 14px 32px -18px rgba(173, 20, 87, 0.55);
 }
 
@@ -170,14 +175,57 @@ textarea:focus,
   background: rgba(255, 228, 239, 0.48);
 }
 
+.table tbody tr.wk-this,
+.table-recipe tbody tr.wk-this,
+.table-energy tbody tr.wk-this,
+.table-gather tbody tr.wk-this {
+  background: #ffd6de !important;
+}
+
+.table tbody tr.wk-next,
+.table-recipe tbody tr.wk-next,
+.table-energy tbody tr.wk-next,
+.table-gather tbody tr.wk-next {
+  background: #ffefb3 !important;
+}
+
+.table tbody tr.wk-both,
+.table-recipe tbody tr.wk-both,
+.table-energy tbody tr.wk-both,
+.table-gather tbody tr.wk-both {
+  background: #ffe0b8 !important;
+}
+
 .table .pos,
 .table-recipe .pos,
 .table-energy .pos,
-.table-gather .pos { color: var(--yadon-accent-strong); }
+.table-gather .pos {
+  color: var(--yadon-diff-pos);
+  font-weight: 800;
+}
 .table .neg,
 .table-recipe .neg,
 .table-energy .neg,
-.table-gather .neg { color: #c62828; }
+.table-gather .neg {
+  color: var(--yadon-diff-neg);
+  font-weight: 800;
+}
+
+.table .diff-pos,
+.table-recipe .diff-pos,
+.table-energy .diff-pos,
+.table-gather .diff-pos {
+  color: #2262a1;
+  font-weight: 800;
+}
+
+.table .diff-neg,
+.table-recipe .diff-neg,
+.table-energy .diff-neg,
+.table-gather .diff-neg {
+  color: #d3506a;
+  font-weight: 800;
+}
 .table-gather .gather-input{
   width: 68px;
   max-width: 90px;
@@ -232,6 +280,18 @@ textarea:focus,
 .need-pod {
   background: var(--yadon-chip-bg) !important;
   border-color: rgba(233, 160, 194, 0.6) !important;
+}
+.need-pod.is-this {
+  background: var(--yadon-chip-this) !important;
+  border-color: rgba(226, 128, 165, 0.55) !important;
+}
+.need-pod.is-next {
+  background: var(--yadon-chip-next) !important;
+  border-color: rgba(239, 188, 94, 0.45) !important;
+}
+.need-pod.is-both {
+  background: var(--yadon-chip-both) !important;
+  border-color: rgba(238, 170, 90, 0.5) !important;
 }
 
 .proposal-card {
@@ -385,3 +445,9 @@ textarea:focus,
   color: var(--yadon-muted);
   font-size: clamp(0.68rem, 0.76rem, 0.84rem);
 }
+.table-recipe .need-pod.is-this,
+.table-energy .need-pod.is-this { background: var(--bg-this); }
+.table-recipe .need-pod.is-next,
+.table-energy .need-pod.is-next { background: var(--bg-next); }
+.table-recipe .need-pod.is-both,
+.table-energy .need-pod.is-both { background: var(--bg-both); }

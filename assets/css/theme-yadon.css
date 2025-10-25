@@ -17,6 +17,11 @@
   --yadon-chip-both: #ffe9d1;
   --yadon-diff-pos: #3f70c0;
   --yadon-diff-neg: #d45e7a;
+  --yadon-chip-this: #ffe4eb;
+  --yadon-chip-next: #fff3d9;
+  --yadon-chip-both: #ffe9d1;
+  --yadon-diff-pos: #3f70c0;
+  --yadon-diff-neg: #d45e7a;
   --yadon-shadow: 0 14px 32px -18px rgba(173, 20, 87, 0.55);
 }
 
@@ -297,10 +302,27 @@ textarea:focus,
 .proposal-card {
   border-radius: 18px !important;
   padding: 16px 18px !important;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.proposal-card.is-applied {
+  border-color: rgba(233, 160, 194, 0.9);
+  box-shadow: 0 0 0 3px rgba(233, 160, 194, 0.18);
 }
 
 .proposal-header {
   color: var(--yadon-accent-strong);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.proposal-header .proposal-apply-btn {
+  font-size: 0.9rem;
+  padding: 4px 10px;
 }
 
 .proposal-summary {
@@ -451,3 +473,16 @@ textarea:focus,
 .table-energy .need-pod.is-next { background: var(--bg-next); }
 .table-recipe .need-pod.is-both,
 .table-energy .need-pod.is-both { background: var(--bg-both); }
+
+
+.gather-memo {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(249, 206, 224, 0.6);
+  background: rgba(255, 246, 252, 0.78);
+  box-shadow: 0 8px 18px -20px rgba(173, 20, 87, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

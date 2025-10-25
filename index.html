@@ -7,13 +7,13 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251024-1450">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251024-1450">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251024-1450">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251024-1450">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251024-1450">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251024-1450">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251024-1450">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251024-1729">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251024-1729">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251024-1729">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251024-1729">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251024-1729">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251024-1729">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251024-1729">
   <link rel="apple-touch-icon" href="./assets/icon-yadon-180.png">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
@@ -219,6 +219,10 @@
             </div>
             <textarea id="gatherRatesText" class="io-textarea" placeholder="例: {\n  &quot;pokemonCount&quot;: 2,\n  &quot;rates&quot;: { &quot;ing-id&quot;: [1,0,0] }\n}"></textarea>
           </div>
+          <div class="gather-memo">
+            <h3 class="io-title">メモ</h3>
+            <textarea id="gatherMemoText" class="io-textarea" placeholder="調達中のメモや次回のTODOなどを書いておけます。"></textarea>
+          </div>
           <div class="proposal-actions">
             <label class="control control-inline">
               <span class="control-label">食材ポケモン数</span>
@@ -244,7 +248,7 @@
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251024-1450" type="module"></script>
+  <script src="./js/main.js?v=20251024-1729" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

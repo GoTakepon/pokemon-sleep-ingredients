@@ -26,7 +26,10 @@ import {
   normalizeGatherValue,
 } from "./logic/gather.js";
 
-const APP_VERSION = '20251024-1450'; // update-version.js と連動
+let switchTab = null;
+let lastProposalCombos = [];
+
+const APP_VERSION = '20251024-1729'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -135,6 +138,7 @@ const state = {
   },
   gatherRates: gatherRatesPayload,
   gatherPokemonCount: normalizePokemonCount(storedPokemonCountRaw),
+  gatherMemo: localStorage.getItem("gatherMemo") || "",
   potCapacity: Number(localStorage.getItem("potCapacity") || 69),
   excludeMaxLevel: localStorage.getItem("excludeMaxLevel") === "1",
   excludeOverPot: localStorage.getItem("excludeOverPot") === "1",
@@ -161,6 +165,7 @@ function save() {
     __pokemonCount: state.gatherPokemonCount,
   };
   localStorage.setItem("gatherRates", JSON.stringify(gatherPayload));
+  localStorage.setItem("gatherMemo", state.gatherMemo || "");
   localStorage.setItem("potCapacity", String(state.potCapacity || 69));
   localStorage.setItem("excludeMaxLevel", state.excludeMaxLevel ? "1" : "0");
   localStorage.setItem("excludeOverPot", state.excludeOverPot ? "1" : "0");
@@ -246,6 +251,7 @@ function setupTabs() {
 
   const saved = localStorage.getItem('activeTab');
   const defaultKey = saved && panels[saved] ? saved : 'this';
+  switchTab = activate;
   activate(defaultKey);
 }
 
@@ -582,9 +588,11 @@ function getAllRecipeEnergyStats({
 
 function clearProposalResults(message = "条件が変更されました。再計算してください。") {
   const container = document.getElementById("proposalResults");
+  lastProposalCombos = [];
   if (container) {
     container.innerHTML = `<p class="muted">${message}</p>`;
   }
+  updateProposalAppliedHighlight(null);
 }
 
 /* ----------------- Render ----------------- */
@@ -891,6 +899,7 @@ function computeBestRecipeCombos(
   return sorted.map((combo) => {
     const entries = combo.recipes.map((stat) => ({
       recipe: stat.recipe,
+      recipeId: stat.id ?? stat.recipe?.id,
       title: stat.title,
       hoursRequired: stat.hoursRequired,
       finalEnergy: stat.finalEnergy,
@@ -927,12 +936,14 @@ function shortageSum(recipe, invMap) {
 function renderProposalResults(combos) {
   const container = document.getElementById("proposalResults");
   if (!container) return;
-  if (!combos?.length) {
+  lastProposalCombos = Array.isArray(combos) ? combos : [];
+  if (!lastProposalCombos.length) {
     container.innerHTML = `<p class="muted">条件を満たす料理の組み合わせが見つかりませんでした。</p>`;
+    updateProposalAppliedHighlight(null);
     return;
   }
 
-  container.innerHTML = combos.map((combo, idx) => {
+  container.innerHTML = lastProposalCombos.map((combo, idx) => {
     const entries = combo.recipes || [];
     const totalHours = formatHours(combo.totalHours);
     const totalEnergy = formatNumber(combo.totalEnergy);
@@ -947,9 +958,17 @@ function renderProposalResults(combos) {
       </tr>
     `).join("");
     return `
-      <div class="proposal-card">
+      <div class="proposal-card" data-proposal-index="${idx}">
         <div class="proposal-header">
           <span class="proposal-rank">提案 ${idx + 1}</span>
+          <button
+            type="button"
+            class="btn btn-primary proposal-apply-btn"
+            data-index="${idx}"
+            aria-label="提案 ${idx + 1} を今週の料理に反映"
+          >
+            今週の料理に反映
+          </button>
         </div>
         <table class="table proposal-table">
           <thead>
@@ -976,6 +995,51 @@ function renderProposalResults(combos) {
       </div>
     `;
   }).join("");
+  updateProposalAppliedHighlight(null);
+}
+
+function updateProposalAppliedHighlight(activeIndex = null) {
+  const container = document.getElementById("proposalResults");
+  if (!container) return;
+  container.querySelectorAll(".proposal-card").forEach((card) => {
+    const idx = Number(card.dataset.proposalIndex);
+    card.classList.toggle("is-applied", activeIndex !== null && idx === activeIndex);
+  });
+}
+
+function convertProposalRecipesToChosen(recipes) {
+  if (!Array.isArray(recipes)) return [];
+  const order = [];
+  const counts = new Map();
+  recipes.forEach((entry) => {
+    const recipeId = entry?.recipeId || entry?.recipe?.id;
+    if (!recipeId) return;
+    if (!counts.has(recipeId)) order.push(recipeId);
+    counts.set(recipeId, (counts.get(recipeId) || 0) + 1);
+  });
+  return order.map((id) => ({
+    recipe: id,
+    qty: counts.get(id),
+  }));
+}
+
+function applyProposalCombo(index) {
+  if (index === null || index === undefined) return;
+  const numericIndex = Number(index);
+  if (!Number.isInteger(numericIndex) || numericIndex < 0) return;
+  const combo = lastProposalCombos?.[numericIndex];
+  if (!combo || !Array.isArray(combo.recipes) || !combo.recipes.length) return;
+  const nextChosen = convertProposalRecipesToChosen(combo.recipes);
+  if (!nextChosen.length) return;
+  state.chosen = nextChosen;
+  save();
+  renderMenuList();
+  rerenderTablesAndSuggestions();
+  renderEnergyTable(els.cat?.value || null);
+  if (typeof switchTab === "function") {
+    switchTab("this");
+  }
+  updateProposalAppliedHighlight(numericIndex);
 }
 
 function renderSuggestionsTable() {
@@ -1347,6 +1411,15 @@ function setupGatherTable() {
     });
   }
 
+  const memoInput = document.getElementById("gatherMemoText");
+  if (memoInput) {
+    memoInput.value = state.gatherMemo || "";
+    memoInput.addEventListener("input", () => {
+      state.gatherMemo = memoInput.value || "";
+      save();
+    });
+  }
+
   const potInput = els.potCapacity || document.getElementById("potCapacityInput");
   if (potInput) {
     potInput.value = String(state.potCapacity || 69);
@@ -1397,6 +1470,17 @@ function setupGatherTable() {
       });
       renderProposalResults(combos);
     });
+  }
+
+  const proposalContainer = document.getElementById("proposalResults");
+  if (proposalContainer && !proposalContainer.dataset.applyBound) {
+    proposalContainer.addEventListener("click", (e) => {
+      const btn = e.target.closest(".proposal-apply-btn");
+      if (!btn) return;
+      e.preventDefault();
+      applyProposalCombo(Number(btn.dataset.index));
+    });
+    proposalContainer.dataset.applyBound = "1";
   }
 
   const exportBtn = document.getElementById("exportGatherRatesBtn");

@@ -30,7 +30,7 @@ let switchTab = null;
 let lastProposalCombos = [];
 let lastStockPlanResult = null;
 
-const APP_VERSION = '20251027-0646'; // update-version.js と連動
+const APP_VERSION = '20251027-1604'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -52,8 +52,6 @@ const els = {
   nwExtraSelect: document.getElementById("nwExtraSelect"),
 //  nwExtraQty:    document.getElementById("nwExtraQty"),
 //  nwExtraAdd:    document.getElementById("nwExtraAdd"),
-  fieldBonus: document.getElementById("fieldBonusInput"),
-  eventBonus: document.getElementById("eventBonusInput"),
   energyTable: document.getElementById("energyTable"),
   gatherPokemonCount: document.getElementById("gatherPokemonCount"),
   potCapacity: document.getElementById("potCapacityInput"),
@@ -69,6 +67,13 @@ const els = {
   stockExcludeMax: document.getElementById("stockExcludeMaxCheckbox"),
   stockDistribute: document.getElementById("stockDistributeCheckbox"),
   stockApplyBtn: document.getElementById("applyStockPlanBtn"),
+  suggestEvent: document.getElementById("suggestEventSelect"),
+  suggestEventCustom: document.getElementById("suggestEventCustomInput"),
+  suggestEc: document.getElementById("suggestEcSelect"),
+  suggestIsland: document.getElementById("suggestIslandSelect"),
+  suggestFieldBonus: document.getElementById("suggestFieldBonusInput"),
+  suggestEventBonus: document.getElementById("suggestEventBonusInput"),
+  suggestBonusSelect: document.getElementById("suggestBonusSelect"),
 };
 
 /* ----------------- State ----------------- */
@@ -115,6 +120,19 @@ const storedGatherRates = (() => {
     return parsed;
   } catch (err) {
     console.warn("[gatherRates] load failed:", err);
+    return null;
+  }
+})();
+
+const storedSuggestConfig = (() => {
+  try {
+    const raw = localStorage.getItem("suggestConfig");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch (err) {
+    console.warn("[suggestConfig] load failed:", err);
     return null;
   }
 })();
@@ -175,6 +193,16 @@ const state = {
     eventBonusMultiplier: storedEnergyConfig?.eventBonusMultiplier ?? 1,
     levels: storedEnergyConfig?.levels || {},
   },
+  suggestConfig: {
+    eventType: storedSuggestConfig?.eventType || "none",
+    eventCustom: storedSuggestConfig?.eventCustom || "",
+    ec: storedSuggestConfig?.ec || "none",
+    island: storedSuggestConfig?.island || "wakakusa_ex",
+    fieldBonusPercent: storedSuggestConfig?.fieldBonusPercent ?? (storedEnergyConfig?.fieldBonusPercent ?? 55),
+    eventBonusMultiplier: storedSuggestConfig?.eventBonusMultiplier ?? (storedEnergyConfig?.eventBonusMultiplier ?? 1),
+    bonusPreset: storedSuggestConfig?.bonusPreset || "preset_berries",
+    otherMemo: storedSuggestConfig?.otherMemo || "",
+  },
   gatherRates: gatherRatesPayload,
   gatherPokemonCount: normalizePokemonCount(storedPokemonCountRaw),
   gatherMemo: localStorage.getItem("gatherMemo") || "",
@@ -201,6 +229,34 @@ state.energyConfig.eventBonusMultiplier = normalizeMultiplier(state.energyConfig
 if (!state.energyConfig.levels || typeof state.energyConfig.levels !== "object") {
   state.energyConfig.levels = {};
 }
+state.suggestConfig.fieldBonusPercent = normalizePercent(state.suggestConfig.fieldBonusPercent ?? state.energyConfig.fieldBonusPercent ?? 0);
+state.suggestConfig.eventBonusMultiplier = normalizeMultiplier(state.suggestConfig.eventBonusMultiplier ?? state.energyConfig.eventBonusMultiplier ?? 1);
+state.energyConfig.fieldBonusPercent = state.suggestConfig.fieldBonusPercent;
+state.energyConfig.eventBonusMultiplier = state.suggestConfig.eventBonusMultiplier;
+const EVENT_OPTIONS = new Set(["none", "halloween"]);
+if (!EVENT_OPTIONS.has(state.suggestConfig.eventType)) {
+  state.suggestConfig.eventCustom = state.suggestConfig.eventType || state.suggestConfig.eventCustom || "";
+  state.suggestConfig.eventType = "custom";
+} else if (state.suggestConfig.eventType !== "custom") {
+  state.suggestConfig.eventCustom = "";
+}
+const EC_OPTIONS = new Set(["none", "available"]);
+if (!EC_OPTIONS.has(state.suggestConfig.ec)) {
+  state.suggestConfig.ec = "none";
+}
+const ISLAND_OPTIONS = new Set(["wakakusa_ex", "normal"]);
+if (!ISLAND_OPTIONS.has(state.suggestConfig.island)) {
+  state.suggestConfig.island = "wakakusa_ex";
+}
+const BONUS_PRESET_MAP = {
+  preset_berries: "きのみx2.4",
+  ingredient_plus: "食材+1",
+  skill_up: "スキル確率×1.25"
+};
+if (!["preset_berries", "ingredient_plus", "skill_up"].includes(state.suggestConfig.bonusPreset)) {
+  state.suggestConfig.bonusPreset = "preset_berries";
+}
+state.suggestConfig.bonusNote = BONUS_PRESET_MAP[state.suggestConfig.bonusPreset] ?? "";
 if (!state.gatherRates || typeof state.gatherRates !== "object") {
   state.gatherRates = {};
 }
@@ -257,6 +313,17 @@ function save() {
   };
   localStorage.setItem("stockPlanConfig", JSON.stringify(stockConfig));
   localStorage.setItem("stockGatherRates", JSON.stringify(state.stockPlan?.gatherRates || {}));
+  const suggestConfig = {
+    eventType: state.suggestConfig?.eventType || "none",
+    eventCustom: state.suggestConfig?.eventCustom || "",
+    ec: state.suggestConfig?.ec || "none",
+    island: state.suggestConfig?.island || "wakakusa_ex",
+    fieldBonusPercent: state.energyConfig.fieldBonusPercent,
+    eventBonusMultiplier: state.energyConfig.eventBonusMultiplier,
+    bonusPreset: state.suggestConfig?.bonusPreset || "preset_berries",
+    otherMemo: state.suggestConfig?.otherMemo || "",
+  };
+  localStorage.setItem("suggestConfig", JSON.stringify(suggestConfig));
 }
 
 function markNextDirty() {
@@ -452,8 +519,9 @@ function setRecipeLevel(recipeId, level) {
 
 function setFieldBonusPercent(value) {
   const normalized = normalizePercent(value);
-  if (state.energyConfig.fieldBonusPercent === normalized) return;
+  if (state.energyConfig.fieldBonusPercent === normalized && state.suggestConfig.fieldBonusPercent === normalized) return;
   state.energyConfig.fieldBonusPercent = normalized;
+  state.suggestConfig.fieldBonusPercent = normalized;
   save();
   renderEnergyTable(els.cat?.value || null);
   clearProposalResults();
@@ -461,8 +529,9 @@ function setFieldBonusPercent(value) {
 
 function setEventBonusMultiplier(value) {
   const normalized = normalizeMultiplier(value);
-  if (state.energyConfig.eventBonusMultiplier === normalized) return;
+  if (state.energyConfig.eventBonusMultiplier === normalized && state.suggestConfig.eventBonusMultiplier === normalized) return;
   state.energyConfig.eventBonusMultiplier = normalized;
+  state.suggestConfig.eventBonusMultiplier = normalized;
   save();
   renderEnergyTable(els.cat?.value || null);
   clearProposalResults();
@@ -857,16 +926,7 @@ function renderEnergyTable(selectedCategory = null) {
   const table = els.energyTable || document.getElementById("energyTable");
   if (!table || !state?.data?.recipes) return;
 
-  const fieldInput = els.fieldBonus || document.getElementById("fieldBonusInput");
-  const eventInput = els.eventBonus || document.getElementById("eventBonusInput");
   const { fieldBonusPercent, eventBonusMultiplier, levels = {} } = state.energyConfig || {};
-
-  if (fieldInput && document.activeElement !== fieldInput) {
-    fieldInput.value = String(fieldBonusPercent ?? 0);
-  }
-  if (eventInput && document.activeElement !== eventInput) {
-    eventInput.value = String(eventBonusMultiplier ?? 1);
-  }
 
   const recipesByCat = state.data.recipes || {};
   const categoryLabelEl = document.getElementById("energyCategoryLabel");
@@ -2010,27 +2070,7 @@ function setupCollapsers(){
 }
 
 function setupEnergyControls() {
-  const fieldInput = els.fieldBonus || document.getElementById("fieldBonusInput");
-  const eventInput = els.eventBonus || document.getElementById("eventBonusInput");
   const table = els.energyTable || document.getElementById("energyTable");
-
-  if (fieldInput) {
-    fieldInput.value = String(state.energyConfig.fieldBonusPercent ?? 0);
-    fieldInput.addEventListener("change", () => {
-      const normalized = normalizePercent(fieldInput.value);
-      fieldInput.value = String(normalized);
-      setFieldBonusPercent(normalized);
-    });
-  }
-
-  if (eventInput) {
-    eventInput.value = String(state.energyConfig.eventBonusMultiplier ?? 1);
-    eventInput.addEventListener("change", () => {
-      const normalized = normalizeMultiplier(eventInput.value);
-      eventInput.value = String(normalized);
-      setEventBonusMultiplier(normalized);
-    });
-  }
 
   if (table) {
     table.addEventListener("change", (e) => {
@@ -2075,69 +2115,162 @@ function setupEnergyControls() {
   }
 }
 
+function syncSuggestControls() {
+  if (els.suggestEvent && document.activeElement !== els.suggestEvent) {
+    const value = (state.suggestConfig.eventType === "halloween" || state.suggestConfig.eventType === "custom")
+      ? state.suggestConfig.eventType
+      : "none";
+    els.suggestEvent.value = value;
+  }
+  if (els.suggestEventCustom && document.activeElement !== els.suggestEventCustom) {
+    els.suggestEventCustom.value = state.suggestConfig.eventType === "custom"
+      ? (state.suggestConfig.eventCustom || "")
+      : "";
+  }
+  if (els.suggestEc && document.activeElement !== els.suggestEc) {
+    els.suggestEc.value = state.suggestConfig.ec === "available" ? "available" : "none";
+  }
+  if (els.suggestIsland && document.activeElement !== els.suggestIsland) {
+    els.suggestIsland.value = state.suggestConfig.island === "normal" ? "normal" : "wakakusa_ex";
+  }
+  if (els.suggestFieldBonus && document.activeElement !== els.suggestFieldBonus) {
+    els.suggestFieldBonus.value = String(state.suggestConfig.fieldBonusPercent ?? 0);
+  }
+  if (els.suggestEventBonus && document.activeElement !== els.suggestEventBonus) {
+    els.suggestEventBonus.value = String(state.suggestConfig.eventBonusMultiplier ?? 1);
+  }
+  if (els.suggestBonusSelect && document.activeElement !== els.suggestBonusSelect) {
+    els.suggestBonusSelect.value = state.suggestConfig.bonusPreset || "preset_berries";
+  }
+  toggleSuggestCustomInputs();
+}
+
+function toggleSuggestCustomInputs() {
+  if (els.suggestEventCustom) {
+    const visible = els.suggestEvent?.value === "custom";
+    els.suggestEventCustom.classList.toggle("is-visible", visible);
+    els.suggestEventCustom.disabled = !visible;
+  }
+}
+
 function setupGatherTable() {
   const table = els.gatherTable || document.getElementById("gatherTable");
-  if (!table) return;
-  table.addEventListener("change", (e) => {
-    const input = e.target.closest(".gather-input");
-    if (!input) return;
-    const ingId = input.dataset.ingId;
-    const idx = input.dataset.index;
-    const normalized = normalizeGatherValue(input.value);
-    input.value = String(normalized);
-    setGatherRate(ingId, idx, normalized);
-  });
+  syncSuggestControls();
+  if (table && !table.dataset.bound) {
+    table.addEventListener("change", (e) => {
+      const input = e.target.closest(".gather-input");
+      if (!input) return;
+      const ingId = input.dataset.ingId;
+      const idx = input.dataset.index;
+      const normalized = normalizeGatherValue(input.value);
+      input.value = String(normalized);
+      setGatherRate(ingId, idx, normalized);
+    });
+    table.dataset.bound = "1";
+  }
 
   const pokemonInput = els.gatherPokemonCount || document.getElementById("gatherPokemonCount");
-  if (pokemonInput) {
+  if (pokemonInput && !pokemonInput.dataset.bound) {
     pokemonInput.value = String(state.gatherPokemonCount);
     pokemonInput.addEventListener("change", () => {
       setGatherPokemonCount(pokemonInput.value);
     });
+    pokemonInput.dataset.bound = "1";
   }
 
+  if (els.suggestEvent && !els.suggestEvent.dataset.bound) {
+    els.suggestEvent.addEventListener("change", () => {
+      setSuggestEventType(els.suggestEvent.value);
+    });
+    els.suggestEvent.dataset.bound = "1";
+  }
+  if (els.suggestEventCustom && !els.suggestEventCustom.dataset.bound) {
+    els.suggestEventCustom.addEventListener("input", () => {
+      state.suggestConfig.eventCustom = els.suggestEventCustom.value;
+      setSuggestEventType("custom");
+    });
+    els.suggestEventCustom.dataset.bound = "1";
+  }
+  if (els.suggestEc && !els.suggestEc.dataset.bound) {
+    els.suggestEc.addEventListener("change", () => {
+      setSuggestEc(els.suggestEc.value);
+    });
+    els.suggestEc.dataset.bound = "1";
+  }
+  if (els.suggestIsland && !els.suggestIsland.dataset.bound) {
+    els.suggestIsland.addEventListener("change", () => {
+      setSuggestIsland(els.suggestIsland.value);
+    });
+    els.suggestIsland.dataset.bound = "1";
+  }
+  if (els.suggestFieldBonus && !els.suggestFieldBonus.dataset.bound) {
+    els.suggestFieldBonus.addEventListener("change", () => {
+      setFieldBonusPercent(els.suggestFieldBonus.value);
+    });
+    els.suggestFieldBonus.dataset.bound = "1";
+  }
+  if (els.suggestEventBonus && !els.suggestEventBonus.dataset.bound) {
+    els.suggestEventBonus.addEventListener("change", () => {
+      setEventBonusMultiplier(els.suggestEventBonus.value);
+    });
+    els.suggestEventBonus.dataset.bound = "1";
+  }
+  if (els.suggestBonusSelect && !els.suggestBonusSelect.dataset.bound) {
+    els.suggestBonusSelect.addEventListener("change", () => {
+      setSuggestBonusPreset(els.suggestBonusSelect.value);
+    });
+    els.suggestBonusSelect.dataset.bound = "1";
+  }
+  toggleSuggestCustomInputs();
+
   const memoInput = document.getElementById("gatherMemoText");
-  if (memoInput) {
+  if (memoInput && !memoInput.dataset.bound) {
     memoInput.value = state.gatherMemo || "";
     memoInput.addEventListener("input", () => {
       state.gatherMemo = memoInput.value || "";
       save();
     });
+    memoInput.dataset.bound = "1";
   }
 
   const potInput = els.potCapacity || document.getElementById("potCapacityInput");
-  if (potInput) {
+  if (potInput && !potInput.dataset.bound) {
     potInput.value = String(state.potCapacity || 69);
     potInput.addEventListener("change", () => {
-      const val = Math.max(1, Number(potInput.value) || 69);      state.potCapacity = val;
+      const val = Math.max(1, Number(potInput.value) || 69);
+      state.potCapacity = val;
       save();
       clearProposalResults();
     });
+    potInput.dataset.bound = "1";
   }
 
   const excludeMaxLevelInput = els.excludeMaxLevel || document.getElementById("excludeMaxLevelCheckbox");
-  if (excludeMaxLevelInput) {
+  if (excludeMaxLevelInput && !excludeMaxLevelInput.dataset.bound) {
     excludeMaxLevelInput.checked = !!state.excludeMaxLevel;
     excludeMaxLevelInput.addEventListener("change", () => {
       state.excludeMaxLevel = !!excludeMaxLevelInput.checked;
       save();
       clearProposalResults();
     });
+    excludeMaxLevelInput.dataset.bound = "1";
   }
 
   const excludeOverPotInput = els.excludeOverPot || document.getElementById("excludeOverPotCheckbox");
-  if (excludeOverPotInput) {
+  if (excludeOverPotInput && !excludeOverPotInput.dataset.bound) {
     excludeOverPotInput.checked = !!state.excludeOverPot;
     excludeOverPotInput.addEventListener("change", () => {
       state.excludeOverPot = !!excludeOverPotInput.checked;
       save();
       clearProposalResults();
     });
+    excludeOverPotInput.dataset.bound = "1";
   }
 
-  const proposalBtn = document.getElementById("calcRecipeProposalsBtn");
-  if (proposalBtn) {
-    proposalBtn.addEventListener("click", () => {
+  const calcBtn = document.getElementById("calcRecipeProposalsBtn");
+  if (calcBtn && !calcBtn.dataset.bound) {
+    calcBtn.addEventListener("click", () => {
+      clearProposalResults();
       const stats = getAllRecipeEnergyStats({
         categoryFilter: els.cat?.value || null,
         usePokemonCount: true,
@@ -2155,144 +2288,9 @@ function setupGatherTable() {
       });
       renderProposalResults(combos);
     });
+    calcBtn.dataset.bound = "1";
   }
-
-  const proposalContainer = document.getElementById("proposalResults");
-  if (proposalContainer && !proposalContainer.dataset.applyBound) {
-    proposalContainer.addEventListener("click", (e) => {
-      const btn = e.target.closest(".proposal-apply-btn");
-      if (!btn) return;
-      e.preventDefault();
-      applyProposalCombo(Number(btn.dataset.index));
-    });
-    proposalContainer.dataset.applyBound = "1";
-  }
-
-  const exportBtn = document.getElementById("exportGatherRatesBtn");
-  const importBtn = document.getElementById("importGatherRatesBtn");
-  const textArea = document.getElementById("gatherRatesText");
-  if (exportBtn && textArea) {
-    exportBtn.addEventListener("click", () => {
-      const text = serializeGatherConfig();
-      textArea.value = text;
-      textArea.focus();
-      textArea.select();
-      writeToClipboard(text);
-    });
-  }
-  if (importBtn && textArea) {
-    importBtn.addEventListener("click", () => {
-      const raw = textArea.value.trim();
-      if (!raw) {
-        alert("インポートするデータを入力してください。\nエクスポートボタンで取得したJSONを貼り付けます。");
-        return;
-      }
-      try {
-        const data = JSON.parse(raw);
-        applyGatherConfig(data);
-        renderGatherTable();
-        rerenderTablesAndSuggestions();
-        clearProposalResults();
-        renderEnergyTable(els.cat?.value || null);
-        alert("食材集め能力をインポートしました。");
-      } catch (err) {
-        console.error("Import gather data failed", err);
-        alert(`インポートに失敗しました: ${err.message || err}`);
-      }
-    });
-  }
-
-  clearProposalResults("料理提案を計算ボタンを押して結果を表示してください。");
-  renderGatherTable();
-  renderEnergyTable(els.cat?.value || null);
 }
-
-function syncStockPlanControls() {
-  if (els.stockBagCapacity && document.activeElement !== els.stockBagCapacity) {
-    els.stockBagCapacity.value = String(state.stockPlan.bagCapacity || 240);
-  }
-  if (els.stockIsland && document.activeElement !== els.stockIsland) {
-    els.stockIsland.value = state.stockPlan.islandType || "EX";
-  }
-  if (els.stockEvent && document.activeElement !== els.stockEvent) {
-    els.stockEvent.value = state.stockPlan.eventType || "none";
-  }
-  if (els.stockCooking && document.activeElement !== els.stockCooking) {
-    els.stockCooking.value = state.stockPlan.cookingCategory || "curry";
-  }
-  if (els.stockExcludeMax && document.activeElement !== els.stockExcludeMax) {
-    els.stockExcludeMax.checked = state.stockPlan.excludeMaxLevel === true;
-  }
-  if (els.stockDistribute && document.activeElement !== els.stockDistribute) {
-    els.stockDistribute.checked = state.stockPlan.distributeLeftover !== false;
-  }
-  updateStockCookingVisibility();
-}
-
-function updateStockCookingVisibility() {
-  const wrap = els.stockCookingWrap || document.getElementById("stockCookingSelectWrap");
-  if (!wrap) return;
-  const show = state.stockPlan.eventType === "cooking";
-  wrap.style.display = show ? "" : "none";
-}
-
-function setStockBagCapacity(value) {
-  const normalized = Math.max(1, Number(value) || state.stockPlan.bagCapacity || 240);
-  if (state.stockPlan.bagCapacity === normalized) return;
-  state.stockPlan.bagCapacity = normalized;
-  save();
-  syncStockPlanControls();
-  clearStockPlanResults();
-}
-
-function setStockIslandType(value) {
-  if (!["EX", "normal"].includes(value)) return;
-  if (state.stockPlan.islandType === value) return;
-  state.stockPlan.islandType = value;
-  save();
-  syncStockPlanControls();
-  clearStockPlanResults();
-}
-
-function setStockEventType(value) {
-  if (!["none", "pokemon", "cooking"].includes(value)) return;
-  if (state.stockPlan.eventType === value) return;
-  state.stockPlan.eventType = value;
-  if (value !== "cooking") {
-    state.stockPlan.cookingCategory = "curry";
-  }
-  save();
-  syncStockPlanControls();
-  clearStockPlanResults();
-}
-
-function setStockCookingCategory(value) {
-  if (!["curry", "salad", "dessert"].includes(value)) return;
-  if (state.stockPlan.cookingCategory === value) return;
-  state.stockPlan.cookingCategory = value;
-  save();
-  syncStockPlanControls();
-  clearStockPlanResults();
-}
-
-function setStockExcludeMax(value) {
-  const flag = !!value;
-  if (state.stockPlan.excludeMaxLevel === flag) return;
-  state.stockPlan.excludeMaxLevel = flag;
-  save();
-  syncStockPlanControls();
-  clearStockPlanResults();
-}
-
-function setStockDistribute(value) {
-  const flag = !!value;
-  if (state.stockPlan.distributeLeftover === flag) return;
-  state.stockPlan.distributeLeftover = flag;
-  save();
-  syncStockPlanControls();
-  clearStockPlanResults();
-}
-
 function setupStockPlanControls() {
   const table = els.stockGatherTable || document.getElementById("stockGatherTable");
   if (table && !table.dataset.bound) {

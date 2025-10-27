@@ -388,6 +388,37 @@ textarea:focus,
   font-weight: 700;
 }
 
+.proposal-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.proposal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.proposal-row .control {
+  flex: 1 1 200px;
+}
+
+.control-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-stack .custom-input {
+  display: none;
+}
+
+.control-stack .custom-input.is-visible {
+  display: block;
+}
+
 .table-stock-plan thead th {
   text-align: center;
 }

@@ -7,13 +7,13 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251027-0646">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251027-0646">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251027-0646">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251027-0646">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251027-0646">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251027-0646">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251027-0646">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251027-1604">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251027-1604">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251027-1604">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251027-1604">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251027-1604">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251027-1604">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251027-1604">
   <link rel="apple-touch-icon" href="./assets/icon-yadon-180.png">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
@@ -34,7 +34,7 @@
       <nav class="tabs" role="tablist" aria-label="機能切り替え">
         <button type="button" class="tab is-active" data-tab="this" aria-selected="true">食材バッグ管理</button>
         <button type="button" class="tab" data-tab="next" aria-selected="false">料理エナジー計算</button>
-        <button type="button" class="tab" data-tab="gather" aria-selected="false">食材調達記録</button>
+        <button type="button" class="tab" data-tab="gather" aria-selected="false">今週料理提案</button>
         <button type="button" class="tab" data-tab="stock" aria-selected="false">次週備蓄プラン</button>
       </nav>
     </header>
@@ -131,7 +131,59 @@
 
         <div class="card">
           <h3 class="sub-title">目標料理の使用食材</h3>
-          <div class="table-wrapper">
+          <div class="bonus-controls">
+            <label class="control">
+              <span class="control-label">イベント</span>
+              <select id="suggestEventSelect" class="select">
+                <option value="none">（なし）</option>
+                <option value="halloween">ハロイベ</option>
+                <option value="custom">その他</option>
+              </select>
+            </label>
+            <label class="control">
+              <span class="control-label">EC</span>
+              <select id="suggestEcSelect" class="select">
+                <option value="none">なし</option>
+                <option value="available">あり</option>
+              </select>
+            </label>
+            <label class="control">
+              <span class="control-label">島</span>
+              <select id="suggestIslandSelect" class="select">
+                <option value="wakakusa_ex">わかくさEx</option>
+                <option value="ghost">ゴースト</option>
+                <option value="bug">むし</option>
+                <option value="normal">ノーマル</option>
+                <option value="custom">その他</option>
+              </select>
+            </label>
+            <label class="control">
+              <span class="control-label">FB（%）</span>
+              <input type="number" id="suggestFieldBonusInput" class="input" min="0" max="300" step="1">
+            </label>
+            <label class="control">
+              <span class="control-label">イベントボーナス（倍率）</span>
+              <input type="number" id="suggestEventBonusInput" class="input" min="0" step="0.01">
+            </label>
+            <label class="control">
+              <span class="control-label">ボーナス</span>
+              <input type="text" id="suggestBonusInput" class="input" placeholder="きのみ×2.4 など">
+            </label>
+            <label class="control">
+              <span class="control-label">きのみ</span>
+              <input type="text" id="suggestBerryInput" class="input" placeholder="２匹いつ育">
+            </label>
+            <label class="control">
+              <span class="control-label">他常駐</span>
+              <input type="text" id="suggestOthersInput" class="input" placeholder="サーナイト など">
+            </label>
+            <label class="control">
+              <span class="control-label">その他</span>
+              <textarea id="suggestMemoOtherInput" class="io-textarea" placeholder="自由記入"></textarea>
+            </label>
+          </div>
+
+          <div class="table-wrapper mt-md">
             <table id="usedTable" class="table"></table>
           </div>
 
@@ -167,16 +219,6 @@
           <h2 class="section-title">料理エナジー計算</h2>
         </header>
         <div class="card">
-          <div class="energy-controls">
-            <label class="control">
-              <span>フィールドボーナス（%）</span>
-              <input type="number" id="fieldBonusInput" class="input" min="0" max="999" step="1">
-            </label>
-            <label class="control">
-              <span>イベントボーナス（倍率）</span>
-              <input type="number" id="eventBonusInput" class="input" min="0" step="0.01">
-            </label>
-          </div>
           <div class="energy-meta">
             表示カテゴリ: <span id="energyCategoryLabel">-</span>
           </div>
@@ -197,16 +239,17 @@
       </section>
     </section>
 
-    <!-- ▼ 食材集め能力タブ -->
+    <!-- ▼ 今週料理提案タブ -->
     <section id="tab_gather" class="tab-panel" hidden>
       <section class="section">
         <header class="section-header">
           <span class="dot dot-green"></span>
-          <h2 class="section-title">食材調達記録（24hあたり）</h2>
+          <h2 class="section-title">今週料理提案</h2>
         </header>
         <div class="card">
-          <p class="muted">各食材が24時間で集められる個数を記録します。食材タイプ・きのみポケ・その他常駐の3枠を入力してください。</p>
-          <div class="table-wrapper">
+          <p class="muted">今週の食材状況とボーナス設定をもとにおすすめ料理を提案します。集め能力やボーナスはここで一元管理します。</p>
+
+          <div class="table-wrapper mt-md">
             <table id="gatherTable" class="table table-gather"></table>
           </div>
           <div class="io-section">
@@ -218,9 +261,58 @@
             </div>
             <textarea id="gatherRatesText" class="io-textarea" placeholder="例: {\n  &quot;pokemonCount&quot;: 2,\n  &quot;rates&quot;: { &quot;ing-id&quot;: [1,0,0] }\n}"></textarea>
           </div>
-          <div class="gather-memo">
-            <h3 class="io-title">メモ</h3>
-            <textarea id="gatherMemoText" class="io-textarea" placeholder="調達中のメモや次回のTODOなどを書いておけます。"></textarea>
+          <div class="proposal-settings">
+            <div class="proposal-row proposal-row-first">
+              <label class="control control-stack">
+                <span class="control-label">イベント</span>
+                <select id="suggestEventSelect" class="select">
+                  <option value="none">なし</option>
+                  <option value="halloween">ハロイベ</option>
+                  <option value="custom">その他</option>
+                </select>
+                <input type="text" id="suggestEventCustomInput" class="input custom-input" placeholder="イベント名">
+              </label>
+              <label class="control control-stack">
+                <span class="control-label">EC</span>
+                <select id="suggestEcSelect" class="select">
+                  <option value="none">なし</option>
+                  <option value="available">あり</option>
+                </select>
+              </label>
+              <label class="control control-stack">
+                <span class="control-label">島</span>
+                <select id="suggestIslandSelect" class="select">
+                  <option value="wakakusa_ex">EX</option>
+                  <option value="normal">非EX</option>
+                </select>
+              </label>
+              <label class="control control-stack">
+                <span class="control-label">ボーナス</span>
+                <select id="suggestBonusSelect" class="select">
+                  <option value="preset_berries">きのみ×2.4</option>
+                  <option value="ingredient_plus">食材+1</option>
+                  <option value="skill_up">スキル確率×1.25</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="proposal-row proposal-row-second">
+              <label class="control">
+                <span class="control-label">FB（%）</span>
+                <input type="number" id="suggestFieldBonusInput" class="input" min="0" max="300" step="1">
+              </label>
+              <label class="control">
+                <span class="control-label">イベントボーナス（倍率）</span>
+                <input type="number" id="suggestEventBonusInput" class="input" min="0" step="0.01">
+              </label>
+            </div>
+
+            <div class="proposal-row proposal-row-third">
+              <label class="control control-full">
+                <span class="control-label">メモ</span>
+                <textarea id="gatherMemoText" class="io-textarea" placeholder="調達中のメモや次回のTODOなどを書いておけます。"></textarea>
+              </label>
+            </div>
           </div>
           <div class="proposal-actions">
             <label class="control control-inline">
@@ -326,7 +418,7 @@
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251027-0646" type="module"></script>
+  <script src="./js/main.js?v=20251027-1604" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

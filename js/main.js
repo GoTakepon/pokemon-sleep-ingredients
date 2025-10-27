@@ -30,7 +30,7 @@ let switchTab = null;
 let lastProposalCombos = [];
 let lastStockPlanResult = null;
 
-const APP_VERSION = '20251027-1604'; // update-version.js と連動
+const APP_VERSION = '20251027-1627'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {

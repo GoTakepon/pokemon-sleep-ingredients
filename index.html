@@ -7,13 +7,13 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251027-1604">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251027-1604">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251027-1604">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251027-1604">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251027-1604">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251027-1604">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251027-1604">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251027-1627">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251027-1627">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251027-1627">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251027-1627">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251027-1627">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251027-1627">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251027-1627">
   <link rel="apple-touch-icon" href="./assets/icon-yadon-180.png">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
@@ -131,58 +131,6 @@
 
         <div class="card">
           <h3 class="sub-title">目標料理の使用食材</h3>
-          <div class="bonus-controls">
-            <label class="control">
-              <span class="control-label">イベント</span>
-              <select id="suggestEventSelect" class="select">
-                <option value="none">（なし）</option>
-                <option value="halloween">ハロイベ</option>
-                <option value="custom">その他</option>
-              </select>
-            </label>
-            <label class="control">
-              <span class="control-label">EC</span>
-              <select id="suggestEcSelect" class="select">
-                <option value="none">なし</option>
-                <option value="available">あり</option>
-              </select>
-            </label>
-            <label class="control">
-              <span class="control-label">島</span>
-              <select id="suggestIslandSelect" class="select">
-                <option value="wakakusa_ex">わかくさEx</option>
-                <option value="ghost">ゴースト</option>
-                <option value="bug">むし</option>
-                <option value="normal">ノーマル</option>
-                <option value="custom">その他</option>
-              </select>
-            </label>
-            <label class="control">
-              <span class="control-label">FB（%）</span>
-              <input type="number" id="suggestFieldBonusInput" class="input" min="0" max="300" step="1">
-            </label>
-            <label class="control">
-              <span class="control-label">イベントボーナス（倍率）</span>
-              <input type="number" id="suggestEventBonusInput" class="input" min="0" step="0.01">
-            </label>
-            <label class="control">
-              <span class="control-label">ボーナス</span>
-              <input type="text" id="suggestBonusInput" class="input" placeholder="きのみ×2.4 など">
-            </label>
-            <label class="control">
-              <span class="control-label">きのみ</span>
-              <input type="text" id="suggestBerryInput" class="input" placeholder="２匹いつ育">
-            </label>
-            <label class="control">
-              <span class="control-label">他常駐</span>
-              <input type="text" id="suggestOthersInput" class="input" placeholder="サーナイト など">
-            </label>
-            <label class="control">
-              <span class="control-label">その他</span>
-              <textarea id="suggestMemoOtherInput" class="io-textarea" placeholder="自由記入"></textarea>
-            </label>
-          </div>
-
           <div class="table-wrapper mt-md">
             <table id="usedTable" class="table"></table>
           </div>
@@ -418,7 +366,7 @@
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251027-1604" type="module"></script>
+  <script src="./js/main.js?v=20251027-1627" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

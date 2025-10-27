@@ -1,0 +1,8 @@
+{
+  "A": {"island": "EX", "event": "none", "plan": "各カテゴリ最高料理3+N食; 差分は共通食材"},
+  "B": {"island": "normal", "event": "none", "plan": "最高料理3+N食; 差分は共通食材; N食分は得意ポケ減算"},
+  "C": {"island": "EX", "event": "pokemon", "plan": "最高料理3+N食; 特定ポケ得意食材控えめ; 差分共通食材"},
+  "D": {"island": "normal", "event": "pokemon", "plan": "最高料理3+N食; 特定ポケ得意食材控えめ; 差分共通食材"},
+  "E": {"island": "EX", "event": "cooking", "plan": "特定カテゴリ最高料理3+N食のみ"},
+  "F": {"island": "normal", "event": "cooking", "plan": "特定カテゴリ最高料理3+N食; 差分共通; N食分得意ポケ減算"}
+}

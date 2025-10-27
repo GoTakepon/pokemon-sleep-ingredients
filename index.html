@@ -7,13 +7,13 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251024-1729">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251024-1729">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251024-1729">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251024-1729">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251024-1729">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251024-1729">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251024-1729">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251027-0646">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251027-0646">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251027-0646">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251027-0646">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251027-0646">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251027-0646">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251027-0646">
   <link rel="apple-touch-icon" href="./assets/icon-yadon-180.png">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
@@ -34,7 +34,8 @@
       <nav class="tabs" role="tablist" aria-label="機能切り替え">
         <button type="button" class="tab is-active" data-tab="this" aria-selected="true">食材バッグ管理</button>
         <button type="button" class="tab" data-tab="next" aria-selected="false">料理エナジー計算</button>
-      <button type="button" class="tab" data-tab="gather" aria-selected="false">食材調達記録</button>
+        <button type="button" class="tab" data-tab="gather" aria-selected="false">食材調達記録</button>
+        <button type="button" class="tab" data-tab="stock" aria-selected="false">次週備蓄プラン</button>
       </nav>
     </header>
 
@@ -108,13 +109,11 @@
           </div>
           <div id="nwListSweets" class="menu-list"></div>
 
-          <!-- 個別食材（現在非表示。復活時は以下のブロックを戻す）
           <div class="form-row mt-lg">
             <label class="label" for="nwExtraSelect">個別食材：</label>
             <select id="nwExtraSelect" class="select select-wide"></select>
           </div>
           <div id="nwExtraList" class="menu-list"></div>
-          -->
         </div>
       </section>
 
@@ -247,8 +246,87 @@
       </section>
     </section>
 
+    <!-- ▼ 次週備蓄プランタブ -->
+    <section id="tab_stock" class="tab-panel" hidden>
+      <section class="section">
+        <header class="section-header">
+          <span class="dot dot-green"></span>
+          <h2 class="section-title">次週食材備蓄プラン</h2>
+        </header>
+        <div class="card">
+          <p class="muted">次週の島・イベント条件とバッグ容量に合わせて、今週のうちに備蓄しておきたい食材数を試算します。</p>
+
+          <div class="stock-controls">
+            <label class="control">
+              <span class="control-label">バッグ容量</span>
+              <input type="number" id="stockBagCapacityInput" class="input" min="1" step="1">
+            </label>
+            <label class="control">
+              <span class="control-label">島タイプ</span>
+              <select id="stockIslandSelect" class="select">
+                <option value="EX">EX 島</option>
+                <option value="normal">通常島</option>
+              </select>
+            </label>
+            <label class="control">
+              <span class="control-label">イベント</span>
+              <select id="stockEventSelect" class="select">
+                <option value="none">イベントなし</option>
+                <option value="pokemon">特定ポケモン強化</option>
+                <option value="cooking">料理カテゴリ強化</option>
+              </select>
+            </label>
+            <label class="control" id="stockCookingSelectWrap">
+              <span class="control-label">対象カテゴリ</span>
+              <select id="stockCookingSelect" class="select">
+                <option value="curry">カレー・シチュー</option>
+                <option value="salad">サラダ</option>
+                <option value="dessert">デザート・ドリンク</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="io-section">
+            <h3 class="io-title">次週用の食材集め能力</h3>
+            <p class="muted io-note">第3タブとは別に、次週案に向けた想定値を入力します。値が入っている食材はブースト対象とみなされます。</p>
+            <div class="table-wrapper">
+              <table id="stockGatherTable" class="table table-gather"></table>
+            </div>
+            <div class="io-controls">
+              <button type="button" id="exportStockGatherBtn" class="btn btn-ghost">エクスポート</button>
+              <button type="button" id="importStockGatherBtn" class="btn btn-primary">インポート</button>
+            </div>
+            <textarea id="stockGatherText" class="io-textarea" placeholder="例: {\n  &quot;bagCapacity&quot;: 240,\n  &quot;rates&quot;: { &quot;ing-id&quot;: [1,0,0] }\n}"></textarea>
+          </div>
+
+          <div class="stock-actions">
+            <label class="check-inline">
+              <input type="checkbox" id="stockExcludeMaxCheckbox">
+              レシピレベルMaxの料理は作らない
+            </label>
+            <label class="check-inline">
+              <input type="checkbox" id="stockDistributeCheckbox" checked>
+              余剰を共通食材へ充当する
+            </label>
+            <button type="button" id="calcStockPlanBtn" class="btn btn-primary">備蓄プランを計算</button>
+            <button type="button" id="applyStockPlanBtn" class="btn btn-ghost">次週計画に反映</button>
+            <div class="stock-summary">
+              <span>想定 N 食: <strong id="stockMealsN">-</strong></span>
+              <span>合計食材数: <strong id="stockTotalCount">-</strong></span>
+            </div>
+          </div>
+
+          <div class="table-wrapper mt-md">
+            <table id="stockPlanTable" class="table table-stock-plan"></table>
+          </div>
+
+          <div id="stockPlanNotes" class="muted footnote mt-md"></div>
+        </div>
+      </section>
+    </section>
+
   </main>
-  <script src="./js/main.js?v=20251024-1729" type="module"></script>
+  <script src="./js/main.js?v=20251027-0646" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

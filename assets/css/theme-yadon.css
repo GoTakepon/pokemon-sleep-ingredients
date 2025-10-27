@@ -360,6 +360,43 @@ textarea:focus,
   text-overflow: ellipsis;
 }
 
+.stock-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.stock-controls .control {
+  min-width: 160px;
+}
+
+.stock-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.stock-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: var(--yadon-deep);
+  font-weight: 700;
+}
+
+.table-stock-plan thead th {
+  text-align: center;
+}
+
+.table-stock-plan td.num,
+.table-stock-plan th.num {
+  min-width: 64px;
+}
+
 .energy-title {
   color: var(--yadon-accent-strong);
 }

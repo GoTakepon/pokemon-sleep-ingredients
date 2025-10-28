@@ -5,7 +5,7 @@
 // - おすすめレシピ：必要食材「合計数が多い順」に並び替え
 import { parseOcrText } from "./ocr-parse.js";
 import { computeBestRecipeCombos } from "./logic/proposals.js";
-import { computeNextWeekStockPlan } from "./logic/stock-plan.js";
+import { computeNextWeekStockPlan, buildStockRecipeStats as buildStockRecipeStatsLogic } from "./logic/stock-plan.js";
 import { bindMenuCardOpsDelegation } from "./ui/card-ops.js";
 import { setupNextWeekSelects, setupNextExtraSelect } from "./ui/next-week-selects.js";
 import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
@@ -13,7 +13,7 @@ import { setupGatherUI } from "./ui/gather-init.js";
 import { setupStockPlanUI } from "./ui/stock-init.js";
 import { setupEnergyControls } from "./ui/energy-controls.js";
 import { renderMenuList as renderMenuListView, renderNextChosen as renderNextChosenView } from "./render/menu.js";
-import { renderTables as renderTablesView, renderSuggestionsTable as renderSuggestionsTableView } from "./render/tables.js?v=20251028-1439";
+import { renderTables as renderTablesView, renderSuggestionsTable as renderSuggestionsTableView } from "./render/tables.js?v=20251028-1557";
 import {
   computeFinalEnergy,
   normalizeLevel,
@@ -25,6 +25,7 @@ import {
   GATHER_COLUMNS,
   normalizeGatherArray,
   normalizeGatherValue,
+  computeIngredientHours as computeIngredientHoursLogic,
 } from "./logic/gather.js";
 import {
   state,
@@ -47,14 +48,14 @@ import {
   removeNextExtra as storeRemoveNextExtra,
   replaceNextState,
   replaceChosen,
-} from "./state/store.js?v=20251028-1439";
+} from "./state/store.js?v=20251028-1557";
 
 let switchTab = null;
 let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251028-1439'; // update-version.js と連動
+const APP_VERSION = '20251028-1557'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -777,14 +778,12 @@ function getStockBoostedIngredients() {
 }
 
 function buildStockRecipeStats(categories) {
-  const statsByCategory = {};
-  (categories || []).forEach((cat) => {
-    statsByCategory[cat] = getAllRecipeEnergyStats({
-      categoryFilter: cat,
+  return buildStockRecipeStatsLogic(categories, {
+    getStats: (categoryKey) => getAllRecipeEnergyStats({
+      categoryFilter: categoryKey,
       excludeMaxLevel: state.stockPlan.excludeMaxLevel,
-    });
+    }),
   });
-  return statsByCategory;
 }
 
 function calculateStockPlan() {
@@ -819,20 +818,18 @@ function calculateStockPlan() {
   });
 }
 
-function computeIngredientHours(ingId, needQty, { usePokemonCount = true, pokemonCount = state.gatherPokemonCount } = {}) {
-  if ((Number(needQty) || 0) <= 0) return 0;
+function computeIngredientHours(ingId, needQty, {
+  usePokemonCount = true,
+  pokemonCount = state.gatherPokemonCount,
+} = {}) {
   const rates = getGatherRates(ingId);
-  const normalizedRates = rates.map((val) => Math.max(0, val));
-  let dailyRate;
-  if (usePokemonCount) {
-    const count = normalizePokemonCount(pokemonCount);
-    const sorted = [...normalizedRates].sort((a, b) => b - a);
-    dailyRate = sorted.slice(0, count).reduce((sum, val) => sum + val, 0);
-  } else {
-    dailyRate = normalizedRates.reduce((sum, val) => sum + val, 0);
-  }
-  if (dailyRate <= 0) return Number.POSITIVE_INFINITY;
-  return (needQty / dailyRate) * 24;
+  return computeIngredientHoursLogic({
+    needQty,
+    rates,
+    usePokemonCount,
+    pokemonCount,
+    normalizePokemonCount,
+  });
 }
 
 function computeRecipeEnergyStats(recipe, {

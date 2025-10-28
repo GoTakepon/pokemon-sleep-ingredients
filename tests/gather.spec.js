@@ -3,6 +3,7 @@ import {
   GATHER_COLUMNS,
   normalizeGatherArray,
   normalizeGatherValue,
+  computeIngredientHours,
 } from "../js/logic/gather.js";
 
 describe("gather logic", () => {
@@ -18,5 +19,25 @@ describe("gather logic", () => {
     expect(arr[0]).toBe(1);
     expect(arr[1]).toBe(2);
     expect(arr[2]).toBe(0);
+  });
+
+  it("computes ingredient hours with pokemon slot selection", () => {
+    const hours = computeIngredientHours({
+      needQty: 4,
+      rates: [2, 1, 0],
+      usePokemonCount: true,
+      pokemonCount: 2,
+      normalizePokemonCount: (count) => count,
+    });
+    expect(hours).toBeCloseTo((4 / 3) * 24);
+  });
+
+  it("returns infinity when no gather rate is available", () => {
+    const hours = computeIngredientHours({
+      needQty: 5,
+      rates: [0, 0, 0],
+      usePokemonCount: false,
+    });
+    expect(hours).toBe(Number.POSITIVE_INFINITY);
   });
 });

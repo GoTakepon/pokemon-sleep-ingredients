@@ -264,3 +264,17 @@ export function computeNextWeekStockPlan({
     },
   };
 }
+
+export function buildStockRecipeStats(
+  categories = [],
+  { getStats } = {},
+) {
+  if (typeof getStats !== "function") return {};
+  const unique = uniqueCategories(categories, []);
+  const result = {};
+  unique.forEach((categoryKey) => {
+    if (!categoryKey) return;
+    result[categoryKey] = getStats(categoryKey) || [];
+  });
+  return result;
+}

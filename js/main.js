@@ -29,8 +29,10 @@ import {
 let switchTab = null;
 let lastProposalCombos = [];
 let lastStockPlanResult = null;
+let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251027-1627'; // update-version.js と連動
+const APP_VERSION = '20251028-1000'; // update-version.js と連動
+const MAX_GATHER_SLOTS = 4;
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -53,7 +55,6 @@ const els = {
 //  nwExtraQty:    document.getElementById("nwExtraQty"),
 //  nwExtraAdd:    document.getElementById("nwExtraAdd"),
   energyTable: document.getElementById("energyTable"),
-  gatherPokemonCount: document.getElementById("gatherPokemonCount"),
   potCapacity: document.getElementById("potCapacityInput"),
   excludeMaxLevel: document.getElementById("excludeMaxLevelCheckbox"),
   excludeOverPot: document.getElementById("excludeOverPotCheckbox"),
@@ -61,12 +62,11 @@ const els = {
   stockBagCapacity: document.getElementById("stockBagCapacityInput"),
   stockIsland: document.getElementById("stockIslandSelect"),
   stockEvent: document.getElementById("stockEventSelect"),
-  stockCookingWrap: document.getElementById("stockCookingSelectWrap"),
-  stockCooking: document.getElementById("stockCookingSelect"),
   stockGatherTable: document.getElementById("stockGatherTable"),
   stockExcludeMax: document.getElementById("stockExcludeMaxCheckbox"),
   stockDistribute: document.getElementById("stockDistributeCheckbox"),
   stockApplyBtn: document.getElementById("applyStockPlanBtn"),
+  suggestCurrentMenu: document.getElementById("suggestCurrentMenu"),
   suggestEvent: document.getElementById("suggestEventSelect"),
   suggestEventCustom: document.getElementById("suggestEventCustomInput"),
   suggestEc: document.getElementById("suggestEcSelect"),
@@ -75,6 +75,48 @@ const els = {
   suggestEventBonus: document.getElementById("suggestEventBonusInput"),
   suggestBonusSelect: document.getElementById("suggestBonusSelect"),
 };
+
+const CATEGORY_LABELS = {
+  curry: "カレー・シチュー",
+  salad: "サラダ",
+  dessert: "デザート・ドリンク",
+};
+const ALL_RECIPE_CATEGORIES = ["curry", "salad", "dessert"];
+const CATEGORY_TO_NEXT_KEY = {
+  curry: "CURRY",
+  salad: "SALAD",
+  dessert: "SWEETS",
+};
+const DEFAULT_STOCK_CATEGORIES = [...ALL_RECIPE_CATEGORIES];
+
+function normalizeStockCategoriesInput(input, fallback = DEFAULT_STOCK_CATEGORIES) {
+  const arr = Array.isArray(input)
+    ? input
+    : (input === undefined || input === null ? [] : [input]);
+  const normalized = [];
+  arr.forEach((value) => {
+    const key = typeof value === "string" ? value.trim().toLowerCase() : "";
+    if (ALL_RECIPE_CATEGORIES.includes(key) && !normalized.includes(key)) {
+      normalized.push(key);
+    }
+  });
+  if (normalized.length) {
+    return normalized;
+  }
+  return Array.isArray(fallback) ? [...fallback] : [];
+}
+
+function sortStockCategories(categories = []) {
+  const order = new Map(ALL_RECIPE_CATEGORIES.map((cat, idx) => [cat, idx]));
+  return categories.slice().sort((a, b) => {
+    return (order.get(a) || 0) - (order.get(b) || 0);
+  });
+}
+
+function shallowArrayEqual(a = [], b = []) {
+  if (a.length !== b.length) return false;
+  return a.every((val, idx) => val === b[idx]);
+}
 
 /* ----------------- State ----------------- */
 const storedTableFilter = (() => {
@@ -166,7 +208,7 @@ const storedStockGatherRates = (() => {
 function normalizePokemonCount(value) {
   const num = Number.parseInt(value, 10);
   if (!Number.isFinite(num) || num <= 0) return 1;
-  return Math.max(1, Math.min(GATHER_COLUMNS, num));
+  return Math.max(1, Math.min(MAX_GATHER_SLOTS, num));
 }
 
 const gatherRatesPayload = storedGatherRates ? { ...storedGatherRates } : {};
@@ -174,6 +216,15 @@ const storedPokemonCountRaw = gatherRatesPayload.__pokemonCount;
 if ("__pokemonCount" in gatherRatesPayload) delete gatherRatesPayload.__pokemonCount;
 
 const stockGatherRatesPayload = storedStockGatherRates ? { ...storedStockGatherRates } : {};
+const storedCookingCategoriesRaw = (() => {
+  if (Array.isArray(storedStockConfig?.cookingCategories)) {
+    return storedStockConfig.cookingCategories;
+  }
+  if (storedStockConfig?.cookingCategory) {
+    return [storedStockConfig.cookingCategory];
+  }
+  return DEFAULT_STOCK_CATEGORIES;
+})();
 
 const state = {
   have:   JSON.parse(localStorage.getItem("have")   || "{}"),
@@ -215,9 +266,7 @@ const state = {
     eventType: ["none", "pokemon", "cooking"].includes(storedStockConfig?.eventType)
       ? storedStockConfig.eventType
       : "none",
-    cookingCategory: ["curry", "salad", "dessert"].includes(storedStockConfig?.cookingCategory)
-      ? storedStockConfig.cookingCategory
-      : "curry",
+    cookingCategories: normalizeStockCategoriesInput(storedCookingCategoriesRaw, DEFAULT_STOCK_CATEGORIES),
     gatherRates: stockGatherRatesPayload,
     distributeLeftover: storedStockConfig?.distributeLeftover !== false,
     excludeMaxLevel: storedStockConfig?.excludeMaxLevel === true,
@@ -233,9 +282,13 @@ state.suggestConfig.fieldBonusPercent = normalizePercent(state.suggestConfig.fie
 state.suggestConfig.eventBonusMultiplier = normalizeMultiplier(state.suggestConfig.eventBonusMultiplier ?? state.energyConfig.eventBonusMultiplier ?? 1);
 state.energyConfig.fieldBonusPercent = state.suggestConfig.fieldBonusPercent;
 state.energyConfig.eventBonusMultiplier = state.suggestConfig.eventBonusMultiplier;
-const EVENT_OPTIONS = new Set(["none", "halloween"]);
+const EVENT_OPTIONS = new Set(["none", "custom"]);
+const LEGACY_EVENT_LABELS = {
+  halloween: "ハロイベ",
+};
 if (!EVENT_OPTIONS.has(state.suggestConfig.eventType)) {
-  state.suggestConfig.eventCustom = state.suggestConfig.eventType || state.suggestConfig.eventCustom || "";
+  const legacyLabel = LEGACY_EVENT_LABELS[state.suggestConfig.eventType] || state.suggestConfig.eventCustom || state.suggestConfig.eventType || "";
+  state.suggestConfig.eventCustom = legacyLabel;
   state.suggestConfig.eventType = "custom";
 } else if (state.suggestConfig.eventType !== "custom") {
   state.suggestConfig.eventCustom = "";
@@ -267,7 +320,7 @@ if (!state.stockPlan || typeof state.stockPlan !== "object") {
     bagCapacity: 240,
     islandType: "EX",
     eventType: "none",
-    cookingCategory: "curry",
+    cookingCategories: [...DEFAULT_STOCK_CATEGORIES],
     gatherRates: {},
     distributeLeftover: true,
     excludeMaxLevel: false,
@@ -283,11 +336,14 @@ if (!["EX", "normal"].includes(state.stockPlan.islandType)) {
 if (!["none", "pokemon", "cooking"].includes(state.stockPlan.eventType)) {
   state.stockPlan.eventType = "none";
 }
-if (!["curry", "salad", "dessert"].includes(state.stockPlan.cookingCategory)) {
-  state.stockPlan.cookingCategory = "curry";
-}
+state.stockPlan.cookingCategories = sortStockCategories(
+  normalizeStockCategoriesInput(state.stockPlan.cookingCategories, DEFAULT_STOCK_CATEGORIES)
+);
 state.stockPlan.distributeLeftover = state.stockPlan.distributeLeftover !== false;
 state.stockPlan.excludeMaxLevel = state.stockPlan.excludeMaxLevel === true;
+if (state.stockPlan.cookingCategory !== undefined) {
+  delete state.stockPlan.cookingCategory;
+}
 
 function save() {
   localStorage.setItem("have", JSON.stringify(state.have));
@@ -307,7 +363,10 @@ function save() {
     bagCapacity: state.stockPlan?.bagCapacity || 240,
     islandType: state.stockPlan?.islandType || "EX",
     eventType: state.stockPlan?.eventType || "none",
-    cookingCategory: state.stockPlan?.cookingCategory || "curry",
+    cookingCategories: sortStockCategories(
+      normalizeStockCategoriesInput(state.stockPlan?.cookingCategories, DEFAULT_STOCK_CATEGORIES)
+    ),
+    cookingCategory: state.stockPlan?.cookingCategories?.[0] || "curry",
     distributeLeftover: state.stockPlan?.distributeLeftover !== false,
     excludeMaxLevel: state.stockPlan?.excludeMaxLevel === true,
   };
@@ -353,6 +412,7 @@ function buildNextWeekOptions() {
     sel.innerHTML =
       '<option value="">選択してください</option>' +
       list.map(r => `<option value="${r.id}">${r.title}</option>`).join("");
+    sel.selectedIndex = 0;
   };
   fill(els.nwRecCurry,  state.data.recipes[catKey.CURRY]  || []);
   fill(els.nwRecSalad,  state.data.recipes[catKey.SALAD]  || []);
@@ -360,8 +420,10 @@ function buildNextWeekOptions() {
 
   // 個別食材セレクト
   if (els.nwExtraSelect) {
-    els.nwExtraSelect.innerHTML = (state.data.ingredients||[])
+    const ingredientOptions = (state.data.ingredients||[])
       .map(i => `<option value="${i.id}">${i.emoji||""} ${i.name}</option>`).join("");
+    els.nwExtraSelect.innerHTML = `<option value="">選択してください</option>${ingredientOptions}`;
+    els.nwExtraSelect.selectedIndex = 0;
   }
 }
 
@@ -419,28 +481,21 @@ function setupTabs() {
 }
 
 /* ----------------- Select builders ----------------- */
-const CATEGORY_LABELS = {
-  curry: "カレー・シチュー",
-  salad: "サラダ",
-  dessert: "デザート・ドリンク",
-};
-
-const ALL_RECIPE_CATEGORIES = ["curry", "salad", "dessert"];
-const CATEGORY_TO_NEXT_KEY = {
-  curry: "CURRY",
-  salad: "SALAD",
-  dessert: "SWEETS",
-};
-
 function buildCategoryOptions(recipes) {
   const order = ["curry", "salad", "dessert"].filter(k => recipes[k]);
-  els.cat.innerHTML = order.map(k => `<option value="${k}">${CATEGORY_LABELS[k] || k}</option>`).join("");
+  const options = order.map(k => `<option value="${k}">${CATEGORY_LABELS[k] || k}</option>`).join("");
+  const saved = localStorage.getItem("lastCategory") || "";
+  els.cat.innerHTML = options;
+  if (order.includes(saved)) {
+    els.cat.value = saved;
+  }
   buildRecipeOptions();
 }
 
 let buildingRecipeOptions = false;
 function buildRecipeOptions() {
   const cat = els.cat.value;
+  if (cat) localStorage.setItem("lastCategory", cat);
   const list = state.data.recipes[cat] || [];
   buildingRecipeOptions = true;
   els.rec.innerHTML = list.map(r => `<option value="${r.id}">${r.title}</option>`).join("");
@@ -537,6 +592,61 @@ function setEventBonusMultiplier(value) {
   clearProposalResults();
 }
 
+function setSuggestEventType(value) {
+  const normalized = value === "custom" ? "custom" : "none";
+  let changed = false;
+  if (state.suggestConfig.eventType !== normalized) {
+    state.suggestConfig.eventType = normalized;
+    changed = true;
+  }
+  if (normalized === "none") {
+    if (state.suggestConfig.eventCustom) {
+      state.suggestConfig.eventCustom = "";
+      changed = true;
+    }
+  } else if (state.suggestConfig.eventCustom == null) {
+    state.suggestConfig.eventCustom = "";
+  }
+  if (changed) {
+    save();
+    clearProposalResults();
+  }
+  toggleSuggestCustomInputs();
+  syncSuggestControls();
+  if (normalized === "custom" && els.suggestEventCustom) {
+    els.suggestEventCustom.focus();
+  }
+}
+
+function setSuggestEc(value) {
+  const normalized = value === "available" ? "available" : "none";
+  if (state.suggestConfig.ec === normalized) return;
+  state.suggestConfig.ec = normalized;
+  save();
+  clearProposalResults();
+  syncSuggestControls();
+}
+
+function setSuggestIsland(value) {
+  const normalized = value === "normal" ? "normal" : "wakakusa_ex";
+  if (state.suggestConfig.island === normalized) return;
+  state.suggestConfig.island = normalized;
+  save();
+  clearProposalResults();
+  syncSuggestControls();
+}
+
+function setSuggestBonusPreset(value) {
+  const allowed = Object.keys(BONUS_PRESET_MAP);
+  const normalized = allowed.includes(value) ? value : "preset_berries";
+  if (state.suggestConfig.bonusPreset === normalized) return;
+  state.suggestConfig.bonusPreset = normalized;
+  state.suggestConfig.bonusNote = BONUS_PRESET_MAP[normalized] ?? "";
+  save();
+  clearProposalResults();
+  syncSuggestControls();
+}
+
 function formatNumber(value) {
   return Number(value || 0).toLocaleString("ja-JP");
 }
@@ -620,10 +730,7 @@ function serializeGatherConfig() {
       rates[id] = normalized;
     }
   });
-  return JSON.stringify({
-    pokemonCount: state.gatherPokemonCount,
-    rates,
-  }, null, 2);
+  return JSON.stringify({ rates }, null, 2);
 }
 
 function applyGatherConfig(data) {
@@ -669,6 +776,104 @@ function setGatherPokemonCount(value) {
   clearProposalResults();
 }
 
+function setStockBagCapacity(value) {
+  const numeric = Math.max(1, Number(value) || state.stockPlan.bagCapacity || 240);
+  if (state.stockPlan.bagCapacity === numeric) return;
+  state.stockPlan.bagCapacity = numeric;
+  save();
+  clearStockPlanResults();
+  if (els.stockBagCapacity && document.activeElement !== els.stockBagCapacity) {
+    els.stockBagCapacity.value = String(numeric);
+  }
+  syncStockPlanControls();
+}
+
+function setStockIslandType(value) {
+  const normalized = value === "normal" ? "normal" : "EX";
+  if (state.stockPlan.islandType === normalized) return;
+  state.stockPlan.islandType = normalized;
+  save();
+  clearStockPlanResults();
+  syncStockPlanControls();
+}
+
+function setStockEventType(value) {
+  const allowed = ["none", "pokemon", "cooking"];
+  const normalized = allowed.includes(value) ? value : "none";
+  if (state.stockPlan.eventType === normalized) return;
+  state.stockPlan.eventType = normalized;
+  save();
+  clearStockPlanResults();
+  syncStockPlanControls();
+}
+
+function setStockExcludeMax(flag) {
+  const next = !!flag;
+  if (state.stockPlan.excludeMaxLevel === next) return;
+  state.stockPlan.excludeMaxLevel = next;
+  save();
+  clearStockPlanResults();
+  syncStockPlanControls();
+}
+
+function setStockDistribute(flag) {
+  const next = flag !== false;
+  if (state.stockPlan.distributeLeftover === next) return;
+  state.stockPlan.distributeLeftover = next;
+  save();
+  clearStockPlanResults();
+  syncStockPlanControls();
+}
+
+function setStockCookingCategories(categories) {
+  const normalized = sortStockCategories(
+    normalizeStockCategoriesInput(categories, DEFAULT_STOCK_CATEGORIES)
+  );
+  if (!normalized.length) return;
+  if (shallowArrayEqual(state.stockPlan.cookingCategories, normalized)) return;
+  state.stockPlan.cookingCategories = normalized;
+  save();
+  clearStockPlanResults();
+  syncStockPlanControls();
+}
+
+function syncStockPlanControls() {
+  if (!stockCategoryCheckboxes.length) {
+    stockCategoryCheckboxes = Array.from(document.querySelectorAll(".stock-category-checkbox"));
+  }
+  if (els.stockBagCapacity && document.activeElement !== els.stockBagCapacity) {
+    els.stockBagCapacity.value = String(state.stockPlan.bagCapacity || 240);
+  }
+  if (els.stockIsland && document.activeElement !== els.stockIsland) {
+    els.stockIsland.value = state.stockPlan.islandType === "normal" ? "normal" : "EX";
+  }
+  if (els.stockEvent && document.activeElement !== els.stockEvent) {
+    els.stockEvent.value = ["none", "pokemon", "cooking"].includes(state.stockPlan.eventType)
+      ? state.stockPlan.eventType
+      : "none";
+  }
+  if (els.stockExcludeMax) {
+    els.stockExcludeMax.checked = !!state.stockPlan.excludeMaxLevel;
+  }
+  if (els.stockDistribute) {
+    els.stockDistribute.checked = state.stockPlan.distributeLeftover !== false;
+  }
+  const selectedSet = new Set(
+    sortStockCategories(
+      normalizeStockCategoriesInput(state.stockPlan.cookingCategories, DEFAULT_STOCK_CATEGORIES)
+    )
+  );
+  if (selectedSet.size === 0) {
+    DEFAULT_STOCK_CATEGORIES.forEach((cat) => selectedSet.add(cat));
+  }
+  if (stockCategoryCheckboxes && stockCategoryCheckboxes.length) {
+    stockCategoryCheckboxes.forEach((checkbox) => {
+      if (!checkbox) return;
+      checkbox.checked = selectedSet.has(checkbox.value);
+    });
+  }
+}
+
 function serializeStockGatherConfig() {
   const rates = {};
   Object.entries(state.stockPlan?.gatherRates || {}).forEach(([id, arr]) => {
@@ -677,11 +882,15 @@ function serializeStockGatherConfig() {
       rates[id] = normalized;
     }
   });
+  const cookingCategories = sortStockCategories(
+    normalizeStockCategoriesInput(state.stockPlan?.cookingCategories, DEFAULT_STOCK_CATEGORIES)
+  );
   return JSON.stringify({
     bagCapacity: state.stockPlan?.bagCapacity || 240,
     islandType: state.stockPlan?.islandType || "EX",
     eventType: state.stockPlan?.eventType || "none",
-    cookingCategory: state.stockPlan?.cookingCategory || "curry",
+    cookingCategories,
+    cookingCategory: cookingCategories[0] || "curry",
     rates,
   }, null, 2);
 }
@@ -703,8 +912,17 @@ function applyStockGatherConfig(data) {
   if (payload.eventType && ["none", "pokemon", "cooking"].includes(payload.eventType)) {
     state.stockPlan.eventType = payload.eventType;
   }
-  if (payload.cookingCategory && ["curry", "salad", "dessert"].includes(payload.cookingCategory)) {
-    state.stockPlan.cookingCategory = payload.cookingCategory;
+  if (payload.cookingCategories) {
+    const normalizedCats = sortStockCategories(
+      normalizeStockCategoriesInput(payload.cookingCategories, state.stockPlan.cookingCategories)
+    );
+    if (normalizedCats.length) {
+      state.stockPlan.cookingCategories = normalizedCats;
+    }
+  } else if (payload.cookingCategory && ["curry", "salad", "dessert"].includes(payload.cookingCategory)) {
+    state.stockPlan.cookingCategories = sortStockCategories(
+      normalizeStockCategoriesInput([payload.cookingCategory], DEFAULT_STOCK_CATEGORIES)
+    );
   }
   save();
 }
@@ -1012,11 +1230,6 @@ function renderGatherTable() {
   const table = els.gatherTable || document.getElementById("gatherTable");
   if (!table || !state?.data?.ingredients) return;
 
-  const pokemonInput = els.gatherPokemonCount || document.getElementById("gatherPokemonCount");
-  if (pokemonInput && document.activeElement !== pokemonInput) {
-    pokemonInput.value = String(state.gatherPokemonCount);
-  }
-
   const headerLabels = ["食材ポケ", "きのポケ", "他常駐"];
   const rows = (state.data.ingredients || []).map((ing) => {
     const rates = getGatherRates(ing.id);
@@ -1205,21 +1418,54 @@ function shortageSum(recipe, invMap) {
   return lack;
 }
 
-function renderProposalResults(combos) {
+function renderProposalResults(perSlotCombos) {
   const container = document.getElementById("proposalResults");
   if (!container) return;
-  lastProposalCombos = Array.isArray(combos) ? combos : [];
+
+  const normalized = Array.isArray(perSlotCombos) ? perSlotCombos : [];
+  const prepared = normalized.map((entry) => {
+    const rawSlot = Number(entry?.slot);
+    const slot = Number.isFinite(rawSlot) && rawSlot > 0 ? rawSlot : null;
+    const combo = entry?.combo && Array.isArray(entry.combo.recipes) && entry.combo.recipes.length
+      ? {
+          ...entry.combo,
+          slotPreset: slot,
+        }
+      : null;
+    return { slot, combo };
+  });
+
+  lastProposalCombos = prepared
+    .filter((entry) => entry.combo)
+    .map((entry) => entry.combo);
+
   if (!lastProposalCombos.length) {
     container.innerHTML = `<p class="muted">条件を満たす料理の組み合わせが見つかりませんでした。</p>`;
     updateProposalAppliedHighlight(null);
     return;
   }
 
-  container.innerHTML = lastProposalCombos.map((combo, idx) => {
+  let renderIndex = -1;
+  const summaryHtml = buildProposalSummaryText();
+  const cardsHtml = prepared.map((entry) => {
+    const slotLabel = entry.slot ? `食材ポケモン枠 ${entry.slot}` : "提案";
+    if (!entry.combo) {
+      return `
+        <div class="proposal-card proposal-card-empty" data-slot="${entry.slot ?? ""}">
+          <div class="proposal-header">
+            <span class="proposal-rank">${slotLabel}</span>
+          </div>
+          <p class="muted">該当する組み合わせが見つかりませんでした。</p>
+        </div>
+      `;
+    }
+
+    renderIndex += 1;
+    const combo = entry.combo;
     const entries = combo.recipes || [];
     const totalHours = formatHours(combo.totalHours);
     const totalEnergy = formatNumber(combo.totalEnergy);
-    const slotCount = formatSlotCount(combo.slotCount);
+    const computedSlotCount = formatSlotCount(combo.slotCount);
     const energyPerSlot = formatEnergyPerSlot(combo.energyPerSlot);
     const rows = entries.map((r, mealIdx) => `
       <tr>
@@ -1230,14 +1476,14 @@ function renderProposalResults(combos) {
       </tr>
     `).join("");
     return `
-      <div class="proposal-card" data-proposal-index="${idx}">
+      <div class="proposal-card" data-proposal-index="${renderIndex}" data-slot="${entry.slot ?? ""}">
         <div class="proposal-header">
-          <span class="proposal-rank">提案 ${idx + 1}</span>
+          <span class="proposal-rank">${slotLabel}</span>
           <button
             type="button"
             class="btn btn-primary proposal-apply-btn"
-            data-index="${idx}"
-            aria-label="提案 ${idx + 1} を今週の料理に反映"
+            data-index="${renderIndex}"
+            aria-label="${slotLabel} を今週の料理に反映"
           >
             今週の料理に反映
           </button>
@@ -1261,13 +1507,76 @@ function renderProposalResults(combos) {
           </tfoot>
         </table>
         <div class="proposal-summary">
-          <span>稼働枠数 (合計時間 ÷ 24h): ${slotCount}</span>
+          <span>想定枠: ${entry.slot ?? "—"}枠</span>
+          <span>稼働枠数 (合計時間 ÷ 24h): ${computedSlotCount}</span>
           <span>1枠あたりエナジー: ${energyPerSlot}</span>
         </div>
       </div>
     `;
   }).join("");
+  container.innerHTML = `${summaryHtml}${cardsHtml}`;
   updateProposalAppliedHighlight(null);
+}
+
+function buildProposalSummaryText() {
+  const config = state.suggestConfig || {};
+  const pieces = [];
+
+  const eventLabels = {
+    none: "なし",
+  };
+  let eventLabel = eventLabels[config.eventType] || "なし";
+  if (config.eventType === "custom") {
+    const customName = (config.eventCustom || "").trim();
+    eventLabel = customName || "あり";
+  }
+  pieces.push(`イベント: ${eventLabel}`);
+
+  const ecLabel = config.ec === "available" ? "あり" : "なし";
+  pieces.push(`EC: ${ecLabel}`);
+
+  const islandLabel = config.island === "normal" ? "非EX" : "EX";
+  pieces.push(`島: ${islandLabel}`);
+
+  const bonusLabels = {
+    preset_berries: "きのみ×2.4",
+    ingredient_plus: "食材+1",
+    skill_up: "スキル確率×1.25",
+  };
+  const bonusText = bonusLabels[config.bonusPreset] || "-";
+  pieces.push(`ボーナス: ${bonusText}`);
+
+  const fieldBonusRaw = Number(state.energyConfig?.fieldBonusPercent ?? 0);
+  const fieldBonus = Number.isFinite(fieldBonusRaw) ? Math.round(fieldBonusRaw * 10) / 10 : 0;
+  pieces.push(`FB: ${fieldBonus}%`);
+
+  const eventMultiplierRaw = Number(state.energyConfig?.eventBonusMultiplier ?? 1);
+  const eventMultiplier = Number.isFinite(eventMultiplierRaw) ? Math.round(eventMultiplierRaw * 100) / 100 : 1;
+  pieces.push(`イベント倍率: ×${eventMultiplier}`);
+
+  const categorySummary = formatChosenCategorySummary();
+  const memoRaw = state.gatherMemo?.trim() || "";
+
+  const lines = [];
+  if (pieces.length) {
+    const escaped = escapeHtml(pieces.join(" ／ "));
+    lines.push(`<div class="conditions-text">${escaped}</div>`);
+  }
+  if (categorySummary) {
+    lines.push(`<div class="conditions-text">カテゴリ: ${escapeHtml(categorySummary)}</div>`);
+  }
+  if (memoRaw) {
+    const escapedMemo = escapeHtml(memoRaw).replace(/\n/g, "<br>");
+    lines.push(`<div class="conditions-memo">${escapedMemo}</div>`);
+  }
+
+  if (!lines.length) return "";
+  return `
+    <div class="proposal-conditions">
+      <div class="conditions-label">イベント条件</div>
+      ${lines.join("\n")}
+    </div>
+  `;
 }
 
 function updateProposalAppliedHighlight(activeIndex = null) {
@@ -1510,14 +1819,17 @@ function computeNextWeekStockPlan({
   bagCapacity,
   islandType,
   eventType,
-  cookingCategory,
+  cookingCategories,
 }) {
   if (!state?.data?.ingredients || !state?.data?.recipes) {
     return { error: "データを読み込み中です。しばらくお待ちください。" };
   }
   const capacity = Math.max(1, Number(bagCapacity) || 0);
-  const categoriesRaw = eventType === "cooking" ? [cookingCategory] : ALL_RECIPE_CATEGORIES;
-  const categories = categoriesRaw.filter((cat, idx, arr) => arr.indexOf(cat) === idx);
+  const selectedCategories = sortStockCategories(
+    normalizeStockCategoriesInput(cookingCategories, DEFAULT_STOCK_CATEGORIES)
+  );
+  const categoriesBase = selectedCategories.length ? selectedCategories : DEFAULT_STOCK_CATEGORIES;
+  const categories = categoriesBase.filter((cat, idx, arr) => arr.indexOf(cat) === idx);
 
   const categoryStats = categories.map((cat) => {
     const stat = findHighestEnergyStatForCategory(cat, {
@@ -1649,7 +1961,7 @@ function computeNextWeekStockPlan({
     params: {
       islandType,
       eventType,
-      cookingCategory,
+      cookingCategories: categories,
     },
   };
 }
@@ -1871,6 +2183,71 @@ function renderMenuCardsShared({ ctx, items, mountEl, catKey = null }) {
   }).join("") || `<div class="empty muted">（なし）</div>`;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (ch) => {
+    switch (ch) {
+      case "&": return "&amp;";
+      case "<": return "&lt;";
+      case ">": return "&gt;";
+      case '"': return "&quot;";
+      case "'": return "&#39;";
+      default: return ch;
+    }
+  });
+}
+
+function collectChosenCategoryCounts() {
+  const counts = new Map();
+  const recipesById = new Map();
+  Object.entries(state.data?.recipes || {}).forEach(([catKey, list]) => {
+    (list || []).forEach((recipe) => {
+      if (recipe?.id) {
+        recipesById.set(recipe.id, catKey);
+      }
+    });
+  });
+  (state.chosen || []).forEach((item) => {
+    const catKey = recipesById.get(item.recipe) || "unknown";
+    const qtyRaw = Number(item.qty);
+    const qty = Number.isFinite(qtyRaw) && qtyRaw > 0 ? qtyRaw : 1;
+    counts.set(catKey, (counts.get(catKey) || 0) + qty);
+  });
+  return counts;
+}
+
+function formatChosenCategorySummary() {
+  const counts = collectChosenCategoryCounts();
+  if (!counts.size) return "";
+  const parts = [];
+  ALL_RECIPE_CATEGORIES.forEach((catKey) => {
+    if (!counts.has(catKey)) return;
+    parts.push(CATEGORY_LABELS[catKey] || catKey);
+    counts.delete(catKey);
+  });
+  counts.forEach((_, catKey) => {
+    const label = CATEGORY_LABELS[catKey] || (catKey === "unknown" ? "未分類" : catKey);
+    parts.push(label);
+  });
+  return parts.join(" ／ ");
+}
+
+function renderCurrentMenuSummary() {
+  const container = els.suggestCurrentMenu || document.getElementById("suggestCurrentMenu");
+  if (!container) return;
+
+  const summary = formatChosenCategorySummary();
+  if (!summary) {
+    container.innerHTML = `<span class="current-menu-empty muted">今週の料理は未選択です</span>`;
+    return;
+  }
+
+  const escaped = escapeHtml(summary);
+  container.innerHTML = `
+    <span class="current-menu-label">今週の料理:</span>
+    <span class="current-menu-text">${escaped}</span>
+  `;
+}
+
 function renderMenuList() {
   const wrap = document.getElementById('menuList');
   renderMenuCardsShared({
@@ -1878,6 +2255,7 @@ function renderMenuList() {
     items: state.chosen,
     mountEl: wrap
   });
+  renderCurrentMenuSummary();
 }
 
 function renderExtraCards() {
@@ -2117,9 +2495,7 @@ function setupEnergyControls() {
 
 function syncSuggestControls() {
   if (els.suggestEvent && document.activeElement !== els.suggestEvent) {
-    const value = (state.suggestConfig.eventType === "halloween" || state.suggestConfig.eventType === "custom")
-      ? state.suggestConfig.eventType
-      : "none";
+    const value = state.suggestConfig.eventType === "custom" ? "custom" : "none";
     els.suggestEvent.value = value;
   }
   if (els.suggestEventCustom && document.activeElement !== els.suggestEventCustom) {
@@ -2147,7 +2523,7 @@ function syncSuggestControls() {
 
 function toggleSuggestCustomInputs() {
   if (els.suggestEventCustom) {
-    const visible = els.suggestEvent?.value === "custom";
+    const visible = state.suggestConfig.eventType === "custom";
     els.suggestEventCustom.classList.toggle("is-visible", visible);
     els.suggestEventCustom.disabled = !visible;
   }
@@ -2169,15 +2545,6 @@ function setupGatherTable() {
     table.dataset.bound = "1";
   }
 
-  const pokemonInput = els.gatherPokemonCount || document.getElementById("gatherPokemonCount");
-  if (pokemonInput && !pokemonInput.dataset.bound) {
-    pokemonInput.value = String(state.gatherPokemonCount);
-    pokemonInput.addEventListener("change", () => {
-      setGatherPokemonCount(pokemonInput.value);
-    });
-    pokemonInput.dataset.bound = "1";
-  }
-
   if (els.suggestEvent && !els.suggestEvent.dataset.bound) {
     els.suggestEvent.addEventListener("change", () => {
       setSuggestEventType(els.suggestEvent.value);
@@ -2187,7 +2554,13 @@ function setupGatherTable() {
   if (els.suggestEventCustom && !els.suggestEventCustom.dataset.bound) {
     els.suggestEventCustom.addEventListener("input", () => {
       state.suggestConfig.eventCustom = els.suggestEventCustom.value;
-      setSuggestEventType("custom");
+      if (state.suggestConfig.eventType !== "custom") {
+        setSuggestEventType("custom");
+      } else {
+        save();
+        clearProposalResults();
+        syncSuggestControls();
+      }
     });
     els.suggestEventCustom.dataset.bound = "1";
   }
@@ -2233,6 +2606,41 @@ function setupGatherTable() {
     memoInput.dataset.bound = "1";
   }
 
+  const gatherExportBtn = document.getElementById("exportGatherRatesBtn");
+  const gatherImportBtn = document.getElementById("importGatherRatesBtn");
+  const gatherTextArea = document.getElementById("gatherRatesText");
+  if (gatherExportBtn && gatherTextArea && !gatherExportBtn.dataset.bound) {
+    gatherExportBtn.addEventListener("click", () => {
+      const text = serializeGatherConfig();
+      gatherTextArea.value = text;
+      gatherTextArea.focus();
+      gatherTextArea.select();
+      writeToClipboard(text);
+    });
+    gatherExportBtn.dataset.bound = "1";
+  }
+  if (gatherImportBtn && gatherTextArea && !gatherImportBtn.dataset.bound) {
+    gatherImportBtn.addEventListener("click", () => {
+      const raw = gatherTextArea.value.trim();
+      if (!raw) {
+        alert("インポートするデータを入力してください。");
+        return;
+      }
+      try {
+        const payload = JSON.parse(raw);
+        applyGatherConfig(payload);
+        renderGatherTable();
+        renderEnergyTable(els.cat?.value || null);
+        clearProposalResults();
+        alert("食材集め能力をインポートしました。");
+      } catch (err) {
+        console.error("Import gather rates failed", err);
+        alert(`インポートに失敗しました: ${err.message || err}`);
+      }
+    });
+    gatherImportBtn.dataset.bound = "1";
+  }
+
   const potInput = els.potCapacity || document.getElementById("potCapacityInput");
   if (potInput && !potInput.dataset.bound) {
     potInput.value = String(state.potCapacity || 69);
@@ -2270,25 +2678,45 @@ function setupGatherTable() {
   const calcBtn = document.getElementById("calcRecipeProposalsBtn");
   if (calcBtn && !calcBtn.dataset.bound) {
     calcBtn.addEventListener("click", () => {
-      clearProposalResults();
-      const stats = getAllRecipeEnergyStats({
-        categoryFilter: els.cat?.value || null,
-        usePokemonCount: true,
-        pokemonCount: state.gatherPokemonCount,
-        potCapacity: state.excludeOverPot ? state.potCapacity : null,
-        excludeMaxLevel: state.excludeMaxLevel,
-      });
-      const combos = computeBestRecipeCombos(stats, {
-        pokemonCount: state.gatherPokemonCount,
-        maxHours: 24,
-        maxMeals: 3,
-        maxResults: 3,
-        potCapacity: state.excludeOverPot ? state.potCapacity : null,
-        excludeMaxLevel: state.excludeMaxLevel,
-      });
-      renderProposalResults(combos);
+      clearProposalResults("計算中...");
+      const category = els.cat?.value || null;
+      const potCapacity = state.excludeOverPot ? state.potCapacity : null;
+      const results = [];
+      for (let slot = 1; slot <= MAX_GATHER_SLOTS; slot += 1) {
+        const stats = getAllRecipeEnergyStats({
+          categoryFilter: category,
+          usePokemonCount: true,
+          pokemonCount: slot,
+          potCapacity,
+          excludeMaxLevel: state.excludeMaxLevel,
+        });
+        const combos = computeBestRecipeCombos(stats, {
+          pokemonCount: slot,
+          maxHours: 24,
+          maxMeals: 3,
+          maxResults: 1,
+          potCapacity,
+          excludeMaxLevel: state.excludeMaxLevel,
+        });
+        const best = combos && combos[0] ? {
+          ...combos[0],
+          recipes: (combos[0].recipes || []).map((r) => ({ ...r })),
+        } : null;
+        results.push({ slot, combo: best });
+      }
+      renderProposalResults(results);
     });
     calcBtn.dataset.bound = "1";
+  }
+
+  const proposalsContainer = document.getElementById("proposalResults");
+  if (proposalsContainer && !proposalsContainer.dataset.applyBound) {
+    proposalsContainer.addEventListener("click", (e) => {
+      const btn = e.target.closest(".proposal-apply-btn");
+      if (!btn) return;
+      applyProposalCombo(btn.dataset.index);
+    });
+    proposalsContainer.dataset.applyBound = "1";
   }
 }
 function setupStockPlanControls() {
@@ -2314,15 +2742,30 @@ function setupStockPlanControls() {
   if (els.stockEvent) {
     els.stockEvent.addEventListener("change", () => setStockEventType(els.stockEvent.value));
   }
-  if (els.stockCooking) {
-    els.stockCooking.addEventListener("change", () => setStockCookingCategory(els.stockCooking.value));
-  }
   if (els.stockExcludeMax) {
     els.stockExcludeMax.addEventListener("change", () => setStockExcludeMax(els.stockExcludeMax.checked));
   }
   if (els.stockDistribute) {
     els.stockDistribute.addEventListener("change", () => setStockDistribute(els.stockDistribute.checked));
   }
+
+  stockCategoryCheckboxes = Array.from(document.querySelectorAll(".stock-category-checkbox"));
+  stockCategoryCheckboxes.forEach((checkbox) => {
+    if (!checkbox || checkbox.dataset.bound) return;
+    checkbox.addEventListener("change", (event) => {
+      const selected = stockCategoryCheckboxes
+        .filter((cb) => cb?.checked)
+        .map((cb) => cb.value);
+      if (!selected.length) {
+        alert("カテゴリは最低1つ選択してください。");
+        checkbox.checked = true;
+        syncStockPlanControls();
+        return;
+      }
+      setStockCookingCategories(selected);
+    });
+    checkbox.dataset.bound = "1";
+  });
 
   const exportBtn = document.getElementById("exportStockGatherBtn");
   const importBtn = document.getElementById("importStockGatherBtn");
@@ -2364,7 +2807,7 @@ function setupStockPlanControls() {
         bagCapacity: state.stockPlan.bagCapacity,
         islandType: state.stockPlan.islandType,
         eventType: state.stockPlan.eventType,
-        cookingCategory: state.stockPlan.cookingCategory,
+        cookingCategories: state.stockPlan.cookingCategories,
       });
       renderStockPlanResults(result);
     });

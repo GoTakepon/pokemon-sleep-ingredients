@@ -1,84 +1,58 @@
 // js/render/tables.js
-// テーブルおよびおすすめ表示に関する描画ユーティリティ
+// テーブル描画とおすすめ表示に関するユーティリティ
 
-import { computeNextWeekTotals as computeNextWeekTotalsCore } from "../logic/next-week.js";
+import { computeNextWeekTotals } from "../logic/next-week.js";
+import { computeThisWeekTotals, buildTableRows } from "../logic/weekly-totals.js";
+import {
+  collectThisWeekIngredientIds,
+  buildChosenRecipeSet,
+} from "../logic/recommendation.js";
 
-export { computeNextWeekTotalsCore as computeNextWeekTotals };
+function resolveElement(ref, fallbackId) {
+  if (ref) return ref;
+  if (fallbackId) return document.getElementById(fallbackId);
+  return null;
+}
 
-/**
- * 所持食材のマップを作成する。
- * @param {Array} ingredients
- * @param {Record<string, number>} have
- * @returns {Map<string, number>}
- */
 export function buildInventoryMap(ingredients = [], have = {}) {
   const map = new Map();
-  for (const ing of ingredients) {
-    map.set(ing.id, Number(have[ing.id] || 0));
-  }
+  (ingredients || []).forEach((ing) => {
+    map.set(ing.id, Number(have?.[ing.id] || 0));
+  });
   return map;
 }
 
-function totalNeeds(recipe) {
-  let total = 0;
-  for (const n of Object.values(recipe?.needs || {})) total += Number(n) || 0;
-  return total;
-}
-
-function shortageSum(recipe, invMap) {
-  let lack = 0;
-  for (const [id, need] of Object.entries(recipe?.needs || {})) {
-    const have = invMap.get(id) || 0;
-    if (have < need) lack += (need - have);
-  }
-  return lack;
-}
-
-function formatHours(value) {
-  if (!Number.isFinite(value) || value <= 0) return "-";
-  if (value >= 100) return Math.round(value).toString();
-  return (Math.round(value * 10) / 10).toFixed(1);
-}
-
-function computeShortageHoursDisplay(state, ingId, shortageQty) {
-  if (!shortageQty || shortageQty <= 0) return "-";
-  const rates = (state.gatherRates?.[ingId] || []).map((val) => Math.max(0, Number(val) || 0));
-  const count = Math.max(1, Number(state.gatherPokemonCount) || 1);
-  const dailyRate = rates
-    .slice()
-    .sort((a, b) => b - a)
-    .slice(0, count)
-    .reduce((sum, val) => sum + val, 0);
-  if (dailyRate <= 0) return "-";
-  const hours = (shortageQty / dailyRate) * 24;
-  return formatHours(hours);
-}
-
-export function renderTables({ state, findRecipeById }) {
-  const recipesByCat = state.data?.recipes || {};
-  const ingredients = state.data?.ingredients || [];
-  const invMap = buildInventoryMap(ingredients, state.have);
-
-  const computeThis = () => {
-    const map = new Map();
-    const used = new Set();
-    (state.chosen || []).forEach(it => {
-      const r = findRecipeById(it.recipe);
-      const qty = Number(it.qty) || 0;
-      if (!r || !qty) return;
-      Object.entries(r.needs || {}).forEach(([id, need]) => {
-        used.add(id);
-        map.set(id, (map.get(id) || 0) + need * qty);
-      });
-    });
-    return { map, used };
+function defaultShortageHoursFactory(state) {
+  return (ingId, shortageQty) => {
+    if (!shortageQty || shortageQty <= 0) return "-";
+    const rates = (state.gatherRates?.[ingId] || [])
+      .map((val) => Math.max(0, Number(val) || 0));
+    const count = Math.max(1, Number(state.gatherPokemonCount) || 1);
+    const dailyRate = rates
+      .slice()
+      .sort((a, b) => b - a)
+      .slice(0, count)
+      .reduce((sum, val) => sum + val, 0);
+    if (dailyRate <= 0) return "-";
+    const hours = (shortageQty / dailyRate) * 24;
+    if (!Number.isFinite(hours)) return "-";
+    if (hours >= 100) return Math.round(hours).toString();
+    return (Math.round(hours * 10) / 10).toFixed(1);
   };
+}
 
-  const useThis = !!state.tableFilter?.this;
-  const useNext = !!state.tableFilter?.next;
+export function renderTables({
+  state,
+  findRecipeById,
+  computeShortageHours = defaultShortageHoursFactory(state),
+  elements = {},
+} = {}) {
+  const ingredients = state.data?.ingredients || [];
+  const recipesByCat = state.data?.recipes || {};
+  const inventoryMap = buildInventoryMap(ingredients, state.have);
 
-  const thisTotals = computeThis();
-  const totalsMap = computeNextWeekTotalsCore(
+  const thisTotals = computeThisWeekTotals(state.chosen, findRecipeById);
+  const totalsMap = computeNextWeekTotals(
     state.next,
     recipesByCat,
     ingredients,
@@ -86,151 +60,155 @@ export function renderTables({ state, findRecipeById }) {
   );
   const nextTotals = {
     map: new Map(
-      Array.from(totalsMap.entries()).map(([id, info]) => [id, Number(info?.qty) || 0])
+      Array.from(totalsMap.entries()).map(([id, info]) => [
+        id,
+        Number(info?.qty) || 0,
+      ]),
     ),
     used: new Set(totalsMap.keys()),
   };
 
-  const targetMap = new Map();
-  const addAll = (m) => m.forEach((v, k) => targetMap.set(k, (targetMap.get(k) || 0) + v));
-  if (useThis) addAll(thisTotals.map);
-  if (useNext) addAll(nextTotals.map);
+  const tableFilter = {
+    this: state.tableFilter?.this !== undefined ? !!state.tableFilter.this : true,
+    next: state.tableFilter?.next !== undefined ? !!state.tableFilter.next : true,
+  };
 
-  const usedThisSet = thisTotals.used;
-  const usedNextSet = nextTotals.used;
+  const { usedRows, otherRows, sums } = buildTableRows({
+    thisTotals,
+    nextTotals,
+    tableFilter,
+    inventoryMap,
+    ingredients,
+    computeShortageHours,
+  });
 
-  const usedRows = [];
-  const otherRows = [];
-  let sumCurU = 0, sumTarU = 0;
-  let sumCurO = 0, sumTarO = 0;
-
-  for (const ing of ingredients) {
-    const id = ing.id;
-    const cur = Number(invMap.get(id) || 0);
-    const tar = Number(targetMap.get(id) || 0);
-    const diff = cur - tar;
-
-    const inThis = usedThisSet.has(id);
-    const inNext = usedNextSet.has(id);
-    const rowCls = (inThis && inNext) ? "wk-both"
-      : inThis ? "wk-this"
-      : inNext ? "wk-next"
-      : "";
-
-    const shortageDisplay = (diff < 0)
-      ? computeShortageHoursDisplay(state, id, tar - cur)
-      : "-";
-
-    const rowHtml = `
-      <tr class="${rowCls}">
-        <td>${ing.emoji || ""} ${ing.name || id}</td>
-        <td class="num">${cur}</td>
-        <td class="num">${tar}</td>
-        <td class="num ${diff < 0 ? "neg" : diff > 0 ? "pos" : ""}">${diff}</td>
-        <td class="num">${shortageDisplay}</td>
-      </tr>`;
-
-    if (tar > 0) {
-      usedRows.push(rowHtml);
-      sumCurU += cur; sumTarU += tar;
-    } else {
-      otherRows.push(rowHtml);
-      sumCurO += cur; sumTarO += tar;
-    }
-  }
-
-  const writeTable = (tableId, rows, sums) => {
-    const el = document.getElementById(tableId);
+  const writeTable = (el, rows, summary) => {
     if (!el) return;
-    const body = rows.length ? rows.join("") : `<tr><td class="muted" colspan="5">（なし）</td></tr>`;
-    const footDiff = sums.cur - sums.tar;
+    const body = rows.length
+      ? rows.join("")
+      : `<tr><td class="muted" colspan="5">（なし）</td></tr>`;
+    const diff = summary.cur - summary.tar;
     el.innerHTML = `
       <thead>
-        <tr><th>食材名</th><th class="num">現在</th><th class="num">目標</th><th class="num">差分</th><th class="num">補充所要時間 (h)</th></tr>
+        <tr><th>食材名</th><th class="num">現在</th><th class="num">目標</th><th class="num">差分</th><th class="num">残時間 (h)</th></tr>
       </thead>
       <tbody>${body}</tbody>
       <tfoot>
         <tr>
           <th>合計</th>
-          <th class="num">${sums.cur}</th>
-          <th class="num">${sums.tar}</th>
-          <th class="num ${footDiff < 0 ? "neg" : footDiff > 0 ? "pos" : ""}">${footDiff}</th>
+          <th class="num">${summary.cur}</th>
+          <th class="num">${summary.tar}</th>
+          <th class="num ${diff < 0 ? "neg" : diff > 0 ? "pos" : ""}">${diff}</th>
           <th class="num">-</th>
         </tr>
       </tfoot>`;
   };
 
-  writeTable("usedTable", usedRows, { cur: sumCurU, tar: sumTarU });
-  writeTable("otherTable", otherRows, { cur: sumCurO, tar: sumTarO });
+  writeTable(
+    resolveElement(elements.usedTable, "usedTable"),
+    usedRows,
+    sums.used,
+  );
+  writeTable(
+    resolveElement(elements.otherTable, "otherTable"),
+    otherRows,
+    sums.other,
+  );
 }
-export function renderSuggestionsTable({ state, els, findRecipeById, em }) {
-  const table = document.getElementById("recommendTable");
+
+function totalNeeds(recipe) {
+  let total = 0;
+  Object.values(recipe?.needs || {}).forEach((val) => {
+    total += Number(val) || 0;
+  });
+  return total;
+}
+
+function shortageSum(recipe, inventoryMap) {
+  let lack = 0;
+  Object.entries(recipe?.needs || {}).forEach(([id, need]) => {
+    const have = inventoryMap.get(id) || 0;
+    if (have < need) lack += (need - have);
+  });
+  return lack;
+}
+
+export function renderSuggestionsTable({
+  state,
+  elements = {},
+  els = {},
+  findRecipeById,
+  em = () => "",
+} = {}) {
+  const refs = { ...els, ...elements };
+  const table = resolveElement(refs.recommendTable, "recommendTable");
   if (!table) return;
+
+  const catSelect = resolveElement(refs.cat, "categorySelect");
+  const categoryKey = catSelect?.value;
+  if (!categoryKey) {
+    table.innerHTML = `
+      <thead>
+        <tr><th class="left">料理名</th><th class="num">不足(合計)</th><th class="right">状態</th></tr>
+      </thead>
+      <tbody><tr><td class="muted" colspan="3">カテゴリが選択されていません</td></tr></tbody>`;
+    return;
+  }
 
   const ingredients = state.data?.ingredients || [];
   const recipesByCat = state.data?.recipes || {};
-  const inv = buildInventoryMap(ingredients, state.have);
-  const chosenSet = new Set(state.chosen.map(c => c.recipe));
-  const cat = els.cat?.value;
-  const candidates = (recipesByCat[cat] || []).filter(r => !chosenSet.has(r.id));
-
-  const thisWeekIds = new Set();
-  for (const ch of state.chosen) {
-    const q = Number(ch?.qty) || 0;
-    if (q <= 0) continue;
-    const rr = findRecipeById(ch.recipe);
-    if (rr && rr.needs) {
-      for (const id of Object.keys(rr.needs)) thisWeekIds.add(id);
-    }
-  }
-
-  const nextTotals = computeNextWeekTotalsCore(
+  const chosenSet = buildChosenRecipeSet(state.chosen);
+  const candidates = (recipesByCat[categoryKey] || []).filter(
+    (recipe) => !chosenSet.has(recipe?.id),
+  );
+  const inventoryMap = buildInventoryMap(ingredients, state.have);
+  const nextTotals = computeNextWeekTotals(
     state.next,
     recipesByCat,
     ingredients,
     state.nextVersion,
   );
   const nextWeekIds = new Set(nextTotals.keys());
+  const thisWeekIds = collectThisWeekIngredientIds(state.chosen, findRecipeById);
 
   const rows = [];
-  for (const r of candidates) {
-    const deficit = shortageSum(r, inv);
-    if (deficit === 0 || deficit <= 10) {
-      const pods = Object.entries(r.needs || {}).map(([id, need]) => {
-        const have = inv.get(id) || 0;
-        const lack = Math.max(0, need - have);
+  candidates.forEach((recipe) => {
+    const deficit = shortageSum(recipe, inventoryMap);
+    if (deficit !== 0 && deficit > 10) return;
 
-        let useCls = "";
-        const inThis = thisWeekIds.has(id);
-        const inNext = nextWeekIds.has(id);
-        if (inThis && inNext) useCls = "is-both";
-        else if (inThis) useCls = "is-this";
-        else if (inNext) useCls = "is-next";
+    const pods = Object.entries(recipe.needs || {}).map(([id, need]) => {
+      const have = inventoryMap.get(id) || 0;
+      const lack = Math.max(0, need - have);
+      let useCls = "";
+      const inThis = thisWeekIds.has(id);
+      const inNext = nextWeekIds.has(id);
+      if (inThis && inNext) useCls = "is-both";
+      else if (inThis) useCls = "is-this";
+      else if (inNext) useCls = "is-next";
+      return `
+        <div class="need-pod ${useCls}">
+          <div class="em">${em(id)}</div>
+          <div class="num">×${need}</div>
+          ${lack > 0 ? `<div class="lack">-${lack}</div>` : ""}
+        </div>`;
+    }).join("");
 
-        return `<div class="need-pod ${useCls}">
-                  <div class="em">${em(id)}</div>
-                  <div class="num">×${need}</div>
-                  ${lack > 0 ? `<div class="lack">-${lack}</div>` : ""}
-                </div>`;
-      }).join("");
-
-      rows.push({
-        deficit,
-        total: totalNeeds(r),
-        title: r.title,
-        html: `<tr>
-          <td class="title-cell">
-            <div class="sugg-title">${r.title}</div>
-            <div class="need-pods">${pods}</div>
-          </td>
-          <td class="num">${deficit}</td>
-          <td class="status-col">${deficit === 0
-            ? '<span class="status-ok">作れる</span>'
-            : '<span class="status-near">あと少し</span>'}</td>
-        </tr>`
-      });
-    }
-  }
+    rows.push({
+      deficit,
+      total: totalNeeds(recipe),
+      title: recipe.title,
+      html: `<tr>
+        <td class="title-cell">
+          <div class="sugg-title">${recipe.title}</div>
+          <div class="need-pods">${pods}</div>
+        </td>
+        <td class="num">${deficit}</td>
+        <td class="status-col">${deficit === 0
+          ? '<span class="status-ok">作れる</span>'
+          : '<span class="status-near">あと少し</span>'}</td>
+      </tr>`,
+    });
+  });
 
   rows.sort((a, b) => {
     if (b.total !== a.total) return b.total - a.total;
@@ -243,7 +221,9 @@ export function renderSuggestionsTable({ state, els, findRecipeById, em }) {
       <tr><th class="left">料理名</th><th class="num">不足(合計)</th><th class="right">状態</th></tr>
     </thead>
     <tbody>
-      ${rows.length ? rows.map(r => r.html).join("") : `<tr><td class="muted" colspan="3">該当なし</td></tr>`}
+      ${rows.length
+        ? rows.map((row) => row.html).join("")
+        : `<tr><td class="muted" colspan="3">該当なし</td></tr>`}
     </tbody>
   `;
 }

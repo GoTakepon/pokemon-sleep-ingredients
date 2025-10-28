@@ -22,9 +22,12 @@ export function setupEnergyControls({
       const input = event.target.closest(".energy-level-input");
       if (!input) return;
       const recipeId = input.dataset.recipeId;
-      const normalized = normalizeLevel?.(input.value) ?? Number(input.value) || 0;
+      const rawValue = normalizeLevel
+        ? normalizeLevel(input.value)
+        : Number(input.value);
+      const normalized = Number.isFinite(rawValue) ? rawValue : 0;
       input.value = String(normalized);
-      setRecipeLevel?.(recipeId, normalized);
+      if (setRecipeLevel) setRecipeLevel(recipeId, normalized);
     });
     energyTable.dataset.bound = "1";
   }

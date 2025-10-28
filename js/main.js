@@ -4,20 +4,16 @@
 // - 数量は 0 まで可（−で 0、× で削除）
 // - おすすめレシピ：必要食材「合計数が多い順」に並び替え
 import { parseOcrText } from "./ocr-parse.js";
-import {
-  collectThisWeekIngredientIds,
-  buildChosenRecipeSet,
-} from "./logic/recommendation.js";
-import { computeNextWeekTotals } from "./logic/next-week.js";
 import { computeBestRecipeCombos } from "./logic/proposals.js";
 import { computeNextWeekStockPlan } from "./logic/stock-plan.js";
-import { computeThisWeekTotals, buildTableRows } from "./logic/weekly-totals.js";
 import { bindMenuCardOpsDelegation } from "./ui/card-ops.js";
 import { setupNextWeekSelects, setupNextExtraSelect } from "./ui/next-week-selects.js";
 import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
 import { setupGatherUI } from "./ui/gather-init.js";
 import { setupStockPlanUI } from "./ui/stock-init.js";
 import { setupEnergyControls } from "./ui/energy-controls.js";
+import { renderMenuList as renderMenuListView, renderNextChosen as renderNextChosenView } from "./render/menu.js";
+import { renderTables as renderTablesView, renderSuggestionsTable as renderSuggestionsTableView } from "./render/tables.js?v=20251028-1439";
 import {
   computeFinalEnergy,
   normalizeLevel,
@@ -51,14 +47,14 @@ import {
   removeNextExtra as storeRemoveNextExtra,
   replaceNextState,
   replaceChosen,
-} from "./state/store.js?v=20251028-1344";
+} from "./state/store.js?v=20251028-1439";
 
 let switchTab = null;
 let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251028-1344'; // update-version.js と連動
+const APP_VERSION = '20251028-1439'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -78,6 +74,7 @@ const els = {
   nwListSalad: document.getElementById("nwListSalad"),
   nwListSweets:document.getElementById("nwListSweets"),
   nwExtraSelect: document.getElementById("nwExtraSelect"),
+  nwExtraList: document.getElementById("nwExtraList"),
 //  nwExtraQty:    document.getElementById("nwExtraQty"),
 //  nwExtraAdd:    document.getElementById("nwExtraAdd"),
   energyTable: document.getElementById("energyTable"),
@@ -103,6 +100,7 @@ const els = {
   suggestFieldBonus: document.getElementById("suggestFieldBonusInput"),
   suggestEventBonus: document.getElementById("suggestEventBonusInput"),
   suggestBonusSelect: document.getElementById("suggestBonusSelect"),
+  recommendTable: document.getElementById("recommendTable"),
 };
 
 const CATEGORY_LABELS = {
@@ -374,11 +372,6 @@ els.clear?.addEventListener("click", () => {
 });
 
 /* ----------------- Helpers ----------------- */
-function buildInventoryMap() {
-  const m = new Map();
-  for (const ing of state.data.ingredients) m.set(ing.id, Number(state.have[ing.id] || 0));
-  return m;
-}
 function em(ingId) {
   const ing = state.data.ingredients.find(x => x.id === ingId);
   return ing?.emoji || "";
@@ -933,21 +926,32 @@ function refresh() {
   renderGatherTable();
 }
 
-function renderNextChosen() {
-  const map = {
-    CURRY:  document.getElementById('nwListCurry'),
-    SALAD:  document.getElementById('nwListSalad'),
-    SWEETS: document.getElementById('nwListSweets'),
-  };
-  ['CURRY','SALAD','SWEETS'].forEach(k => {
-    renderMenuCardsShared({
-      ctx: 'NEXT',
-      items: state.next[k] || [],
-      mountEl: map[k],
-      catKey: k
-    });
+function renderMenuList() {
+  renderMenuListView({
+    state,
+    elements: {
+      menuList: els.chosen,
+      currentMenu: els.suggestCurrentMenu,
+    },
+    findRecipeById,
+    em,
+    getSummary: () => formatChosenCategorySummary(),
+    escapeHtml,
   });
-  renderExtraCards();
+}
+
+function renderNextChosen() {
+  renderNextChosenView({
+    state,
+    elements: {
+      nwListCurry: els.nwListCurry,
+      nwListSalad: els.nwListSalad,
+      nwListSweets: els.nwListSweets,
+      nwExtraList: els.nwExtraList,
+    },
+    findRecipeById,
+    em,
+  });
 }
 
 function rerenderTablesAndSuggestions() {
@@ -957,59 +961,11 @@ function rerenderTablesAndSuggestions() {
 
 // 今週/次週チェックに基づき「使用食材／その他の食材」の2表を1回で描画
 function renderTables() {
-  const invMap = buildInventoryMap();
-  const ingredients = state.data.ingredients || [];
-
-  const useThis = state.tableFilter?.this !== undefined ? !!state.tableFilter.this : true;
-  const useNext = state.tableFilter?.next !== undefined ? !!state.tableFilter.next : true;
-  const tableFilter = { this: useThis, next: useNext };
-
-  const thisTotals = computeThisWeekTotals(state.chosen, findRecipeById);
-  const nextTotalsMap = computeNextWeekTotals(
-    state.next,
-    state.data.recipes || {},
-    ingredients,
-    state.nextVersion,
-  );
-  const nextTotals = {
-    map: new Map(
-      Array.from(nextTotalsMap.entries()).map(([id, info]) => [id, Number(info?.qty) || 0])
-    ),
-    used: new Set(nextTotalsMap.keys()),
-  };
-
-  const { usedRows, otherRows, sums } = buildTableRows({
-    thisTotals,
-    nextTotals,
-    tableFilter,
-    inventoryMap: invMap,
-    ingredients,
+  renderTablesView({
+    state,
+    findRecipeById,
     computeShortageHours: (ingId, shortage) => computeShortageHoursDisplay(ingId, shortage),
   });
-
-  const writeTable = (tableId, rows, sumsObj) => {
-    const el = document.getElementById(tableId);
-    if (!el) return;
-    const body = rows.length ? rows.join("") : `<tr><td class="muted" colspan="5">（なし）</td></tr>`;
-    const footDiff = sumsObj.cur - sumsObj.tar;
-    el.innerHTML = `
-      <thead>
-        <tr><th>食材名</th><th class="num">現在</th><th class="num">目標</th><th class="num">差分</th><th class="num">残時間 (h)</th></tr>
-      </thead>
-      <tbody>${body}</tbody>
-      <tfoot>
-        <tr>
-          <th>合計</th>
-          <th class="num">${sumsObj.cur}</th>
-          <th class="num">${sumsObj.tar}</th>
-          <th class="num ${footDiff < 0 ? 'neg' : footDiff > 0 ? 'pos' : ''}">${footDiff}</th>
-          <th class="num">-</th>
-        </tr>
-      </tfoot>`;
-  };
-
-  writeTable('usedTable', usedRows, sums.used);
-  writeTable('otherTable', otherRows, sums.other);
 }
 
 function renderEnergyTable(selectedCategory = null) {
@@ -1180,20 +1136,6 @@ function renderStockGatherTable() {
     </thead>
     <tbody>${rows}</tbody>
   `;
-}
-
-function totalNeeds(recipe) {
-  let total = 0;
-  for (const n of Object.values(recipe.needs || {})) total += Number(n) || 0;
-  return total;
-}
-function shortageSum(recipe, invMap) {
-  let lack = 0;
-  for (const [id, need] of Object.entries(recipe.needs || {})) {
-    const have = invMap.get(id) || 0;
-    if (have < need) lack += (need - have);
-  }
-  return lack;
 }
 
 function renderProposalResults(perSlotCombos) {
@@ -1402,82 +1344,15 @@ function applyProposalCombo(index) {
 }
 
 function renderSuggestionsTable() {
-  const table = document.getElementById("recommendTable");
-  if (!table) return;
-
-  const cat = els.cat.value;
-  const inv = buildInventoryMap();
-  const chosenSet = buildChosenRecipeSet(state.chosen);
-  const candidates = (state.data.recipes[cat] || []).filter(r => !chosenSet.has(r.id));
-
-  // 今週＝選択済みレシピの needs を合算 (キー集合だけ欲しい)
-  const thisWeekIds = collectThisWeekIngredientIds(state.chosen, findRecipeById);
-  // 次週＝computeNextWeekTotals のキー
-  const nextTotalsMap = computeNextWeekTotals(
-    state.next,
-    state.data.recipes || {},
-    state.data.ingredients || [],
-    state.nextVersion,
-  );
-  const nextWeekIds = new Set(nextTotalsMap.keys());
-
-  const rows = [];
-  for (const r of candidates) {
-    const deficit = shortageSum(r, inv);
-    if (deficit === 0 || deficit <= 10) { // 作れる / あと少し（10以下）
-
-      // ★ 食材チップに色クラスを付与
-      const pods = Object.entries(r.needs || {}).map(([id, need]) => {
-        const have = inv.get(id) || 0;
-        const lack = Math.max(0, need - have);
-
-        // どちらに使われているか
-        let useCls = "";
-        const inThis = thisWeekIds.has(id);
-        const inNext = nextWeekIds.has(id);
-        if (inThis && inNext) useCls = "is-both";
-        else if (inThis)     useCls = "is-this";
-        else if (inNext)     useCls = "is-next";
-
-        return `<div class="need-pod ${useCls}">
-                  <div class="em">${em(id)}</div>
-                  <div class="num">×${need}</div>
-                  ${lack > 0 ? `<div class="lack">-${lack}</div>` : ""}
-                </div>`;
-      }).join("");
-
-      rows.push({
-        deficit,
-        total: totalNeeds(r),
-        title: r.title,
-        html: `<tr>
-          <td class="title-cell">
-            <div class="sugg-title">${r.title}</div>
-            <div class="need-pods">${pods}</div>
-          </td>
-          <td class="num">${deficit}</td>
-          <td class="status-col">${deficit===0
-            ? '<span class="status-ok">作れる</span>'
-            : '<span class="status-near">あと少し</span>'}</td>
-        </tr>`
-      });
-    }
-  }
-
-  rows.sort((a, b) => {
-    if (b.total !== a.total) return b.total - a.total;     // 必要食材合計が多い順
-    if (a.deficit !== b.deficit) return a.deficit - b.deficit; // 次点で不足少ない順
-    return a.title.localeCompare(b.title, "ja");
+  renderSuggestionsTableView({
+    state,
+    elements: {
+      recommendTable: els.recommendTable,
+      cat: els.cat,
+    },
+    findRecipeById,
+    em,
   });
-
-  table.innerHTML = `
-    <thead>
-      <tr><th class="left">料理名</th><th class="num">不足(合計)</th><th class="right">状態</th></tr>
-    </thead>
-    <tbody>
-      ${rows.length ? rows.map(r => r.html).join("") : `<tr><td class="muted" colspan="3">該当なし</td></tr>`}
-    </tbody>
-  `;
 }
 
 
@@ -1681,40 +1556,6 @@ function applyStockPlanToNext() {
 
 // 共有カード描画（THIS/NEXT 共通）
 // ※ 順序ミスを防ぐためオブジェクト引数に変更
-function renderMenuCardsShared({ ctx, items, mountEl, catKey = null }) {
-  if (!mountEl) return;
-  mountEl.innerHTML = (items || []).map(it => {
-    const r = findRecipeById(it.recipe);
-    const needs = (ctx === "EXTRA")
-      ? "" // 個別食材はチップ非表示
-      : Object.entries(r?.needs || {})
-          .map(([id, n]) => `
-            <div class="need-pill">
-              <span class="em">${em(id)}</span>
-              <span class="num">×${n}</span>
-            </div>
-          `).join("");
-
-    return `
-      <div class="menu-card"
-           data-ctx="${ctx}" data-cat="${catKey || ""}" data-id="${it.recipe}">
-        <!-- ▲ 同一行：タイトル（左）＋ 操作ボタン（右） -->
-        <div class="header-line">
-          <div class="title">${r?.title ?? ""}</div>
-          <div class="qty-ops">
-            <button class="op-btn op-minus btn btn-primary">−</button>
-            <input class="qty-input" type="number" min="0" value="${it.qty}">
-            <button class="op-btn op-plus  btn btn-primary">＋</button>
-            <button class="op-btn op-remove btn btn-ghost">×</button>
-          </div>
-        </div>
-        <!-- ▼ 食材ピルは下段で横並び -->
-        <div class="needs">${needs}</div>
-      </div>
-    `;
-  }).join("") || `<div class="empty muted">（なし）</div>`;
-}
-
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (ch) => {
     switch (ch) {
@@ -1761,64 +1602,6 @@ function formatChosenCategorySummary() {
     parts.push(label);
   });
   return parts.join(" ／ ");
-}
-
-function renderCurrentMenuSummary() {
-  const container = els.suggestCurrentMenu || document.getElementById("suggestCurrentMenu");
-  if (!container) return;
-
-  const summary = formatChosenCategorySummary();
-  if (!summary) {
-    container.innerHTML = `<span class="current-menu-empty muted">今週の料理は未選択です</span>`;
-    return;
-  }
-
-  const escaped = escapeHtml(summary);
-  container.innerHTML = `
-    <span class="current-menu-label">今週の料理:</span>
-    <span class="current-menu-text">${escaped}</span>
-  `;
-}
-
-function renderMenuList() {
-  const wrap = document.getElementById('menuList');
-  renderMenuCardsShared({
-    ctx: 'THIS',
-    items: state.chosen,
-    mountEl: wrap
-  });
-  renderCurrentMenuSummary();
-}
-
-function renderExtraCards() {
-  const wrap = document.getElementById('nwExtraList');
-  if (!wrap) return;
-  const extras = state.next.extra || [];
-  if (!extras.length) {
-    wrap.innerHTML = `<div class="empty muted">（なし）</div>`;
-    return;
-  }
-
-  const ingredients = state.data?.ingredients || [];
-  const map = new Map(ingredients.map((ing) => [ing.id, ing]));
-
-  wrap.innerHTML = extras.map((item) => {
-    const meta = map.get(item.ingId) || { name: item.ingId, emoji: "" };
-    const label = `${meta.emoji || ""} ${meta.name || item.ingId}`.trim();
-    return `
-      <div class="menu-card" data-ctx="NEXT" data-cat="extra" data-id="${item.ingId}">
-        <div class="header-line">
-          <div class="title">${label}</div>
-          <div class="qty-ops">
-            <button class="op-btn op-minus btn btn-primary">−</button>
-            <input class="qty-input" type="number" step="1" value="${item.qty}" aria-label="${label} の数量">
-            <button class="op-btn op-plus btn btn-primary">＋</button>
-            <button class="op-btn op-remove btn btn-ghost">×</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join("");
 }
 
 function displayAppVersion() {

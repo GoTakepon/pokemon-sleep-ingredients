@@ -12,8 +12,8 @@ import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
 import { setupGatherUI } from "./ui/gather-init.js";
 import { setupStockPlanUI } from "./ui/stock-init.js";
 import { setupEnergyControls } from "./ui/energy-controls.js";
-import { renderMenuList as renderMenuListView, renderNextChosen as renderNextChosenView } from "./render/menu.js";
-import { renderTables as renderTablesView, renderSuggestionsTable as renderSuggestionsTableView } from "./render/tables.js?v=20251028-1611";
+import { renderMenuList as renderMenuListView, renderNextChosen as renderNextChosenView } from "./render/menu.js?v=20251028-1715";
+import { renderTables as renderTablesView, renderSuggestionsTable as renderSuggestionsTableView } from "./render/tables.js?v=20251028-1633";
 import {
   computeFinalEnergy,
   normalizeLevel,
@@ -46,20 +46,19 @@ import {
   decNextExtra as storeDecNextExtra,
   setNextExtraQty as storeSetNextExtraQty,
   removeNextExtra as storeRemoveNextExtra,
-  replaceNextState,
   replaceChosen,
-} from "./state/store.js?v=20251028-1611";
+} from "./state/store.js?v=20251028-1633";
 import {
   applyProposalComboToState,
   applyStockPlanResult,
-} from "./state/apply.js?v=20251028-1557";
+} from "./state/apply.js?v=20251028-1715";
 
 let switchTab = null;
 let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251028-1611'; // update-version.js と連動
+const APP_VERSION = '20251028-1633'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -1309,31 +1308,12 @@ function updateProposalAppliedHighlight(activeIndex = null) {
   });
 }
 
-function convertProposalRecipesToChosen(recipes) {
-  if (!Array.isArray(recipes)) return [];
-  const order = [];
-  const counts = new Map();
-  recipes.forEach((entry) => {
-    const recipeId = entry?.recipeId || entry?.recipe?.id;
-    if (!recipeId) return;
-    if (!counts.has(recipeId)) order.push(recipeId);
-    counts.set(recipeId, (counts.get(recipeId) || 0) + 1);
-  });
-  return order.map((id) => ({
-    recipe: id,
-    qty: counts.get(id),
-  }));
-}
-
 function applyProposalCombo(index) {
   if (index === null || index === undefined) return;
   const numericIndex = Number(index);
   if (!Number.isInteger(numericIndex) || numericIndex < 0) return;
   const combo = lastProposalCombos?.[numericIndex];
-  if (!combo || !Array.isArray(combo.recipes) || !combo.recipes.length) return;
-  const nextChosen = convertProposalRecipesToChosen(combo.recipes);
-  if (!nextChosen.length) return;
-  replaceChosen(nextChosen);
+  if (!applyProposalComboToState(combo)) return;
   save();
   renderMenuList();
   rerenderTablesAndSuggestions();
@@ -1356,24 +1336,6 @@ function renderSuggestionsTable() {
   });
 }
 
-
-function intersectIngredientIds(recipes) {
-  const list = recipes.filter(Boolean);
-  if (!list.length) return [];
-  const first = list[0];
-  const baseSet = new Set(Object.keys(first?.needs || {}));
-  for (let i = 1; i < list.length; i += 1) {
-    const recipe = list[i];
-    const nextSet = new Set(Object.keys(recipe?.needs || {}));
-    for (const id of Array.from(baseSet)) {
-      if (!nextSet.has(id)) {
-        baseSet.delete(id);
-      }
-    }
-    if (!baseSet.size) break;
-  }
-  return Array.from(baseSet);
-}
 
 function formatStockPlanTotalsRow({ ingredient, baseQty, extraQty, bonusQty, totalQty }) {
   return `
@@ -1517,34 +1479,10 @@ function applyStockPlanToNext() {
     return;
   }
 
-  const nextState = {
-    CURRY: [],
-    SALAD: [],
-    SWEETS: [],
-    extra: [],
-  };
-
-  const topCategoryKey = result.topCategoryKey || null;
-  const extraMeals = Number(result.extraMeals || 0);
-
-  plans.forEach((plan) => {
-    const key = CATEGORY_TO_NEXT_KEY[plan.categoryKey];
-    if (!key || !plan.recipeId) return;
-    const quantity = baseMeals + (plan.categoryKey === topCategoryKey ? extraMeals : 0);
-    if (!Number.isFinite(quantity) || quantity === 0) return;
-    nextState[key].push({ recipe: plan.recipeId, qty: quantity });
-  });
-
-  const extras = [];
-  result.bonusTotals?.forEach((qty, ingId) => {
-    const numeric = Number(qty) || 0;
-    if (numeric !== 0) {
-      extras.push({ ingId, qty: numeric });
-    }
-  });
-  nextState.extra = extras;
-
-  replaceNextState(nextState);
+  if (!applyStockPlanResult(result, CATEGORY_TO_NEXT_KEY)) {
+    alert("反映できる料理プランが見つかりませんでした。");
+    return;
+  }
   save();
   renderNextChosen();
   rerenderTablesAndSuggestions();

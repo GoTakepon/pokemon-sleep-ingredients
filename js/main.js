@@ -25,14 +25,35 @@ import {
   normalizeGatherArray,
   normalizeGatherValue,
 } from "./logic/gather.js";
+import {
+  state,
+  saveState,
+  normalizePokemonCount,
+  MAX_GATHER_SLOTS,
+  setData as storeSetData,
+  findRecipeById,
+  incChosen as storeIncChosen,
+  decChosen as storeDecChosen,
+  setChosenQty as storeSetChosenQty,
+  removeChosen as storeRemoveChosen,
+  incNextRecipe as storeIncNextRecipe,
+  decNextRecipe as storeDecNextRecipe,
+  setNextRecipeQty as storeSetNextRecipeQty,
+  removeNextRecipe as storeRemoveNextRecipe,
+  incNextExtra as storeIncNextExtra,
+  decNextExtra as storeDecNextExtra,
+  setNextExtraQty as storeSetNextExtraQty,
+  removeNextExtra as storeRemoveNextExtra,
+  replaceNextState,
+  replaceChosen,
+} from "./state/store.js?v=20251028-1147";
 
 let switchTab = null;
 let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251028-1000'; // update-version.js と連動
-const MAX_GATHER_SLOTS = 4;
+const APP_VERSION = '20251028-1147'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -119,159 +140,6 @@ function shallowArrayEqual(a = [], b = []) {
 }
 
 /* ----------------- State ----------------- */
-const storedTableFilter = (() => {
-  try {
-    const raw = localStorage.getItem("tableFilter");
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object") {
-      return {
-        this: parsed.this !== undefined ? !!parsed.this : undefined,
-        next: parsed.next !== undefined ? !!parsed.next : undefined,
-      };
-    }
-  } catch (err) {
-    console.warn("[tableFilter] load failed:", err);
-  }
-  return null;
-})();
-
-const storedEnergyConfig = (() => {
-  try {
-    const raw = localStorage.getItem("energyConfig");
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return null;
-    return {
-      fieldBonusPercent: Number(parsed.fieldBonusPercent) || 0,
-      eventBonusMultiplier: Number(parsed.eventBonusMultiplier) || 1,
-      levels: parsed.levels && typeof parsed.levels === "object" ? parsed.levels : {},
-    };
-  } catch (err) {
-    console.warn("[energyConfig] load failed:", err);
-    return null;
-  }
-})();
-
-const storedGatherRates = (() => {
-  try {
-    const raw = localStorage.getItem("gatherRates");
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return null;
-    return parsed;
-  } catch (err) {
-    console.warn("[gatherRates] load failed:", err);
-    return null;
-  }
-})();
-
-const storedSuggestConfig = (() => {
-  try {
-    const raw = localStorage.getItem("suggestConfig");
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return null;
-    return parsed;
-  } catch (err) {
-    console.warn("[suggestConfig] load failed:", err);
-    return null;
-  }
-})();
-
-const storedStockConfig = (() => {
-  try {
-    const raw = localStorage.getItem("stockPlanConfig");
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return null;
-    return parsed;
-  } catch (err) {
-    console.warn("[stockPlanConfig] load failed:", err);
-    return null;
-  }
-})();
-
-const storedStockGatherRates = (() => {
-  try {
-    const raw = localStorage.getItem("stockGatherRates");
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return null;
-    return parsed;
-  } catch (err) {
-    console.warn("[stockGatherRates] load failed:", err);
-    return null;
-  }
-})();
-
-function normalizePokemonCount(value) {
-  const num = Number.parseInt(value, 10);
-  if (!Number.isFinite(num) || num <= 0) return 1;
-  return Math.max(1, Math.min(MAX_GATHER_SLOTS, num));
-}
-
-const gatherRatesPayload = storedGatherRates ? { ...storedGatherRates } : {};
-const storedPokemonCountRaw = gatherRatesPayload.__pokemonCount;
-if ("__pokemonCount" in gatherRatesPayload) delete gatherRatesPayload.__pokemonCount;
-
-const stockGatherRatesPayload = storedStockGatherRates ? { ...storedStockGatherRates } : {};
-const storedCookingCategoriesRaw = (() => {
-  if (Array.isArray(storedStockConfig?.cookingCategories)) {
-    return storedStockConfig.cookingCategories;
-  }
-  if (storedStockConfig?.cookingCategory) {
-    return [storedStockConfig.cookingCategory];
-  }
-  return DEFAULT_STOCK_CATEGORIES;
-})();
-
-const state = {
-  have:   JSON.parse(localStorage.getItem("have")   || "{}"),
-  chosen: JSON.parse(localStorage.getItem("chosen") || "[]"), // 今週
-  next:   JSON.parse(localStorage.getItem("next")   || JSON.stringify({
-            CURRY: [], SALAD: [], SWEETS: [], extra: []
-          })), // 次週 {CURRY:[{recipe,qty}],... , extra:[{ingId,qty}]}
-  data: null,
-  nextWeekPlan: null,
-  nextVersion: 0,
-  tableFilter: {
-    this: storedTableFilter?.this ?? true,
-    next: storedTableFilter?.next ?? true,
-  },
-  energyConfig: {
-    fieldBonusPercent: storedEnergyConfig?.fieldBonusPercent ?? 0,
-    eventBonusMultiplier: storedEnergyConfig?.eventBonusMultiplier ?? 1,
-    levels: storedEnergyConfig?.levels || {},
-  },
-  suggestConfig: {
-    eventType: storedSuggestConfig?.eventType || "none",
-    eventCustom: storedSuggestConfig?.eventCustom || "",
-    ec: storedSuggestConfig?.ec || "none",
-    island: storedSuggestConfig?.island || "wakakusa_ex",
-    fieldBonusPercent: storedSuggestConfig?.fieldBonusPercent ?? (storedEnergyConfig?.fieldBonusPercent ?? 55),
-    eventBonusMultiplier: storedSuggestConfig?.eventBonusMultiplier ?? (storedEnergyConfig?.eventBonusMultiplier ?? 1),
-    bonusPreset: storedSuggestConfig?.bonusPreset || "preset_berries",
-    otherMemo: storedSuggestConfig?.otherMemo || "",
-  },
-  gatherRates: gatherRatesPayload,
-  gatherPokemonCount: normalizePokemonCount(storedPokemonCountRaw),
-  gatherMemo: localStorage.getItem("gatherMemo") || "",
-  potCapacity: Number(localStorage.getItem("potCapacity") || 69),
-  excludeMaxLevel: localStorage.getItem("excludeMaxLevel") === "1",
-  excludeOverPot: localStorage.getItem("excludeOverPot") === "1",
-  stockPlan: {
-    bagCapacity: Math.max(1, Number(storedStockConfig?.bagCapacity) || 240),
-    islandType: storedStockConfig?.islandType === "normal" ? "normal" : "EX",
-    eventType: ["none", "pokemon", "cooking"].includes(storedStockConfig?.eventType)
-      ? storedStockConfig.eventType
-      : "none",
-    cookingCategories: normalizeStockCategoriesInput(storedCookingCategoriesRaw, DEFAULT_STOCK_CATEGORIES),
-    gatherRates: stockGatherRatesPayload,
-    distributeLeftover: storedStockConfig?.distributeLeftover !== false,
-    excludeMaxLevel: storedStockConfig?.excludeMaxLevel === true,
-  },
-};
 
 state.energyConfig.fieldBonusPercent = normalizePercent(state.energyConfig.fieldBonusPercent ?? 0);
 state.energyConfig.eventBonusMultiplier = normalizeMultiplier(state.energyConfig.eventBonusMultiplier ?? 1);
@@ -345,49 +213,7 @@ if (state.stockPlan.cookingCategory !== undefined) {
   delete state.stockPlan.cookingCategory;
 }
 
-function save() {
-  localStorage.setItem("have", JSON.stringify(state.have));
-  localStorage.setItem("chosen", JSON.stringify(state.chosen));
-  localStorage.setItem("next", JSON.stringify(state.next)); // ★追加
-  localStorage.setItem("energyConfig", JSON.stringify(state.energyConfig));
-  const gatherPayload = {
-    ...state.gatherRates,
-    __pokemonCount: state.gatherPokemonCount,
-  };
-  localStorage.setItem("gatherRates", JSON.stringify(gatherPayload));
-  localStorage.setItem("gatherMemo", state.gatherMemo || "");
-  localStorage.setItem("potCapacity", String(state.potCapacity || 69));
-  localStorage.setItem("excludeMaxLevel", state.excludeMaxLevel ? "1" : "0");
-  localStorage.setItem("excludeOverPot", state.excludeOverPot ? "1" : "0");
-  const stockConfig = {
-    bagCapacity: state.stockPlan?.bagCapacity || 240,
-    islandType: state.stockPlan?.islandType || "EX",
-    eventType: state.stockPlan?.eventType || "none",
-    cookingCategories: sortStockCategories(
-      normalizeStockCategoriesInput(state.stockPlan?.cookingCategories, DEFAULT_STOCK_CATEGORIES)
-    ),
-    cookingCategory: state.stockPlan?.cookingCategories?.[0] || "curry",
-    distributeLeftover: state.stockPlan?.distributeLeftover !== false,
-    excludeMaxLevel: state.stockPlan?.excludeMaxLevel === true,
-  };
-  localStorage.setItem("stockPlanConfig", JSON.stringify(stockConfig));
-  localStorage.setItem("stockGatherRates", JSON.stringify(state.stockPlan?.gatherRates || {}));
-  const suggestConfig = {
-    eventType: state.suggestConfig?.eventType || "none",
-    eventCustom: state.suggestConfig?.eventCustom || "",
-    ec: state.suggestConfig?.ec || "none",
-    island: state.suggestConfig?.island || "wakakusa_ex",
-    fieldBonusPercent: state.energyConfig.fieldBonusPercent,
-    eventBonusMultiplier: state.energyConfig.eventBonusMultiplier,
-    bonusPreset: state.suggestConfig?.bonusPreset || "preset_berries",
-    otherMemo: state.suggestConfig?.otherMemo || "",
-  };
-  localStorage.setItem("suggestConfig", JSON.stringify(suggestConfig));
-}
-
-function markNextDirty() {
-  state.nextVersion = (state.nextVersion || 0) + 1;
-}
+const save = saveState;
 
 /* ----------------- Data load ----------------- */
 async function loadData() {
@@ -396,7 +222,7 @@ async function loadData() {
     fetch(`./data/recipes.json?v=${APP_VERSION}`).then( r => r.json()),
     fetch(`./nextWeekPlan.json?v=${APP_VERSION}`).then((r) => r.json()).catch(() => ({})),
   ]);
-  state.data = { ingredients, recipes };
+  storeSetData({ ingredients, recipes });
   if (nextPlan && typeof nextPlan === "object") {
     state.nextWeekPlan = nextPlan;
   }
@@ -505,21 +331,16 @@ function buildRecipeOptions() {
 
 function addNextRecipe(cat, recipeId) {
   if (!recipeId) return;
-  const arr = state.next[cat] || (state.next[cat] = []);
-  const hit = arr.find(x => x.recipe === recipeId);
-  if (hit) hit.qty += 1; else arr.push({ recipe: recipeId, qty: 1 });
-  markNextDirty();
-  save(); renderNextChosen(); rerenderTablesAndSuggestions();
+  storeIncNextRecipe(cat, recipeId);
 }
 
 /* ----------------- Menu actions ----------------- */
 function addRecipeById(id) {
   if (!id) return;
-  const found = state.chosen.find(c => c.recipe === id);
-  if (found) found.qty += 1;
-  else state.chosen.push({ recipe: id, qty: 1 });
-  save();
-  refresh();
+  if (storeIncChosen(id)) {
+    save();
+    refresh();
+  }
 }
 
 els.cat.addEventListener("change", () => buildRecipeOptions());
@@ -539,7 +360,7 @@ els.parse?.addEventListener("click", () => {
 });
 els.clear?.addEventListener("click", () => {
   state.have = {};
-  state.chosen = [];
+  replaceChosen([]);
   if (els.ocr) els.ocr.value = "";
   save(); refresh();
 });
@@ -1612,7 +1433,7 @@ function applyProposalCombo(index) {
   if (!combo || !Array.isArray(combo.recipes) || !combo.recipes.length) return;
   const nextChosen = convertProposalRecipesToChosen(combo.recipes);
   if (!nextChosen.length) return;
-  state.chosen = nextChosen;
+  replaceChosen(nextChosen);
   save();
   renderMenuList();
   rerenderTablesAndSuggestions();
@@ -2135,8 +1956,7 @@ function applyStockPlanToNext() {
   });
   nextState.extra = extras;
 
-  state.next = nextState;
-  markNextDirty();
+  replaceNextState(nextState);
   save();
   renderNextChosen();
   rerenderTablesAndSuggestions();
@@ -2295,138 +2115,45 @@ function displayAppVersion() {
 }
 
 /* ==== 今週（THIS）用の増減/削除 ==== */
-function findChosen(recipeId) {
-  return state.chosen.find(c => c.recipe === recipeId) || null;
-}
 function incChosen(recipeId) {
-  const hit = findChosen(recipeId);
-  if (hit) hit.qty += 1;
-  else state.chosen.push({ recipe: recipeId, qty: 1 });
-  save();
+  if (storeIncChosen(recipeId)) save();
 }
 function decChosen(recipeId) {
-  const hit = findChosen(recipeId);
-  if (!hit) return;
-  hit.qty = Math.max(0, (hit.qty || 0) - 1);
-  save();
+  if (storeDecChosen(recipeId)) save();
 }
 function setChosenQty(recipeId, qty) {
-  const hit = findChosen(recipeId);
-  if (!hit) return;
-  hit.qty = Math.max(0, Number(qty) || 0);
-  save();
+  if (storeSetChosenQty(recipeId, qty)) save();
 }
 function removeChosen(recipeId) {
-  state.chosen = state.chosen.filter(c => c.recipe !== recipeId);
-  save();
+  if (storeRemoveChosen(recipeId)) save();
 }
 
 /* ==== 次週（NEXT）用の増減/削除 ==== */
-function findNextArray(catKey) {
-  return state.next[catKey] || (state.next[catKey] = []);
-}
 function incNextRecipe(catKey, recipeId) {
-  const arr = findNextArray(catKey);
-  const hit = arr.find(x => x.recipe === recipeId);
-  if (hit) {
-    hit.qty += 1;
-  } else {
-    arr.push({ recipe: recipeId, qty: 1 });
-  }
-  markNextDirty();
-  save();
+  if (storeIncNextRecipe(catKey, recipeId)) save();
 }
 function decNextRecipe(catKey, recipeId) {
-  const arr = findNextArray(catKey);
-  const hit = arr.find(x => x.recipe === recipeId);
-  if (!hit) return;
-  const prev = hit.qty || 0;
-  const nextQty = Math.max(0, prev - 1);
-  if (nextQty === prev) return;
-  hit.qty = nextQty;
-  markNextDirty();
-  save();
+  if (storeDecNextRecipe(catKey, recipeId)) save();
 }
 function setNextRecipeQty(catKey, recipeId, qty) {
-  const arr = findNextArray(catKey);
-  const hit = arr.find(x => x.recipe === recipeId);
-  if (!hit) return;
-  const nextQty = Math.max(0, Number(qty) || 0);
-  if (hit.qty === nextQty) return;
-  hit.qty = nextQty;
-  markNextDirty();
-  save();
+  if (storeSetNextRecipeQty(catKey, recipeId, qty)) save();
 }
 function removeNextRecipe(catKey, recipeId) {
-  const arr = findNextArray(catKey);
-  const filtered = arr.filter(x => x.recipe !== recipeId);
-  if (filtered.length === arr.length) return;
-  state.next[catKey] = filtered;
-  markNextDirty();
-  save();
+  if (storeRemoveNextRecipe(catKey, recipeId)) save();
 }
 
 // ==== 個別食材（extra） 用の増減/削除 ====
-function findExtra(ingId) {
-  return (state.next.extra || []).find(e => e.ingId === ingId) || null;
-}
 function incNextExtra(ingId) {
-  if (!state.next.extra) state.next.extra = [];
-  const hit = findExtra(ingId);
-  if (hit) {
-    hit.qty = (Number(hit.qty) || 0) + 1;
-  } else {
-    state.next.extra.push({ ingId, qty: 1 });
-  }
-  markNextDirty();
-  save();
+  if (storeIncNextExtra(ingId)) save();
 }
 function decNextExtra(ingId) {
-  if (!state.next.extra) return;
-  const hit = findExtra(ingId);
-  if (!hit) return;
-  const prev = Number(hit.qty) || 0;
-  const nextQty = prev - 1;
-  if (nextQty === prev) return;
-  if (nextQty === 0) {
-    state.next.extra = state.next.extra.filter(e => e.ingId !== ingId);
-  } else {
-    hit.qty = nextQty;
-  }
-  markNextDirty();
-  save();
+  if (storeDecNextExtra(ingId)) save();
 }
 function setNextExtraQty(ingId, qty) {
-  if (!state.next.extra) return;
-  const hit = findExtra(ingId);
-  if (!hit) return;
-  let nextQty = Number(qty);
-  if (!Number.isFinite(nextQty)) nextQty = 0;
-  if (hit.qty === nextQty) return;
-  if (nextQty === 0) {
-    state.next.extra = state.next.extra.filter(e => e.ingId !== ingId);
-  } else {
-    hit.qty = nextQty;
-  }
-  markNextDirty();
-  save();
+  if (storeSetNextExtraQty(ingId, qty)) save();
 }
 function removeNextExtra(ingId) {
-  if (!state.next.extra) return;
-  const filtered = state.next.extra.filter(e => e.ingId !== ingId);
-  if (filtered.length === state.next.extra.length) return;
-  state.next.extra = filtered;
-  markNextDirty();
-  save();
-}
-
-function findRecipeById(id) {
-  const groups = state?.data?.recipes || {};
-  for (const list of Object.values(groups)) {
-    const hit = (list || []).find(r => r.id === id);
-    if (hit) return hit;
-  }
-  return null;
+  if (storeRemoveNextExtra(ingId)) save();
 }
 
 function setupCollapsers(){
@@ -2893,7 +2620,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     });
     setupNextExtraSelect({
-      onAddExtra: incNextExtra,
+      onAddExtra: storeIncNextExtra,
       renderNextChosen,
       rerenderAll: rerenderTablesAndSuggestions,
       save,

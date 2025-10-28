@@ -13,7 +13,7 @@ import { setupGatherUI } from "./ui/gather-init.js";
 import { setupStockPlanUI } from "./ui/stock-init.js";
 import { setupEnergyControls } from "./ui/energy-controls.js";
 import { renderMenuList as renderMenuListView, renderNextChosen as renderNextChosenView } from "./render/menu.js";
-import { renderTables as renderTablesView, renderSuggestionsTable as renderSuggestionsTableView } from "./render/tables.js?v=20251028-1557";
+import { renderTables as renderTablesView, renderSuggestionsTable as renderSuggestionsTableView } from "./render/tables.js?v=20251028-1611";
 import {
   computeFinalEnergy,
   normalizeLevel,
@@ -48,14 +48,18 @@ import {
   removeNextExtra as storeRemoveNextExtra,
   replaceNextState,
   replaceChosen,
-} from "./state/store.js?v=20251028-1557";
+} from "./state/store.js?v=20251028-1611";
+import {
+  applyProposalComboToState,
+  applyStockPlanResult,
+} from "./state/apply.js?v=20251028-1557";
 
 let switchTab = null;
 let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251028-1557'; // update-version.js と連動
+const APP_VERSION = '20251028-1611'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {

@@ -13,6 +13,8 @@ import { computeThisWeekTotals, buildTableRows } from "./logic/weekly-totals.js"
 import { bindMenuCardOpsDelegation } from "./ui/card-ops.js";
 import { setupNextWeekSelects, setupNextExtraSelect } from "./ui/next-week-selects.js";
 import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
+import { setupGatherUI } from "./ui/gather-init.js";
+import { setupStockPlanUI } from "./ui/stock-init.js";
 import {
   computeFinalEnergy,
   normalizeLevel,
@@ -46,14 +48,14 @@ import {
   removeNextExtra as storeRemoveNextExtra,
   replaceNextState,
   replaceChosen,
-} from "./state/store.js?v=20251028-1147";
+} from "./state/store.js?v=20251028-1327";
 
 let switchTab = null;
 let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251028-1147'; // update-version.js と連動
+const APP_VERSION = '20251028-1327'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -2256,302 +2258,6 @@ function toggleSuggestCustomInputs() {
   }
 }
 
-function setupGatherTable() {
-  const table = els.gatherTable || document.getElementById("gatherTable");
-  syncSuggestControls();
-  if (table && !table.dataset.bound) {
-    table.addEventListener("change", (e) => {
-      const input = e.target.closest(".gather-input");
-      if (!input) return;
-      const ingId = input.dataset.ingId;
-      const idx = input.dataset.index;
-      const normalized = normalizeGatherValue(input.value);
-      input.value = String(normalized);
-      setGatherRate(ingId, idx, normalized);
-    });
-    table.dataset.bound = "1";
-  }
-
-  if (els.suggestEvent && !els.suggestEvent.dataset.bound) {
-    els.suggestEvent.addEventListener("change", () => {
-      setSuggestEventType(els.suggestEvent.value);
-    });
-    els.suggestEvent.dataset.bound = "1";
-  }
-  if (els.suggestEventCustom && !els.suggestEventCustom.dataset.bound) {
-    els.suggestEventCustom.addEventListener("input", () => {
-      state.suggestConfig.eventCustom = els.suggestEventCustom.value;
-      if (state.suggestConfig.eventType !== "custom") {
-        setSuggestEventType("custom");
-      } else {
-        save();
-        clearProposalResults();
-        syncSuggestControls();
-      }
-    });
-    els.suggestEventCustom.dataset.bound = "1";
-  }
-  if (els.suggestEc && !els.suggestEc.dataset.bound) {
-    els.suggestEc.addEventListener("change", () => {
-      setSuggestEc(els.suggestEc.value);
-    });
-    els.suggestEc.dataset.bound = "1";
-  }
-  if (els.suggestIsland && !els.suggestIsland.dataset.bound) {
-    els.suggestIsland.addEventListener("change", () => {
-      setSuggestIsland(els.suggestIsland.value);
-    });
-    els.suggestIsland.dataset.bound = "1";
-  }
-  if (els.suggestFieldBonus && !els.suggestFieldBonus.dataset.bound) {
-    els.suggestFieldBonus.addEventListener("change", () => {
-      setFieldBonusPercent(els.suggestFieldBonus.value);
-    });
-    els.suggestFieldBonus.dataset.bound = "1";
-  }
-  if (els.suggestEventBonus && !els.suggestEventBonus.dataset.bound) {
-    els.suggestEventBonus.addEventListener("change", () => {
-      setEventBonusMultiplier(els.suggestEventBonus.value);
-    });
-    els.suggestEventBonus.dataset.bound = "1";
-  }
-  if (els.suggestBonusSelect && !els.suggestBonusSelect.dataset.bound) {
-    els.suggestBonusSelect.addEventListener("change", () => {
-      setSuggestBonusPreset(els.suggestBonusSelect.value);
-    });
-    els.suggestBonusSelect.dataset.bound = "1";
-  }
-  toggleSuggestCustomInputs();
-
-  const memoInput = document.getElementById("gatherMemoText");
-  if (memoInput && !memoInput.dataset.bound) {
-    memoInput.value = state.gatherMemo || "";
-    memoInput.addEventListener("input", () => {
-      state.gatherMemo = memoInput.value || "";
-      save();
-    });
-    memoInput.dataset.bound = "1";
-  }
-
-  const gatherExportBtn = document.getElementById("exportGatherRatesBtn");
-  const gatherImportBtn = document.getElementById("importGatherRatesBtn");
-  const gatherTextArea = document.getElementById("gatherRatesText");
-  if (gatherExportBtn && gatherTextArea && !gatherExportBtn.dataset.bound) {
-    gatherExportBtn.addEventListener("click", () => {
-      const text = serializeGatherConfig();
-      gatherTextArea.value = text;
-      gatherTextArea.focus();
-      gatherTextArea.select();
-      writeToClipboard(text);
-    });
-    gatherExportBtn.dataset.bound = "1";
-  }
-  if (gatherImportBtn && gatherTextArea && !gatherImportBtn.dataset.bound) {
-    gatherImportBtn.addEventListener("click", () => {
-      const raw = gatherTextArea.value.trim();
-      if (!raw) {
-        alert("インポートするデータを入力してください。");
-        return;
-      }
-      try {
-        const payload = JSON.parse(raw);
-        applyGatherConfig(payload);
-        renderGatherTable();
-        renderEnergyTable(els.cat?.value || null);
-        clearProposalResults();
-        alert("食材集め能力をインポートしました。");
-      } catch (err) {
-        console.error("Import gather rates failed", err);
-        alert(`インポートに失敗しました: ${err.message || err}`);
-      }
-    });
-    gatherImportBtn.dataset.bound = "1";
-  }
-
-  const potInput = els.potCapacity || document.getElementById("potCapacityInput");
-  if (potInput && !potInput.dataset.bound) {
-    potInput.value = String(state.potCapacity || 69);
-    potInput.addEventListener("change", () => {
-      const val = Math.max(1, Number(potInput.value) || 69);
-      state.potCapacity = val;
-      save();
-      clearProposalResults();
-    });
-    potInput.dataset.bound = "1";
-  }
-
-  const excludeMaxLevelInput = els.excludeMaxLevel || document.getElementById("excludeMaxLevelCheckbox");
-  if (excludeMaxLevelInput && !excludeMaxLevelInput.dataset.bound) {
-    excludeMaxLevelInput.checked = !!state.excludeMaxLevel;
-    excludeMaxLevelInput.addEventListener("change", () => {
-      state.excludeMaxLevel = !!excludeMaxLevelInput.checked;
-      save();
-      clearProposalResults();
-    });
-    excludeMaxLevelInput.dataset.bound = "1";
-  }
-
-  const excludeOverPotInput = els.excludeOverPot || document.getElementById("excludeOverPotCheckbox");
-  if (excludeOverPotInput && !excludeOverPotInput.dataset.bound) {
-    excludeOverPotInput.checked = !!state.excludeOverPot;
-    excludeOverPotInput.addEventListener("change", () => {
-      state.excludeOverPot = !!excludeOverPotInput.checked;
-      save();
-      clearProposalResults();
-    });
-    excludeOverPotInput.dataset.bound = "1";
-  }
-
-  const calcBtn = document.getElementById("calcRecipeProposalsBtn");
-  if (calcBtn && !calcBtn.dataset.bound) {
-    calcBtn.addEventListener("click", () => {
-      clearProposalResults("計算中...");
-      const category = els.cat?.value || null;
-      const potCapacity = state.excludeOverPot ? state.potCapacity : null;
-      const results = [];
-      for (let slot = 1; slot <= MAX_GATHER_SLOTS; slot += 1) {
-        const stats = getAllRecipeEnergyStats({
-          categoryFilter: category,
-          usePokemonCount: true,
-          pokemonCount: slot,
-          potCapacity,
-          excludeMaxLevel: state.excludeMaxLevel,
-        });
-        const combos = computeBestRecipeCombos(stats, {
-          pokemonCount: slot,
-          maxHours: 24,
-          maxMeals: 3,
-          maxResults: 1,
-          potCapacity,
-          excludeMaxLevel: state.excludeMaxLevel,
-        });
-        const best = combos && combos[0] ? {
-          ...combos[0],
-          recipes: (combos[0].recipes || []).map((r) => ({ ...r })),
-        } : null;
-        results.push({ slot, combo: best });
-      }
-      renderProposalResults(results);
-    });
-    calcBtn.dataset.bound = "1";
-  }
-
-  const proposalsContainer = document.getElementById("proposalResults");
-  if (proposalsContainer && !proposalsContainer.dataset.applyBound) {
-    proposalsContainer.addEventListener("click", (e) => {
-      const btn = e.target.closest(".proposal-apply-btn");
-      if (!btn) return;
-      applyProposalCombo(btn.dataset.index);
-    });
-    proposalsContainer.dataset.applyBound = "1";
-  }
-}
-function setupStockPlanControls() {
-  const table = els.stockGatherTable || document.getElementById("stockGatherTable");
-  if (table && !table.dataset.bound) {
-    table.addEventListener("change", (e) => {
-      const input = e.target.closest(".stock-gather-input");
-      if (!input) return;
-      const ingId = input.dataset.ingId;
-      const idx = input.dataset.index;
-      setStockGatherRate(ingId, idx, input.value);
-      clearStockPlanResults();
-    });
-    table.dataset.bound = "1";
-  }
-
-  if (els.stockBagCapacity) {
-    els.stockBagCapacity.addEventListener("change", () => setStockBagCapacity(els.stockBagCapacity.value));
-  }
-  if (els.stockIsland) {
-    els.stockIsland.addEventListener("change", () => setStockIslandType(els.stockIsland.value));
-  }
-  if (els.stockEvent) {
-    els.stockEvent.addEventListener("change", () => setStockEventType(els.stockEvent.value));
-  }
-  if (els.stockExcludeMax) {
-    els.stockExcludeMax.addEventListener("change", () => setStockExcludeMax(els.stockExcludeMax.checked));
-  }
-  if (els.stockDistribute) {
-    els.stockDistribute.addEventListener("change", () => setStockDistribute(els.stockDistribute.checked));
-  }
-
-  stockCategoryCheckboxes = Array.from(document.querySelectorAll(".stock-category-checkbox"));
-  stockCategoryCheckboxes.forEach((checkbox) => {
-    if (!checkbox || checkbox.dataset.bound) return;
-    checkbox.addEventListener("change", (event) => {
-      const selected = stockCategoryCheckboxes
-        .filter((cb) => cb?.checked)
-        .map((cb) => cb.value);
-      if (!selected.length) {
-        alert("カテゴリは最低1つ選択してください。");
-        checkbox.checked = true;
-        syncStockPlanControls();
-        return;
-      }
-      setStockCookingCategories(selected);
-    });
-    checkbox.dataset.bound = "1";
-  });
-
-  const exportBtn = document.getElementById("exportStockGatherBtn");
-  const importBtn = document.getElementById("importStockGatherBtn");
-  const textArea = document.getElementById("stockGatherText");
-  if (exportBtn && textArea) {
-    exportBtn.addEventListener("click", () => {
-      const text = serializeStockGatherConfig();
-      textArea.value = text;
-      textArea.focus();
-      textArea.select();
-      writeToClipboard(text);
-    });
-  }
-  if (importBtn && textArea) {
-    importBtn.addEventListener("click", () => {
-      const raw = textArea.value.trim();
-      if (!raw) {
-        alert("インポートするデータを入力してください。");
-        return;
-      }
-      try {
-        const data = JSON.parse(raw);
-        applyStockGatherConfig(data);
-        syncStockPlanControls();
-        renderStockGatherTable();
-        clearStockPlanResults();
-        alert("次週用の食材集め能力をインポートしました。");
-      } catch (err) {
-        console.error("Import stock gather data failed", err);
-        alert(`インポートに失敗しました: ${err.message || err}`);
-      }
-    });
-  }
-
-  const calcBtn = document.getElementById("calcStockPlanBtn");
-  if (calcBtn && !calcBtn.dataset.bound) {
-    calcBtn.addEventListener("click", () => {
-      const result = computeNextWeekStockPlan({
-        bagCapacity: state.stockPlan.bagCapacity,
-        islandType: state.stockPlan.islandType,
-        eventType: state.stockPlan.eventType,
-        cookingCategories: state.stockPlan.cookingCategories,
-      });
-      renderStockPlanResults(result);
-    });
-    calcBtn.dataset.bound = "1";
-  }
-
-  if (els.stockApplyBtn && !els.stockApplyBtn.dataset.bound) {
-    els.stockApplyBtn.addEventListener("click", () => {
-      applyStockPlanToNext();
-    });
-    els.stockApplyBtn.dataset.bound = "1";
-  }
-
-  syncStockPlanControls();
-  renderStockGatherTable();
-  renderStockPlanResults();
-}
 
 /*
 // 今週：選んだすべての料理 × それぞれの数量 をそのまま合算
@@ -2664,8 +2370,52 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     });
     setupEnergyControls();
-    setupGatherTable();
-    setupStockPlanControls();
+    setupGatherUI({
+      elements: els,
+      state,
+      save,
+      maxGatherSlots: MAX_GATHER_SLOTS,
+      syncSuggestControls,
+      toggleSuggestCustomInputs,
+      normalizeGatherValue,
+      setGatherRate,
+      setSuggestEventType,
+      setSuggestEc,
+      setSuggestIsland,
+      setFieldBonusPercent,
+      setEventBonusMultiplier,
+      setSuggestBonusPreset,
+      serializeGatherConfig,
+      writeToClipboard,
+      applyGatherConfig,
+      renderGatherTable,
+      renderEnergyTable,
+      renderProposalResults,
+      clearProposalResults,
+      getAllRecipeEnergyStats,
+      computeBestRecipeCombos,
+      applyProposalCombo,
+    });
+    setupStockPlanUI({
+      elements: els,
+      state,
+      setStockGatherRate,
+      clearStockPlanResults,
+      setStockBagCapacity,
+      setStockIslandType,
+      setStockEventType,
+      setStockExcludeMax,
+      setStockDistribute,
+      setStockCookingCategories,
+      serializeStockGatherConfig,
+      writeToClipboard,
+      applyStockGatherConfig,
+      syncStockPlanControls,
+      renderStockGatherTable,
+      renderStockPlanResults,
+      computeNextWeekStockPlan,
+      applyStockPlanToNext,
+    });
     refresh();
   }).catch(err => console.error("Init failed:", err));
 });

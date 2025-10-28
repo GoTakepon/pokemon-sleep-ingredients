@@ -21,7 +21,7 @@ export function setupStockPlanUI({
   syncStockPlanControls,
   renderStockGatherTable,
   renderStockPlanResults,
-  computeNextWeekStockPlan,
+  calculateStockPlan,
   applyStockPlanToNext,
 }) {
   const {
@@ -141,12 +141,7 @@ export function setupStockPlanUI({
   const calcBtn = document.getElementById("calcStockPlanBtn");
   if (calcBtn && !calcBtn.dataset.bound) {
     calcBtn.addEventListener("click", () => {
-      const result = computeNextWeekStockPlan({
-        bagCapacity: state.stockPlan.bagCapacity,
-        islandType: state.stockPlan.islandType,
-        eventType: state.stockPlan.eventType,
-        cookingCategories: state.stockPlan.cookingCategories,
-      });
+      const result = calculateStockPlan();
       renderStockPlanResults(result);
     });
     calcBtn.dataset.bound = "1";

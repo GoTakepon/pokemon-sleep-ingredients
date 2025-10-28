@@ -9,6 +9,8 @@ import {
   buildChosenRecipeSet,
 } from "./logic/recommendation.js";
 import { computeNextWeekTotals } from "./logic/next-week.js";
+import { computeBestRecipeCombos } from "./logic/proposals.js";
+import { computeNextWeekStockPlan } from "./logic/stock-plan.js";
 import { computeThisWeekTotals, buildTableRows } from "./logic/weekly-totals.js";
 import { bindMenuCardOpsDelegation } from "./ui/card-ops.js";
 import { setupNextWeekSelects, setupNextExtraSelect } from "./ui/next-week-selects.js";
@@ -48,14 +50,14 @@ import {
   removeNextExtra as storeRemoveNextExtra,
   replaceNextState,
   replaceChosen,
-} from "./state/store.js?v=20251028-1327";
+} from "./state/store.js?v=20251028-1344";
 
 let switchTab = null;
 let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251028-1327'; // update-version.js と連動
+const APP_VERSION = '20251028-1344'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -777,6 +779,49 @@ function getStockBoostedIngredients() {
   return boosted;
 }
 
+function buildStockRecipeStats(categories) {
+  const statsByCategory = {};
+  (categories || []).forEach((cat) => {
+    statsByCategory[cat] = getAllRecipeEnergyStats({
+      categoryFilter: cat,
+      excludeMaxLevel: state.stockPlan.excludeMaxLevel,
+    });
+  });
+  return statsByCategory;
+}
+
+function calculateStockPlan() {
+  if (!state?.data?.ingredients || !state?.data?.recipes) {
+    return { error: "データを読み込み中です。しばらくお待ちください。" };
+  }
+
+  const normalizedCategories = sortStockCategories(
+    normalizeStockCategoriesInput(state.stockPlan.cookingCategories, DEFAULT_STOCK_CATEGORIES),
+  );
+  const categories = normalizedCategories.length
+    ? normalizedCategories
+    : [...DEFAULT_STOCK_CATEGORIES];
+
+  const statsByCategory = buildStockRecipeStats(categories);
+  const boostedSet = getStockBoostedIngredients();
+
+  return computeNextWeekStockPlan({
+    bagCapacity: state.stockPlan.bagCapacity,
+    islandType: state.stockPlan.islandType,
+    eventType: state.stockPlan.eventType,
+    categories,
+    defaultCategories: DEFAULT_STOCK_CATEGORIES,
+    recipesByCategory: state.data.recipes || {},
+    ingredients: state.data.ingredients || [],
+    recipeStatsByCategory: statsByCategory,
+    nextWeekPlan: state.nextWeekPlan || {},
+    distributeLeftover: state.stockPlan.distributeLeftover !== false,
+    boostedIngredientIds: Array.from(boostedSet),
+    categoryToNextKey: CATEGORY_TO_NEXT_KEY,
+    baseMeals: 3,
+  });
+}
+
 function computeIngredientHours(ingId, needQty, { usePokemonCount = true, pokemonCount = state.gatherPokemonCount } = {}) {
   if ((Number(needQty) || 0) <= 0) return 0;
   const rates = getGatherRates(ingId);
@@ -1133,100 +1178,6 @@ function renderStockGatherTable() {
   `;
 }
 
-function computeBestRecipeCombos(
-  stats,
-  {
-    maxMeals = 3,
-    maxHours = 24,
-    maxResults = 3,
-    allowRepeats = true,
-    pokemonCount = state.gatherPokemonCount,
-    excludeMaxLevel = false,
-    maxLevel = 65,
-    potCapacity = null,
-  } = {},
-) {
-  const valid = stats.filter(
-    (s) =>
-      Number.isFinite(s.hoursRequired) &&
-      s.hoursRequired > 0 &&
-      Number.isFinite(s.finalEnergy) &&
-      s.finalEnergy > 0,
-  );
-  const normCount = Math.max(1, normalizePokemonCount(pokemonCount));
-  const combosMap = new Map();
-  const n = valid.length;
-
-  const addIfValid = (indexes) => {
-    if (!indexes.length || indexes.length > maxMeals) return;
-    const key = indexes
-      .slice()
-      .sort((a, b) => a - b)
-      .join("-");
-    if (!allowRepeats && combosMap.has(key)) return;
-
-    const recipes = indexes.map((idx) => valid[idx]);
-    let totalHours = 0;
-    let totalEnergy = 0;
-    for (const stat of recipes) {
-      totalHours += stat.hoursRequired;
-      totalEnergy += stat.finalEnergy;
-    }
-
-    if (!Number.isFinite(totalHours) || totalHours <= 0) return;
-    if (totalHours / normCount > maxHours) return;
-
-    const efficiency = totalEnergy / totalHours;
-    if (!combosMap.has(key) || combosMap.get(key).totalEnergy < totalEnergy) {
-      combosMap.set(key, {
-        recipes,
-        totalHours,
-        totalEnergy,
-        efficiency,
-      });
-    }
-  };
-
-  // 探索
-  for (let i = 0; i < n; i++) {
-    addIfValid([i]);
-    for (let j = 0; j < n; j++) {
-      addIfValid([i, j]);
-      for (let k = 0; k < n; k++) {
-        addIfValid([i, j, k]);
-      }
-    }
-  }
-
-  const sorted = Array.from(combosMap.values()).sort((a, b) =>
-    b.totalEnergy - a.totalEnergy ||
-    b.efficiency - a.efficiency ||
-    a.recipes.length - b.recipes.length
-  ).slice(0, maxResults);
-
-  return sorted.map((combo) => {
-    const entries = combo.recipes.map((stat) => ({
-      recipe: stat.recipe,
-      recipeId: stat.id ?? stat.recipe?.id,
-      title: stat.title,
-      hoursRequired: stat.hoursRequired,
-      finalEnergy: stat.finalEnergy,
-    }));
-    const slotCount = (Number.isFinite(combo.totalHours) && combo.totalHours > 0)
-      ? combo.totalHours / 24
-      : null;
-    const energyPerSlot = slotCount && slotCount > 0
-      ? combo.totalEnergy / slotCount
-      : null;
-    return {
-      ...combo,
-      recipes: entries,
-      slotCount,
-      energyPerSlot,
-    };
-  });
-}
-
 function totalNeeds(recipe) {
   let total = 0;
   for (const n of Object.values(recipe.needs || {})) total += Number(n) || 0;
@@ -1525,39 +1476,6 @@ function renderSuggestionsTable() {
   `;
 }
 
-function resolveStockPlanEntry(islandType, eventType) {
-  if (!state.nextWeekPlan || typeof state.nextWeekPlan !== "object") return null;
-  const entries = Object.entries(state.nextWeekPlan);
-  for (const [key, entry] of entries) {
-    if (!entry || typeof entry !== "object") continue;
-    if (entry.island === islandType && entry.event === eventType) {
-      return { key, ...entry };
-    }
-  }
-  return null;
-}
-
-function stockPlanSubtractsBoosted(islandType, eventType) {
-  if (eventType === "pokemon") return true;
-  if (eventType === "cooking") return islandType === "normal";
-  return islandType === "normal";
-}
-
-function findHighestEnergyStatForCategory(categoryKey, options = {}) {
-  const stats = getAllRecipeEnergyStats({
-    categoryFilter: categoryKey,
-    excludeMaxLevel: options.excludeMaxLevel ?? state.stockPlan.excludeMaxLevel,
-  });
-  if (!stats?.length) return null;
-  let best = null;
-  for (const stat of stats) {
-    if (!stat?.recipe) continue;
-    if (!best || (stat.finalEnergy || 0) > (best.finalEnergy || 0)) {
-      best = stat;
-    }
-  }
-  return best;
-}
 
 function intersectIngredientIds(recipes) {
   const list = recipes.filter(Boolean);
@@ -1575,218 +1493,6 @@ function intersectIngredientIds(recipes) {
     if (!baseSet.size) break;
   }
   return Array.from(baseSet);
-}
-
-function findSharedIngredientIds(recipes, minCategories = 2) {
-  const threshold = Math.max(1, Math.min(minCategories, recipes.length || 0));
-  if (!threshold) return [];
-  const freq = new Map();
-  recipes.forEach((recipe) => {
-    if (!recipe?.needs) return;
-    Object.keys(recipe.needs).forEach((ingId) => {
-      freq.set(ingId, (freq.get(ingId) || 0) + 1);
-    });
-  });
-  const shared = [];
-  freq.forEach((count, ingId) => {
-    if (count >= threshold) shared.push(ingId);
-  });
-  return shared;
-}
-
-function totalsToQtyMap(rawMap) {
-  const out = new Map();
-  if (!rawMap) return out;
-  rawMap.forEach((value, key) => {
-    const qty = value && typeof value === "object" && "qty" in value ? value.qty : value;
-    const numeric = Number(qty) || 0;
-    if (numeric > 0) {
-      out.set(key, numeric);
-    }
-  });
-  return out;
-}
-
-function sumQtyMap(map) {
-  let sum = 0;
-  map?.forEach((qty) => {
-    sum += Number(qty) || 0;
-  });
-  return sum;
-}
-
-function scaleQtyMap(map, factor) {
-  const scalar = Number(factor) || 0;
-  const result = new Map();
-  if (scalar <= 0) return result;
-  map?.forEach((qty, ingId) => {
-    const value = (Number(qty) || 0) * scalar;
-    if (value > 0) {
-      result.set(ingId, value);
-    }
-  });
-  return result;
-}
-
-function addQtyMap(target, source) {
-  const out = target instanceof Map ? new Map(target) : new Map();
-  source?.forEach((qty, ingId) => {
-    const value = Number(qty) || 0;
-    if (value <= 0) return;
-    out.set(ingId, (Number(out.get(ingId)) || 0) + value);
-  });
-  return out;
-}
-
-function computeNextWeekStockPlan({
-  bagCapacity,
-  islandType,
-  eventType,
-  cookingCategories,
-}) {
-  if (!state?.data?.ingredients || !state?.data?.recipes) {
-    return { error: "データを読み込み中です。しばらくお待ちください。" };
-  }
-  const capacity = Math.max(1, Number(bagCapacity) || 0);
-  const selectedCategories = sortStockCategories(
-    normalizeStockCategoriesInput(cookingCategories, DEFAULT_STOCK_CATEGORIES)
-  );
-  const categoriesBase = selectedCategories.length ? selectedCategories : DEFAULT_STOCK_CATEGORIES;
-  const categories = categoriesBase.filter((cat, idx, arr) => arr.indexOf(cat) === idx);
-
-  const categoryStats = categories.map((cat) => {
-    const stat = findHighestEnergyStatForCategory(cat, {
-      excludeMaxLevel: state.stockPlan.excludeMaxLevel,
-    });
-    return stat?.recipe ? { categoryKey: cat, stat } : null;
-  }).filter(Boolean);
-
-  if (!categoryStats.length) {
-    return { error: "対象カテゴリの最高エナジー料理が見つかりませんでした。" };
-  }
-
-  categoryStats.sort((a, b) => (b.stat.finalEnergy || 0) - (a.stat.finalEnergy || 0));
-
-  const basePlan = { CURRY: [], SALAD: [], SWEETS: [], extra: [] };
-  categoryStats.forEach(({ categoryKey, stat }) => {
-    const key = CATEGORY_TO_NEXT_KEY[categoryKey];
-    if (!key || !stat?.recipe?.id) return;
-    basePlan[key] = [{ recipe: stat.recipe.id, qty: 1 }];
-  });
-
-  const perSetTotalsRaw = computeNextWeekTotals(
-    basePlan,
-    state.data.recipes || {},
-    state.data.ingredients || [],
-  );
-  const perSetTotals = totalsToQtyMap(perSetTotalsRaw);
-  const baseMeals = 3;
-  const baseTotals = scaleQtyMap(perSetTotals, baseMeals);
-  const baseCount = sumQtyMap(baseTotals);
-
-  const subtractBoosted = stockPlanSubtractsBoosted(islandType, eventType);
-  const boostedSet = subtractBoosted ? getStockBoostedIngredients() : new Set();
-
-  const topChoice = categoryStats[0] || null;
-  const topStat = topChoice?.stat || null;
-  const topCategoryKey = topChoice?.categoryKey || null;
-  const categoryPlans = categoryStats.map(({ categoryKey, stat }) => ({
-    categoryKey,
-    recipeId: stat?.recipe?.id || null,
-    recipeTitle: stat?.recipe?.title || "",
-    stat,
-  }));
-  const extraPerSet = new Map();
-  perSetTotals.forEach((qty, ingId) => {
-    const value = Number(qty) || 0;
-    if (value <= 0) return;
-    if (subtractBoosted && boostedSet.has(ingId)) return;
-    extraPerSet.set(ingId, value);
-  });
-  const effectivePerSetSum = sumQtyMap(extraPerSet);
-
-  const extraCapacity = Math.max(0, capacity - baseCount);
-  const extraMeals = effectivePerSetSum > 0 ? Math.max(0, Math.floor(extraCapacity / effectivePerSetSum)) : 0;
-
-  const extraTotals = scaleQtyMap(extraPerSet, extraMeals);
-
-  let finalTotals = addQtyMap(baseTotals, extraTotals);
-  let totalCount = sumQtyMap(finalTotals);
-  let leftover = Math.max(0, capacity - totalCount);
-  const bonusTotals = new Map();
-  let sharedSetMultiplier = 0;
-  let sharedSetIngredients = [];
-  if (state.stockPlan.distributeLeftover !== false && leftover > 0) {
-    const recipesForIntersection = categoryStats
-      .map((choice) => choice.stat?.recipe)
-      .filter(Boolean);
-    const sharedIds = findSharedIngredientIds(
-      recipesForIntersection,
-      Math.min(2, recipesForIntersection.length || 0),
-    );
-    if (sharedIds.length) {
-      const sharedTotals = new Map();
-      sharedIds.forEach((ingId) => {
-        const qty = Number(perSetTotals.get(ingId)) || 0;
-        if (qty > 0) {
-          sharedTotals.set(ingId, qty);
-        }
-      });
-      if (sharedTotals.size) {
-        sharedSetIngredients = Array.from(sharedTotals.keys());
-      }
-      const sharedSum = sumQtyMap(sharedTotals);
-      if (sharedSum > 0) {
-        const multiplier = Math.floor(leftover / sharedSum);
-        if (multiplier > 0) {
-          sharedTotals.forEach((qty, ingId) => {
-            const inc = qty * multiplier;
-            finalTotals.set(ingId, (finalTotals.get(ingId) || 0) + inc);
-            bonusTotals.set(ingId, (bonusTotals.get(ingId) || 0) + inc);
-          });
-          leftover -= sharedSum * multiplier;
-          totalCount = sumQtyMap(finalTotals);
-          sharedSetMultiplier = multiplier;
-        }
-      }
-    }
-  }
-
-  const warning = baseCount > capacity
-    ? "バッグ容量が3食分を下回っています。容量を見直すか、入力値を調整してください。"
-    : null;
-
-  const planEntry = resolveStockPlanEntry(islandType, eventType);
-
-  return {
-    success: true,
-    capacity,
-    baseCount,
-    totalCount,
-    extraMeals,
-    subtractBoosted,
-    boostedSet,
-    baselineStats: categoryStats.map((choice) => choice.stat),
-    topStat,
-    baseTotals,
-    extraTotals,
-    bonusTotals,
-    finalTotals,
-    warning,
-    planEntry,
-    sharedSetMultiplier,
-    sharedSetIngredients,
-    categoryPlans,
-    baseMeals,
-    extraMeals,
-    topCategoryKey,
-    remainingCapacity: leftover,
-    params: {
-      islandType,
-      eventType,
-      cookingCategories: categories,
-    },
-  };
 }
 
 function formatStockPlanTotalsRow({ ingredient, baseQty, extraQty, bonusQty, totalQty }) {
@@ -2413,7 +2119,7 @@ document.addEventListener("DOMContentLoaded", () => {
       syncStockPlanControls,
       renderStockGatherTable,
       renderStockPlanResults,
-      computeNextWeekStockPlan,
+      calculateStockPlan,
       applyStockPlanToNext,
     });
     refresh();

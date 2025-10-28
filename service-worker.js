@@ -1,43 +1,43 @@
 // service-worker.js
 
 // ★ キャッシュ名を更新して強制入れ替え（update-version.js が自動更新）
-const CACHE_NAME = "psleep-cache-20251028-1633";
+const CACHE_NAME = "psleep-cache-20251028-2258";
 
 // ★ データ用のバージョン（update-version.js が自動更新）
-const VERSION = "20251028-1633";
+const VERSION = "20251028-2258";
 
 // 静的アセット（?v は update-version.js で更新される）
 const STATIC_ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./js/main.js?v=20251028-1633",
-  "./js/ocr-parse.js?v=20251028-1633",
-  "./js/state/store.js?v=20251028-1633",
-  "./js/state/apply.js?v=20251028-1715",
-  "./js/render/menu.js?v=20251028-1715",
-  "./js/render/tables.js?v=20251028-1633",
-  "./js/ui/card-ops.js?v=20251028-1715",
-  "./js/ui/next-week-selects.js?v=20251028-1715",
-  "./js/ui/ingredients-filter.js?v=20251028-1715",
-  "./js/ui/init.js?v=20251028-1633",
-  "./js/ui/gather-init.js?v=20251028-1715",
-  "./js/ui/stock-init.js?v=20251028-1715",
-  "./js/ui/energy-controls.js?v=20251028-1715",
-  "./js/logic/energy.js?v=20251028-1715",
-  "./js/logic/gather.js?v=20251028-1715",
-  "./js/logic/proposals.js?v=20251028-1715",
-  "./js/logic/stock-plan.js?v=20251028-1715",
-  "./js/logic/next-week.js?v=20251028-1715",
-  "./js/logic/weekly-totals.js?v=20251028-1715",
-  "./js/data/recipe-level-bonus.js?v=20251028-1715",
-  "./assets/css/base.css?v=20251028-1633",
-  "./assets/css/custom.css?v=20251028-1633",
-  "./assets/css/section-ocr.css?v=20251028-1633",
-  "./assets/css/section-goal.css?v=20251028-1633",
-  "./assets/css/section-ingrediants.css?v=20251028-1633",
-  "./assets/css/section-recommend.css?v=20251028-1633",
-  "./assets/css/theme-yadon.css?v=20251028-1633",
+  "./js/main.js?v=20251028-2258",
+  "./js/ocr-parse.js?v=20251028-2258",
+  "./js/state/store.js?v=20251028-2258",
+  "./js/state/apply.js?v=20251028-2241",
+  "./js/render/menu.js?v=20251028-2241",
+  "./js/render/tables.js?v=20251028-2258",
+  "./js/ui/card-ops.js?v=20251028-2241",
+  "./js/ui/next-week-selects.js?v=20251028-2241",
+  "./js/ui/ingredients-filter.js?v=20251028-2241",
+  "./js/ui/init.js?v=20251028-2258",
+  "./js/ui/gather-init.js?v=20251028-2241",
+  "./js/ui/stock-init.js?v=20251028-2241",
+  "./js/ui/energy-controls.js?v=20251028-2241",
+  "./js/logic/energy.js?v=20251028-2241",
+  "./js/logic/gather.js?v=20251028-2241",
+  "./js/logic/proposals.js?v=20251028-2241",
+  "./js/logic/stock-plan.js?v=20251028-2241",
+  "./js/logic/next-week.js?v=20251028-2241",
+  "./js/logic/weekly-totals.js?v=20251028-2241",
+  "./js/data/recipe-level-bonus.js?v=20251028-2241",
+  "./assets/css/base.css?v=20251028-2258",
+  "./assets/css/custom.css?v=20251028-2258",
+  "./assets/css/section-ocr.css?v=20251028-2258",
+  "./assets/css/section-goal.css?v=20251028-2258",
+  "./assets/css/section-ingrediants.css?v=20251028-2258",
+  "./assets/css/section-recommend.css?v=20251028-2258",
+  "./assets/css/theme-yadon.css?v=20251028-2258",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
 ];

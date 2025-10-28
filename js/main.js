@@ -12,8 +12,8 @@ import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
 import { setupGatherUI } from "./ui/gather-init.js";
 import { setupStockPlanUI } from "./ui/stock-init.js";
 import { setupEnergyControls } from "./ui/energy-controls.js";
-import { renderMenuList as renderMenuListView, renderNextChosen as renderNextChosenView } from "./render/menu.js?v=20251028-1715";
-import { renderTables as renderTablesView, renderSuggestionsTable as renderSuggestionsTableView } from "./render/tables.js?v=20251028-1633";
+import { renderMenuList as renderMenuListView, renderNextChosen as renderNextChosenView } from "./render/menu.js?v=20251028-2241";
+import { renderTables as renderTablesView, renderSuggestionsTable as renderSuggestionsTableView } from "./render/tables.js?v=20251028-2258";
 import {
   computeFinalEnergy,
   normalizeLevel,
@@ -47,18 +47,18 @@ import {
   setNextExtraQty as storeSetNextExtraQty,
   removeNextExtra as storeRemoveNextExtra,
   replaceChosen,
-} from "./state/store.js?v=20251028-1633";
+} from "./state/store.js?v=20251028-2258";
 import {
   applyProposalComboToState,
   applyStockPlanResult,
-} from "./state/apply.js?v=20251028-1715";
+} from "./state/apply.js?v=20251028-2241";
 
 let switchTab = null;
 let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251028-1633'; // update-version.js と連動
+const APP_VERSION = '20251028-2258'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -1318,6 +1318,7 @@ function applyProposalCombo(index) {
   renderMenuList();
   rerenderTablesAndSuggestions();
   renderEnergyTable(els.cat?.value || null);
+  renderGatherTable();
   if (typeof switchTab === "function") {
     switchTab("this");
   }
@@ -1486,6 +1487,9 @@ function applyStockPlanToNext() {
   save();
   renderNextChosen();
   rerenderTablesAndSuggestions();
+  renderStockPlanResults(lastStockPlanResult);
+  renderEnergyTable(els.cat?.value || null);
+  renderGatherTable();
   if (typeof switchTab === "function") {
     switchTab("next");
   }

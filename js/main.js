@@ -17,6 +17,7 @@ import { setupNextWeekSelects, setupNextExtraSelect } from "./ui/next-week-selec
 import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
 import { setupGatherUI } from "./ui/gather-init.js";
 import { setupStockPlanUI } from "./ui/stock-init.js";
+import { setupEnergyControls } from "./ui/energy-controls.js";
 import {
   computeFinalEnergy,
   normalizeLevel,
@@ -92,6 +93,9 @@ const els = {
   stockDistribute: document.getElementById("stockDistributeCheckbox"),
   stockApplyBtn: document.getElementById("applyStockPlanBtn"),
   suggestCurrentMenu: document.getElementById("suggestCurrentMenu"),
+  energyExportBtn: document.getElementById("exportRecipeLevelsBtn"),
+  energyImportBtn: document.getElementById("importRecipeLevelsBtn"),
+  energyLevelsText: document.getElementById("recipeLevelsText"),
   suggestEvent: document.getElementById("suggestEventSelect"),
   suggestEventCustom: document.getElementById("suggestEventCustomInput"),
   suggestEc: document.getElementById("suggestEcSelect"),
@@ -1882,52 +1886,6 @@ function setupCollapsers(){
   });
 }
 
-function setupEnergyControls() {
-  const table = els.energyTable || document.getElementById("energyTable");
-
-  if (table) {
-    table.addEventListener("change", (e) => {
-      const input = e.target.closest(".energy-level-input");
-      if (!input) return;
-      const recipeId = input.dataset.recipeId;
-      const normalized = normalizeLevel(input.value);
-      input.value = String(normalized);
-      setRecipeLevel(recipeId, normalized);
-    });
-  }
-
-  const exportBtn = document.getElementById("exportRecipeLevelsBtn");
-  const importBtn = document.getElementById("importRecipeLevelsBtn");
-  const textArea = document.getElementById("recipeLevelsText");
-  if (exportBtn && textArea) {
-    exportBtn.addEventListener("click", () => {
-      const text = serializeRecipeLevels();
-      textArea.value = text;
-      textArea.focus();
-      textArea.select();
-      writeToClipboard(text);
-    });
-  }
-  if (importBtn && textArea) {
-    importBtn.addEventListener("click", () => {
-      const raw = textArea.value.trim();
-      if (!raw) {
-        alert("インポートするデータを入力してください。\nエクスポートボタンで取得したJSONを貼り付けます。");
-        return;
-      }
-      try {
-        const data = JSON.parse(raw);
-        applyRecipeLevelsData(data);
-        renderEnergyTable();
-        alert("レシピレベルをインポートしました。");
-      } catch (err) {
-        console.error("Import recipe levels failed", err);
-        alert(`インポートに失敗しました: ${err.message || err}`);
-      }
-    });
-  }
-}
-
 function syncSuggestControls() {
   if (els.suggestEvent && document.activeElement !== els.suggestEvent) {
     const value = state.suggestConfig.eventType === "custom" ? "custom" : "none";
@@ -2075,7 +2033,20 @@ document.addEventListener("DOMContentLoaded", () => {
         rerenderTablesAndSuggestions();
       },
     });
-    setupEnergyControls();
+    setupEnergyControls({
+      elements: {
+        energyTable: els.energyTable,
+        energyExportBtn: els.energyExportBtn,
+        energyImportBtn: els.energyImportBtn,
+        energyLevelsText: els.energyLevelsText,
+      },
+      normalizeLevel,
+      setRecipeLevel,
+      serializeRecipeLevels,
+      applyRecipeLevelsData,
+      renderEnergyTable,
+      writeToClipboard,
+    });
     setupGatherUI({
       elements: els,
       state,

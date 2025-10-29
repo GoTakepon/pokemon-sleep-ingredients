@@ -64,7 +64,7 @@ let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251029-1017'; // update-version.js と連動
+const APP_VERSION = '20251029-1102'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -1511,9 +1511,8 @@ function applyStockPlanToNext() {
   renderEnergyTable(els.cat?.value || null);
   renderGatherTable();
   if (typeof switchTab === "function") {
-    switchTab("next");
+    switchTab("this");
   }
-  alert("備蓄計算結果を次週計画へ反映しました。");
 }
 
 

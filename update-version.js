@@ -36,9 +36,6 @@ const write = (p, txt) => fs.writeFileSync(p, txt);
   html = bumpQuery(html, "./assets/css/custom.css");
   html = bumpQuery(html, "./assets/css/theme-yadon.css");
   html = bumpQuery(html, "./js/main.js");
-  html = bumpQuery(html, "./js/render/tables.js");
-  html = bumpQuery(html, "./js/state/store.js");
-  html = bumpQuery(html, "./js/ui/init.js");
   html = bumpQuery(html, "./data/ingredients.json");
   html = bumpQuery(html, "./data/recipes.json");
 
@@ -86,9 +83,6 @@ const write = (p, txt) => fs.writeFileSync(p, txt);
 
   // 🔸ここを追加
   js = js.replace(/const APP_VERSION = ['"].*?['"];/, `const APP_VERSION = '${VER}';`);
-  js = js.replace(/from ["']\.\/render\/tables\.js(?:\?v=[^"']*)?["'];/, `from "./render/tables.js?v=${VER}";`);
-  js = js.replace(/from ["']\.\/state\/store\.js(?:\?v=[^"']*)?["'];/, `from "./state/store.js?v=${VER}";`);
-  js = js.replace(/from ["']\.\/ui\/init\.js(?:\?v=[^"']*)?["'];/, `from "./ui/init.js?v=${VER}";`);
 
   fs.writeFileSync("./js/main.js", js);
 

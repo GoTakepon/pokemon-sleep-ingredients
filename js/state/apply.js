@@ -1,22 +1,21 @@
 // js/state/apply.js
 // 状態変換を伴う操作ヘルパー
 
-import { replaceChosen, replaceNextState } from "./store.js";
+import { state, replaceChosen, replaceNextState } from "./store.js";
 
 export function convertProposalRecipesToChosen(recipes) {
   if (!Array.isArray(recipes)) return [];
-  const order = [];
   const counts = new Map();
-  recipes.forEach((entry) => {
+  (recipes || []).forEach((entry) => {
     const recipeId = entry?.recipeId || entry?.recipe?.id;
     if (!recipeId) return;
-    if (!counts.has(recipeId)) order.push(recipeId);
-    counts.set(recipeId, (counts.get(recipeId) || 0) + 1);
+    const existing = counts.get(recipeId) || { recipe: recipeId, qty: 0 };
+    counts.set(recipeId, {
+      recipe: recipeId,
+      qty: existing.qty + (Number(entry?.qty) || 1),
+    });
   });
-  return order.map((id) => ({
-    recipe: id,
-    qty: counts.get(id),
-  }));
+  return Array.from(counts.values());
 }
 
 export function applyProposalComboToState(combo) {

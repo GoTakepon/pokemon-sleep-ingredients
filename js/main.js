@@ -12,8 +12,8 @@ import { setupIngredientsFilter } from "./ui/ingredients-filter.js";
 import { setupGatherUI } from "./ui/gather-init.js";
 import { setupStockPlanUI } from "./ui/stock-init.js";
 import { setupEnergyControls } from "./ui/energy-controls.js";
-import { renderMenuList as renderMenuListView, renderNextChosen as renderNextChosenView } from "./render/menu.js?v=20251028-2241";
-import { renderTables as renderTablesView, renderSuggestionsTable as renderSuggestionsTableView } from "./render/tables.js?v=20251028-2258";
+import { renderMenuList as renderMenuListView, renderNextChosen as renderNextChosenView } from "./render/menu.js";
+import { renderTables as renderTablesView, renderSuggestionsTable as renderSuggestionsTableView } from "./render/tables.js";
 import {
   computeFinalEnergy,
   normalizeLevel,
@@ -47,18 +47,24 @@ import {
   setNextExtraQty as storeSetNextExtraQty,
   removeNextExtra as storeRemoveNextExtra,
   replaceChosen,
-} from "./state/store.js?v=20251028-2258";
+} from "./state/store.js";
 import {
   applyProposalComboToState,
   applyStockPlanResult,
-} from "./state/apply.js?v=20251028-2241";
+} from "./state/apply.js";
+
+if (typeof window !== "undefined") {
+  window.appState = state;
+  window.applyProposalComboToState = applyProposalComboToState;
+  window.applyStockPlanResult = applyStockPlanResult;
+}
 
 let switchTab = null;
 let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251028-2258'; // update-version.js と連動
+const APP_VERSION = '20251029-1017'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -911,6 +917,9 @@ function getAllRecipeEnergyStats({
 function clearProposalResults(message = "条件が変更されました。再計算してください。") {
   const container = document.getElementById("proposalResults");
   lastProposalCombos = [];
+  if (typeof window !== "undefined") {
+    window.lastProposalCombos = lastProposalCombos;
+  }
   if (container) {
     container.innerHTML = `<p class="muted">${message}</p>`;
   }
@@ -1158,6 +1167,9 @@ function renderProposalResults(perSlotCombos) {
   lastProposalCombos = prepared
     .filter((entry) => entry.combo)
     .map((entry) => entry.combo);
+  if (typeof window !== "undefined") {
+    window.lastProposalCombos = lastProposalCombos;
+  }
 
   if (!lastProposalCombos.length) {
     container.innerHTML = `<p class="muted">条件を満たす料理の組み合わせが見つかりませんでした。</p>`;
@@ -1313,7 +1325,11 @@ function applyProposalCombo(index) {
   const numericIndex = Number(index);
   if (!Number.isInteger(numericIndex) || numericIndex < 0) return;
   const combo = lastProposalCombos?.[numericIndex];
-  if (!applyProposalComboToState(combo)) return;
+  if (!applyProposalComboToState(combo)) {
+    console.warn("[proposal] apply failed", { index: numericIndex, combo, lastProposalCombos });
+    alert("反映できる提案が見つかりませんでした。再計算してください。");
+    return;
+  }
   save();
   renderMenuList();
   rerenderTablesAndSuggestions();
@@ -1356,6 +1372,9 @@ function formatStockPlanTotalsRow({ ingredient, baseQty, extraQty, bonusQty, tot
 function renderStockPlanResults(result) {
   if (result !== undefined) {
     lastStockPlanResult = result;
+    if (typeof window !== "undefined") {
+      window.lastStockPlanResult = lastStockPlanResult;
+    }
   }
   const table = document.getElementById("stockPlanTable");
   const nEl = document.getElementById("stockMealsN");
@@ -1481,7 +1500,8 @@ function applyStockPlanToNext() {
   }
 
   if (!applyStockPlanResult(result, CATEGORY_TO_NEXT_KEY)) {
-    alert("反映できる料理プランが見つかりませんでした。");
+    console.warn("[stock-plan] apply failed", { result });
+    alert("反映できる料理プランが見つかりませんでした。再計算してください。");
     return;
   }
   save();

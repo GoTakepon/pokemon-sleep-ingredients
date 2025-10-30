@@ -7,13 +7,13 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251030-1122">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251030-1122">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251030-1122">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251030-1122">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251030-1122">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251030-1122">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251030-1122">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251030-1332">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251030-1332">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251030-1332">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251030-1332">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251030-1332">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251030-1332">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251030-1332">
   <link rel="apple-touch-icon" href="./assets/icon-yadon-180.png">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
@@ -361,7 +361,13 @@
               <input type="checkbox" id="stockDistributeCheckbox" checked>
               余剰を共通食材へ充当する
             </label>
-            <button type="button" id="calcStockPlanBtn" class="btn btn-primary">備蓄プランを計算</button>
+            <div class="stock-actions-row">
+              <button type="button" id="calcStockPlanBtn" class="btn btn-primary">備蓄プランを計算</button>
+              <span id="stockCalcIndicator" class="calc-indicator" hidden>
+                <span class="spinner"></span>
+                計算中...
+              </span>
+            </div>
             <button type="button" id="applyStockPlanBtn" class="btn btn-ghost">次週計画に反映</button>
             <div class="stock-summary">
               <span>基準食数: <strong id="stockBaseMealsLabel">-</strong></span>
@@ -379,7 +385,7 @@
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251030-1122" type="module"></script>
+  <script src="./js/main.js?v=20251030-1332" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

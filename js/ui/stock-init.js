@@ -9,6 +9,7 @@ export function setupStockPlanUI({
   state,
   setStockGatherRate,
   clearStockPlanResults,
+  setStockCalcLoading,
   setStockBagCapacity,
   setStockBaseMeals,
   setStockIslandType,
@@ -28,6 +29,7 @@ export function setupStockPlanUI({
   const {
     stockGatherTable,
     stockBagCapacity,
+    stockCalcBtn,
     stockBaseMeals,
     stockIsland,
     stockEvent,
@@ -147,11 +149,22 @@ export function setupStockPlanUI({
     importBtn.dataset.bound = "1";
   }
 
-  const calcBtn = document.getElementById("calcStockPlanBtn");
+  const calcBtn = stockCalcBtn || document.getElementById("calcStockPlanBtn");
   if (calcBtn && !calcBtn.dataset.bound) {
     calcBtn.addEventListener("click", () => {
-      const result = calculateStockPlan();
-      renderStockPlanResults(result);
+      if (calcBtn.disabled) return;
+      setStockCalcLoading(true);
+      setTimeout(() => {
+        try {
+          const result = calculateStockPlan();
+          renderStockPlanResults(result);
+        } catch (err) {
+          console.error("Stock plan calculation failed", err);
+          alert(`備蓄プランの計算に失敗しました: ${err?.message || err}`);
+        } finally {
+          setStockCalcLoading(false);
+        }
+      }, 0);
     });
     calcBtn.dataset.bound = "1";
   }

@@ -203,6 +203,38 @@ body{
 .table-gather td:nth-child(4){
   width: 15%;
 }
+
+.stock-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.calc-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.calc-indicator .spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: calc-spin 0.8s linear infinite;
+}
+
+.calc-indicator[hidden] {
+  display: none !important;
+}
+
+@keyframes calc-spin {
+  to { transform: rotate(360deg); }
+}
 .table-gather .cell-ing{
   display:flex;
   align-items:flex-start;

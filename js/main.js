@@ -64,7 +64,7 @@ let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251030-1122'; // update-version.js と連動
+const APP_VERSION = '20251030-1332'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -93,6 +93,8 @@ const els = {
   excludeOverPot: document.getElementById("excludeOverPotCheckbox"),
   gatherTable: document.getElementById("gatherTable"),
   stockBagCapacity: document.getElementById("stockBagCapacityInput"),
+  stockCalcBtn: document.getElementById("calcStockPlanBtn"),
+  stockCalcIndicator: document.getElementById("stockCalcIndicator"),
   stockBaseMeals: document.getElementById("stockBaseMealsInput"),
   stockIsland: document.getElementById("stockIslandSelect"),
   stockEvent: document.getElementById("stockEventSelect"),
@@ -667,6 +669,21 @@ function setStockDistribute(flag) {
   save();
   clearStockPlanResults();
   syncStockPlanControls();
+}
+
+function setStockCalcLoading(flag) {
+  const isLoading = !!flag;
+  if (els.stockCalcBtn) {
+    els.stockCalcBtn.disabled = isLoading;
+    if (isLoading) els.stockCalcBtn.setAttribute("aria-busy", "true");
+    else els.stockCalcBtn.removeAttribute("aria-busy");
+  }
+  if (els.stockApplyBtn) {
+    els.stockApplyBtn.disabled = isLoading;
+  }
+  if (els.stockCalcIndicator) {
+    els.stockCalcIndicator.hidden = !isLoading;
+  }
 }
 
 function setStockCookingCategories(categories) {
@@ -1938,6 +1955,7 @@ document.addEventListener("DOMContentLoaded", () => {
       state,
       setStockGatherRate,
       clearStockPlanResults,
+      setStockCalcLoading,
       setStockBagCapacity,
       setStockBaseMeals,
       setStockIslandType,

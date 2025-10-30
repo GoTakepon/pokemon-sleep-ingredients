@@ -43,13 +43,10 @@ export function buildNextStateFromStockPlan(result, categoryToNextKey) {
     extra: [],
   };
 
-  const topCategoryKey = result.topCategoryKey || null;
-  const extraMeals = Number(result.extraMeals || 0);
-
   plans.forEach((plan) => {
     const key = categoryToNextKey?.[plan.categoryKey];
     if (!key || !plan.recipeId) return;
-    const quantity = baseMeals + (plan.categoryKey === topCategoryKey ? extraMeals : 0);
+    const quantity = baseMeals;
     if (!Number.isFinite(quantity) || quantity === 0) return;
     nextState[key].push({ recipe: plan.recipeId, qty: quantity });
   });

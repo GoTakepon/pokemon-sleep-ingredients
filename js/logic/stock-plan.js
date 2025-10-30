@@ -158,29 +158,21 @@ export function computeNextWeekStockPlan({
     ingredients,
   );
   const perSetTotals = totalsToQtyMap(perSetTotalsRaw);
-  const baseTotals = scaleQtyMap(perSetTotals, baseMeals);
+  const perSetSum = sumQtyMap(perSetTotals);
+
+  const requestedMeals = Math.max(0, Math.round(Number(baseMeals) || 0));
+  const maxMealsByCapacity = perSetSum > 0 ? Math.floor(capacity / perSetSum) : requestedMeals;
+  const effectiveMeals = Math.min(requestedMeals, Math.max(0, maxMealsByCapacity));
+
+  const baseTotals = scaleQtyMap(perSetTotals, effectiveMeals);
   const baseCount = sumQtyMap(baseTotals);
 
   const subtractBoosted = stockPlanSubtractsBoosted(islandType, eventType);
   const boostedSet = new Set(boostedIngredientIds || []);
 
-  const extraPerSet = new Map();
-  perSetTotals.forEach((qty, ingId) => {
-    const value = Number(qty) || 0;
-    if (value <= 0) return;
-    if (subtractBoosted && boostedSet.has(ingId)) return;
-    extraPerSet.set(ingId, value);
-  });
-  const effectivePerSetSum = sumQtyMap(extraPerSet);
-
-  const extraCapacity = Math.max(0, capacity - baseCount);
-  const extraMeals =
-    effectivePerSetSum > 0
-      ? Math.max(0, Math.floor(extraCapacity / effectivePerSetSum))
-      : 0;
-
-  const extraTotals = scaleQtyMap(extraPerSet, extraMeals);
-  let finalTotals = addQtyMap(baseTotals, extraTotals);
+  const extraTotals = new Map();
+  const extraMeals = 0;
+  let finalTotals = new Map(baseTotals);
   let totalCount = sumQtyMap(finalTotals);
   let leftover = Math.max(0, capacity - totalCount);
   const bonusTotals = new Map();
@@ -196,11 +188,11 @@ export function computeNextWeekStockPlan({
       Math.min(2, recipesForIntersection.length || 0),
     );
     if (sharedIds.length) {
-      const sharedTotals = new Map();
-      sharedIds.forEach((ingId) => {
-        const qty = Number(perSetTotals.get(ingId)) || 0;
-        if (qty > 0) sharedTotals.set(ingId, qty);
-      });
+        const sharedTotals = new Map();
+        sharedIds.forEach((ingId) => {
+          const qty = Number(perSetTotals.get(ingId)) || 0;
+          if (qty > 0) sharedTotals.set(ingId, qty);
+        });
       if (sharedTotals.size) {
         sharedSetIngredients = Array.from(sharedTotals.keys());
       }
@@ -221,9 +213,10 @@ export function computeNextWeekStockPlan({
     }
   }
 
+  const baseLabel = `${effectiveMeals}食分`;
   const warning =
-    baseCount > capacity
-      ? "バッグ容量が3食分を下回っています。容量を見直すか、入力値を調整してください。"
+    perSetSum > 0 && effectiveMeals < requestedMeals
+      ? `バッグ容量に収まる最大セット数は ${effectiveMeals} 食分です（希望: ${requestedMeals} 食分）。`
       : null;
 
   const planEntry = resolveStockPlanEntry(nextWeekPlan, islandType, eventType);
@@ -254,7 +247,9 @@ export function computeNextWeekStockPlan({
       recipeTitle: stat?.recipe?.title || "",
       stat,
     })),
-    baseMeals,
+    baseMeals: effectiveMeals,
+    requestedBaseMeals: requestedMeals,
+    maxMealsByCapacity: Number.isFinite(maxMealsByCapacity) ? Math.max(0, maxMealsByCapacity) : requestedMeals,
     topCategoryKey,
     remainingCapacity: leftover,
     params: {

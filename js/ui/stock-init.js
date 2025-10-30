@@ -10,6 +10,7 @@ export function setupStockPlanUI({
   setStockGatherRate,
   clearStockPlanResults,
   setStockBagCapacity,
+  setStockBaseMeals,
   setStockIslandType,
   setStockEventType,
   setStockExcludeMax,
@@ -27,6 +28,7 @@ export function setupStockPlanUI({
   const {
     stockGatherTable,
     stockBagCapacity,
+    stockBaseMeals,
     stockIsland,
     stockEvent,
     stockExcludeMax,
@@ -52,6 +54,13 @@ export function setupStockPlanUI({
       setStockBagCapacity(stockBagCapacity.value);
     });
     stockBagCapacity.dataset.bound = "1";
+  }
+
+  if (stockBaseMeals && !stockBaseMeals.dataset.bound) {
+    stockBaseMeals.addEventListener("change", () => {
+      setStockBaseMeals(stockBaseMeals.value);
+    });
+    stockBaseMeals.dataset.bound = "1";
   }
 
   if (stockIsland && !stockIsland.dataset.bound) {

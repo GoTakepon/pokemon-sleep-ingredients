@@ -120,6 +120,7 @@ export const state = {
     gatherRates: stockGatherRatesPayload,
     distributeLeftover: storedStockConfig?.distributeLeftover !== false,
     excludeMaxLevel: storedStockConfig?.excludeMaxLevel === true,
+    baseMeals: Math.max(1, Math.round(Number(storedStockConfig?.baseMeals) || 3)),
   },
 };
 
@@ -152,6 +153,11 @@ if (!Array.isArray(state.stockPlan.cookingCategories)) {
 if (!state.stockPlan.gatherRates || typeof state.stockPlan.gatherRates !== "object") {
   state.stockPlan.gatherRates = {};
 }
+if (!Number.isFinite(state.stockPlan.baseMeals) || state.stockPlan.baseMeals < 1) {
+  state.stockPlan.baseMeals = 3;
+} else {
+  state.stockPlan.baseMeals = Math.max(1, Math.round(state.stockPlan.baseMeals));
+}
 
 export function markNextDirty() {
   state.nextVersion = (state.nextVersion || 0) + 1;
@@ -179,6 +185,7 @@ export function saveState() {
     cookingCategories: state.stockPlan?.cookingCategories || [],
     distributeLeftover: state.stockPlan?.distributeLeftover !== false,
     excludeMaxLevel: state.stockPlan?.excludeMaxLevel === true,
+    baseMeals: Math.max(1, Math.round(state.stockPlan?.baseMeals || 3)),
   };
   storage.setItem("stockPlanConfig", JSON.stringify(stockConfig));
   storage.setItem("stockGatherRates", JSON.stringify(state.stockPlan?.gatherRates || {}));

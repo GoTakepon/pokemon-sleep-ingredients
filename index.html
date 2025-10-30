@@ -7,13 +7,13 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251029-1102">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251029-1102">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251029-1102">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251029-1102">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251029-1102">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251029-1102">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251029-1102">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251030-1110">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251030-1110">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251030-1110">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251030-1110">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251030-1110">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251030-1110">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251030-1110">
   <link rel="apple-touch-icon" href="./assets/icon-yadon-180.png">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
@@ -297,45 +297,6 @@
         <div class="card">
           <p class="muted">次週の島・イベント条件とバッグ容量に合わせて、今週のうちに備蓄しておきたい食材数を試算します。</p>
 
-          <div class="stock-controls">
-            <label class="control">
-              <span class="control-label">バッグ容量</span>
-              <input type="number" id="stockBagCapacityInput" class="input" min="1" step="1">
-            </label>
-            <label class="control">
-              <span class="control-label">島タイプ</span>
-              <select id="stockIslandSelect" class="select">
-                <option value="EX">EX 島</option>
-                <option value="normal">通常島</option>
-              </select>
-            </label>
-            <label class="control">
-              <span class="control-label">イベント</span>
-              <select id="stockEventSelect" class="select">
-                <option value="none">イベントなし</option>
-                <option value="pokemon">特定ポケモン強化</option>
-                <option value="cooking">料理カテゴリ強化</option>
-              </select>
-            </label>
-            <div class="control control-stack" id="stockCookingSelectWrap">
-              <span class="control-label">対象カテゴリ</span>
-              <div class="stock-category-options" id="stockCategoryOptions">
-                <label class="check-inline">
-                  <input type="checkbox" class="stock-category-checkbox" value="curry" checked>
-                  カレー・シチュー
-                </label>
-                <label class="check-inline">
-                  <input type="checkbox" class="stock-category-checkbox" value="salad" checked>
-                  サラダ
-                </label>
-                <label class="check-inline">
-                  <input type="checkbox" class="stock-category-checkbox" value="dessert" checked>
-                  デザート・ドリンク
-                </label>
-              </div>
-            </div>
-          </div>
-
           <div class="io-section">
             <h3 class="io-title">次週用の食材集め能力</h3>
             <p class="muted io-note">第3タブとは別に、次週案に向けた想定値を入力します。値が入っている食材はブースト対象とみなされます。</p>
@@ -350,6 +311,48 @@
           </div>
 
           <div class="stock-actions">
+            <div class="stock-controls">
+              <label class="control">
+                <span class="control-label">バッグ容量</span>
+                <input type="number" id="stockBagCapacityInput" class="input" min="1" step="1">
+              </label>
+              <label class="control">
+                <span class="control-label">基準食数</span>
+                <input type="number" id="stockBaseMealsInput" class="input" min="1" step="1">
+              </label>
+              <label class="control">
+                <span class="control-label">島タイプ</span>
+                <select id="stockIslandSelect" class="select">
+                  <option value="EX">EX 島</option>
+                  <option value="normal">通常島</option>
+                </select>
+              </label>
+              <label class="control">
+                <span class="control-label">イベント</span>
+                <select id="stockEventSelect" class="select">
+                  <option value="none">イベントなし</option>
+                  <option value="pokemon">特定ポケモン強化</option>
+                  <option value="cooking">料理カテゴリ強化</option>
+                </select>
+              </label>
+              <div class="control control-stack" id="stockCookingSelectWrap">
+                <span class="control-label">対象カテゴリ</span>
+                <div class="stock-category-options" id="stockCategoryOptions">
+                  <label class="check-inline">
+                    <input type="checkbox" class="stock-category-checkbox" value="curry" checked>
+                    カレー・シチュー
+                  </label>
+                  <label class="check-inline">
+                    <input type="checkbox" class="stock-category-checkbox" value="salad" checked>
+                    サラダ
+                  </label>
+                  <label class="check-inline">
+                    <input type="checkbox" class="stock-category-checkbox" value="dessert" checked>
+                    デザート・ドリンク
+                  </label>
+                </div>
+              </div>
+            </div>
             <label class="check-inline">
               <input type="checkbox" id="stockExcludeMaxCheckbox">
               レシピレベルMaxの料理は作らない
@@ -361,7 +364,7 @@
             <button type="button" id="calcStockPlanBtn" class="btn btn-primary">備蓄プランを計算</button>
             <button type="button" id="applyStockPlanBtn" class="btn btn-ghost">次週計画に反映</button>
             <div class="stock-summary">
-              <span>想定 N 食: <strong id="stockMealsN">-</strong></span>
+              <span>基準食数: <strong id="stockBaseMealsLabel">-</strong></span>
               <span>合計食材数: <strong id="stockTotalCount">-</strong></span>
             </div>
           </div>
@@ -376,7 +379,7 @@
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251029-1102" type="module"></script>
+  <script src="./js/main.js?v=20251030-1110" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

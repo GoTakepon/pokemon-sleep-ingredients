@@ -22,22 +22,46 @@ describe("gather logic", () => {
   });
 
   it("computes ingredient hours with pokemon slot selection", () => {
-    const hours = computeIngredientHours({
+    const result = computeIngredientHours({
       needQty: 4,
       rates: [2, 1, 0],
       usePokemonCount: true,
       pokemonCount: 2,
       normalizePokemonCount: (count) => count,
     });
-    expect(hours).toBeCloseTo((4 / 3) * 24);
+    expect(result.totalDailyRate).toBe(5);
+    expect(result.ingredientDailyRate).toBe(4);
+    expect(result.assistDailyRate).toBe(1);
+    expect(result.totalHours).toBeCloseTo((4 / 5) * 24);
+    expect(result.ingredientHours).toBeCloseTo((4 / 4) * 24);
+    expect(result.ingredientShareHours).toBeCloseTo(result.totalHours * (4 / 5));
+    expect(result.assistShareHours).toBeCloseTo(result.totalHours * (1 / 5));
   });
 
   it("returns infinity when no gather rate is available", () => {
-    const hours = computeIngredientHours({
+    const result = computeIngredientHours({
       needQty: 5,
       rates: [0, 0, 0],
       usePokemonCount: false,
     });
-    expect(hours).toBe(Number.POSITIVE_INFINITY);
+    expect(result.totalHours).toBe(Number.POSITIVE_INFINITY);
+    expect(result.ingredientHours).toBe(Number.POSITIVE_INFINITY);
+    expect(result.ingredientShareHours).toBe(0);
+    expect(result.assistShareHours).toBe(0);
+  });
+
+  it("prioritises assist rates when computing total hours", () => {
+    const result = computeIngredientHours({
+      needQty: 6,
+      rates: [1, 5, 0],
+      usePokemonCount: true,
+      pokemonCount: 1,
+      normalizePokemonCount: (count) => count,
+    });
+    expect(result.totalDailyRate).toBe(6);
+    expect(result.totalHours).toBeCloseTo((6 / 6) * 24);
+    expect(result.ingredientHours).toBeCloseTo((6 / 1) * 24);
+    expect(result.ingredientShareHours).toBeCloseTo(result.totalHours * (1 / 6), 4);
+    expect(result.assistShareHours).toBeCloseTo(result.totalHours * (5 / 6), 4);
   });
 });

@@ -64,7 +64,7 @@ let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251029-1102'; // update-version.js と連動
+const APP_VERSION = '20251030-1110'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -93,12 +93,14 @@ const els = {
   excludeOverPot: document.getElementById("excludeOverPotCheckbox"),
   gatherTable: document.getElementById("gatherTable"),
   stockBagCapacity: document.getElementById("stockBagCapacityInput"),
+  stockBaseMeals: document.getElementById("stockBaseMealsInput"),
   stockIsland: document.getElementById("stockIslandSelect"),
   stockEvent: document.getElementById("stockEventSelect"),
   stockGatherTable: document.getElementById("stockGatherTable"),
   stockExcludeMax: document.getElementById("stockExcludeMaxCheckbox"),
   stockDistribute: document.getElementById("stockDistributeCheckbox"),
   stockApplyBtn: document.getElementById("applyStockPlanBtn"),
+  stockBaseMealsLabel: document.getElementById("stockBaseMealsLabel"),
   suggestCurrentMenu: document.getElementById("suggestCurrentMenu"),
   energyExportBtn: document.getElementById("exportRecipeLevelsBtn"),
   energyImportBtn: document.getElementById("importRecipeLevelsBtn"),
@@ -512,10 +514,11 @@ function formatEnergyPerSlot(value) {
 
 function computeShortageHoursDisplay(ingId, shortageQty) {
   if (!shortageQty || shortageQty <= 0) return "-";
-  const hours = computeIngredientHours(ingId, shortageQty, {
+  const result = computeIngredientHours(ingId, shortageQty, {
     usePokemonCount: true,
     pokemonCount: state.gatherPokemonCount,
   });
+  const hours = result?.totalHours;
   if (!Number.isFinite(hours) || hours <= 0) return "-";
   return formatRemainingHours(hours);
 }
@@ -620,6 +623,15 @@ function setStockBagCapacity(value) {
   syncStockPlanControls();
 }
 
+function setStockBaseMeals(value) {
+  const numeric = Math.max(1, Math.round(Number(value) || state.stockPlan.baseMeals || 3));
+  if (state.stockPlan.baseMeals === numeric) return;
+  state.stockPlan.baseMeals = numeric;
+  save();
+  clearStockPlanResults();
+  syncStockPlanControls();
+}
+
 function setStockIslandType(value) {
   const normalized = value === "normal" ? "normal" : "EX";
   if (state.stockPlan.islandType === normalized) return;
@@ -676,6 +688,9 @@ function syncStockPlanControls() {
   if (els.stockBagCapacity && document.activeElement !== els.stockBagCapacity) {
     els.stockBagCapacity.value = String(state.stockPlan.bagCapacity || 240);
   }
+  if (els.stockBaseMeals && document.activeElement !== els.stockBaseMeals) {
+    els.stockBaseMeals.value = String(state.stockPlan.baseMeals || 3);
+  }
   if (els.stockIsland && document.activeElement !== els.stockIsland) {
     els.stockIsland.value = state.stockPlan.islandType === "normal" ? "normal" : "EX";
   }
@@ -704,6 +719,9 @@ function syncStockPlanControls() {
       checkbox.checked = selectedSet.has(checkbox.value);
     });
   }
+  if (els.stockBaseMealsLabel) {
+    els.stockBaseMealsLabel.textContent = String(state.stockPlan.baseMeals || 3);
+  }
 }
 
 function serializeStockGatherConfig() {
@@ -721,6 +739,7 @@ function serializeStockGatherConfig() {
     bagCapacity: state.stockPlan?.bagCapacity || 240,
     islandType: state.stockPlan?.islandType || "EX",
     eventType: state.stockPlan?.eventType || "none",
+    baseMeals: state.stockPlan?.baseMeals || 3,
     cookingCategories,
     cookingCategory: cookingCategories[0] || "curry",
     rates,
@@ -755,6 +774,10 @@ function applyStockGatherConfig(data) {
     state.stockPlan.cookingCategories = sortStockCategories(
       normalizeStockCategoriesInput([payload.cookingCategory], DEFAULT_STOCK_CATEGORIES)
     );
+  }
+  if (payload.baseMeals !== undefined) {
+    const numeric = Math.max(1, Math.round(Number(payload.baseMeals) || state.stockPlan.baseMeals || 3));
+    state.stockPlan.baseMeals = numeric;
   }
   save();
 }
@@ -823,7 +846,7 @@ function calculateStockPlan() {
     distributeLeftover: state.stockPlan.distributeLeftover !== false,
     boostedIngredientIds: Array.from(boostedSet),
     categoryToNextKey: CATEGORY_TO_NEXT_KEY,
-    baseMeals: 3,
+    baseMeals: state.stockPlan.baseMeals || 3,
   });
 }
 
@@ -856,25 +879,83 @@ function computeRecipeEnergyStats(recipe, {
     eventBonusMultiplier,
   });
   if (potCapacity && Number(recipe.total || 0) > potCapacity) {
-    return { finalEnergy, hoursRequired: Number.POSITIVE_INFINITY, energyPerHour: null, overflow: true };
+    return {
+      finalEnergy,
+      hoursRequired: Number.POSITIVE_INFINITY,
+      ingredientHoursRequired: Number.POSITIVE_INFINITY,
+      energyPerHour: null,
+      overflow: true,
+    };
   }
 
-  let hoursRequired = 0;
+  let totalHoursRequired = 0;
+  let ingredientHoursRequired = 0;
+  let ingredientShareHours = 0;
+  let assistShareHours = 0;
+  let totalHoursInfinite = false;
+  let ingredientHoursInfinite = false;
+  let shareInvalid = false;
   for (const [ingId, qty] of Object.entries(recipe.needs || {})) {
     const need = Number(qty) || 0;
-    const hours = computeIngredientHours(ingId, need, { usePokemonCount, pokemonCount });
-    if (!Number.isFinite(hours)) {
-      hoursRequired = Number.POSITIVE_INFINITY;
-      break;
+    const baseResult = computeIngredientHours(ingId, need, { usePokemonCount: false });
+
+    const totalHours = baseResult?.totalHours;
+    const ingredientHours = baseResult?.ingredientHours;
+    const baseTotalDaily = baseResult?.totalDailyRate;
+    const baseIngredientDaily = baseResult?.ingredientDailyRate;
+    const baseAssistDaily = baseResult?.assistDailyRate;
+
+    if (!Number.isFinite(totalHours)) {
+      totalHoursInfinite = true;
+    } else if (!totalHoursInfinite) {
+      totalHoursRequired += totalHours;
     }
-    hoursRequired += hours;
+
+    if (!Number.isFinite(ingredientHours)) {
+      ingredientHoursInfinite = true;
+    } else if (!ingredientHoursInfinite) {
+      ingredientHoursRequired += ingredientHours;
+    }
+
+    if (
+      Number.isFinite(totalHours) &&
+      Number.isFinite(baseTotalDaily) &&
+      baseTotalDaily > 0 &&
+      Number.isFinite(baseIngredientDaily) &&
+      Number.isFinite(baseAssistDaily)
+    ) {
+      const ingredientRatio = Math.max(0, Math.min(1, baseIngredientDaily / baseTotalDaily));
+      const assistRatio = Math.max(0, Math.min(1, baseAssistDaily / baseTotalDaily));
+      const shareHours = totalHours;
+      ingredientShareHours += shareHours * ingredientRatio;
+      assistShareHours += shareHours * assistRatio;
+    } else {
+      shareInvalid = true;
+    }
   }
 
-  const energyPerHour = (Number.isFinite(hoursRequired) && hoursRequired > 0)
-    ? finalEnergy / hoursRequired
+  if (totalHoursInfinite) {
+    totalHoursRequired = Number.POSITIVE_INFINITY;
+    ingredientShareHours = Number.POSITIVE_INFINITY;
+    assistShareHours = Number.POSITIVE_INFINITY;
+  }
+
+  if (ingredientHoursInfinite) {
+    ingredientHoursRequired = Number.POSITIVE_INFINITY;
+  }
+
+  const energyPerHour = (Number.isFinite(totalHoursRequired) && totalHoursRequired > 0)
+    ? finalEnergy / totalHoursRequired
     : null;
 
-  return { finalEnergy, hoursRequired, energyPerHour };
+  return {
+    finalEnergy,
+    hoursRequired: totalHoursRequired,
+    ingredientHoursRequired,
+    ingredientShareHours: !shareInvalid ? ingredientShareHours : Number.POSITIVE_INFINITY,
+    assistShareHours: !shareInvalid ? assistShareHours : Number.POSITIVE_INFINITY,
+    energyPerHour,
+  };
 }
 
 function getAllRecipeEnergyStats({
@@ -1196,17 +1277,27 @@ function renderProposalResults(perSlotCombos) {
     const combo = entry.combo;
     const entries = combo.recipes || [];
     const totalHours = formatHours(combo.totalHours);
+    const totalIngredientShare = formatHours(combo.totalIngredientShareHours);
+    const totalAssistShare = formatHours(combo.totalAssistShareHours);
+    const totalIngredientOnlyHours = formatHours(combo.totalIngredientHours);
     const totalEnergy = formatNumber(combo.totalEnergy);
     const computedSlotCount = formatSlotCount(combo.slotCount);
     const energyPerSlot = formatEnergyPerSlot(combo.energyPerSlot);
-    const rows = entries.map((r, mealIdx) => `
-      <tr>
-        <td class="num">${mealIdx + 1}</td>
-        <td class="proposal-recipe-cell">${r.title}</td>
-        <td class="num">${formatHours(r.hoursRequired)}</td>
-        <td class="num">${formatNumber(r.finalEnergy)}</td>
-      </tr>
-    `).join("");
+    const rows = entries.map((r, mealIdx) => {
+      const ingredientHoursDisplay = formatHours(r.ingredientShareHours);
+      const assistHoursDisplay = formatHours(r.assistShareHours);
+      const totalHoursDisplay = formatHours(r.hoursRequired);
+      return `
+        <tr>
+          <td class="num">${mealIdx + 1}</td>
+          <td class="proposal-recipe-cell">${r.title}</td>
+          <td class="num">${ingredientHoursDisplay}</td>
+          <td class="num">${assistHoursDisplay}</td>
+          <td class="num">${totalHoursDisplay}</td>
+          <td class="num">${formatNumber(r.finalEnergy)}</td>
+        </tr>
+      `;
+    }).join("");
     return `
       <div class="proposal-card" data-proposal-index="${renderIndex}" data-slot="${entry.slot ?? ""}">
         <div class="proposal-header">
@@ -1225,7 +1316,9 @@ function renderProposalResults(perSlotCombos) {
             <tr>
               <th class="num">順番</th>
               <th class="left">料理名</th>
-              <th class="num">所要時間 (h)</th>
+              <th class="num">食材枠 (h)</th>
+              <th class="num">その他枠 (h)</th>
+              <th class="num">合計 (h)</th>
               <th class="num">エナジー</th>
             </tr>
           </thead>
@@ -1233,6 +1326,8 @@ function renderProposalResults(perSlotCombos) {
           <tfoot>
             <tr>
               <th colspan="2">合計</th>
+              <th class="num">${totalIngredientShare}</th>
+              <th class="num">${totalAssistShare}</th>
               <th class="num">${totalHours}</th>
               <th class="num">${totalEnergy}</th>
             </tr>
@@ -1240,7 +1335,8 @@ function renderProposalResults(perSlotCombos) {
         </table>
         <div class="proposal-summary">
           <span>想定枠: ${entry.slot ?? "—"}枠</span>
-          <span>稼働枠数 (合計時間 ÷ 24h): ${computedSlotCount}</span>
+          <span>稼働枠数 (食材枠合計 ÷ 24h): ${computedSlotCount}</span>
+          <span class="muted">食材枠合計 (参考): ${totalIngredientOnlyHours}</span>
           <span>1枠あたりエナジー: ${energyPerSlot}</span>
         </div>
       </div>
@@ -1354,7 +1450,7 @@ function renderSuggestionsTable() {
 }
 
 
-function formatStockPlanTotalsRow({ ingredient, baseQty, extraQty, bonusQty, totalQty }) {
+function formatStockPlanTotalsRow({ ingredient, baseQty, bonusQty, totalQty }) {
   return `
     <tr>
       <td class="cell-ing">
@@ -1362,7 +1458,6 @@ function formatStockPlanTotalsRow({ ingredient, baseQty, extraQty, bonusQty, tot
         <span class="name">${ingredient.name || ingredient.id}</span>
       </td>
       <td class="num">${baseQty}</td>
-      <td class="num">${extraQty}</td>
       <td class="num">${bonusQty}</td>
       <td class="num">${totalQty}</td>
     </tr>
@@ -1377,27 +1472,37 @@ function renderStockPlanResults(result) {
     }
   }
   const table = document.getElementById("stockPlanTable");
-  const nEl = document.getElementById("stockMealsN");
   const totalEl = document.getElementById("stockTotalCount");
   const noteEl = document.getElementById("stockPlanNotes");
   if (!table) return;
 
   const current = lastStockPlanResult;
+  const requestedMealsValue = Number.isFinite(current?.requestedBaseMeals)
+    ? current.requestedBaseMeals
+    : Math.max(1, Math.round(state.stockPlan.baseMeals || 3));
+  const baseMealsValue = Number.isFinite(current?.baseMeals)
+    ? current.baseMeals
+    : requestedMealsValue;
+  const baseMealsLabel = `${baseMealsValue}食分`;
+  if (els.stockBaseMeals && document.activeElement !== els.stockBaseMeals) {
+    els.stockBaseMeals.value = String(state.stockPlan.baseMeals || requestedMealsValue);
+  }
+  if (els.stockBaseMealsLabel) {
+    els.stockBaseMealsLabel.textContent = String(baseMealsValue);
+  }
   if (!current || current.error) {
     table.innerHTML = `
       <thead>
-        <tr><th>食材名</th><th class="num">3食分</th><th class="num">追加分</th><th class="num">余剰充当</th><th class="num">合計</th></tr>
+        <tr><th>食材名</th><th class="num">${baseMealsLabel}</th><th class="num">余剰充当</th><th class="num">合計</th></tr>
       </thead>
-      <tbody><tr><td class="muted" colspan="5">${current?.error || "条件を設定し、「備蓄プランを計算」を押してください。"}</td></tr></tbody>
+      <tbody><tr><td class="muted" colspan="4">${current?.error || "条件を設定し、「備蓄プランを計算」を押してください。"}</td></tr></tbody>
     `;
-    if (nEl) nEl.textContent = "-";
     if (totalEl) totalEl.textContent = "-";
     if (noteEl) noteEl.textContent = current?.planEntry?.plan || "";
     return;
   }
 
   const baseTotals = current.baseTotals || new Map();
-  const extraTotals = current.extraTotals || new Map();
   const bonusTotals = current.bonusTotals || new Map();
   const finalTotals = current.finalTotals || new Map();
 
@@ -1405,7 +1510,6 @@ function renderStockPlanResults(result) {
   const ingredientMap = new Map((state.data?.ingredients || []).map((ing) => [ing.id, ing]));
   const allIds = new Set([
     ...Array.from(baseTotals.keys()),
-    ...Array.from(extraTotals.keys()),
     ...Array.from(bonusTotals.keys()),
     ...Array.from(finalTotals.keys()),
   ]);
@@ -1413,13 +1517,11 @@ function renderStockPlanResults(result) {
     const meta = ingredientMap.get(ingId) || { id: ingId, name: ingId, emoji: "" };
     const totalQty = Number(finalTotals.get(ingId) || 0);
     const baseQty = Number(baseTotals.get(ingId) || 0);
-    const extraQty = Number(extraTotals.get(ingId) || 0);
     const bonusQty = Number(bonusTotals.get(ingId) || 0);
-    if (totalQty <= 0 && baseQty <= 0 && extraQty <= 0 && bonusQty <= 0) return;
+    if (totalQty <= 0 && baseQty <= 0 && bonusQty <= 0) return;
     rows.push(formatStockPlanTotalsRow({
       ingredient: meta,
       baseQty,
-      extraQty,
       bonusQty,
       totalQty,
     }));
@@ -1427,18 +1529,30 @@ function renderStockPlanResults(result) {
 
   table.innerHTML = `
     <thead>
-      <tr><th>食材名</th><th class="num">3食分</th><th class="num">追加分</th><th class="num">余剰充当</th><th class="num">合計</th></tr>
+      <tr><th>食材名</th><th class="num">${baseMealsLabel}</th><th class="num">余剰充当</th><th class="num">合計</th></tr>
     </thead>
-    <tbody>${rows.length ? rows.join("") : `<tr><td class="muted" colspan="5">（備蓄対象なし）</td></tr>`}</tbody>
+    <tbody>${rows.length ? rows.join("") : `<tr><td class="muted" colspan="4">（備蓄対象なし）</td></tr>`}</tbody>
   `;
 
-  if (nEl) nEl.textContent = String(current.extraMeals || 0);
   if (totalEl) totalEl.textContent = String(current.totalCount || current.baseCount || 0);
 
   if (noteEl) {
     const notes = [];
-    if (current.planEntry?.plan) {
-      notes.push(`方針: ${current.planEntry.plan}`);
+    const planLines = (current.categoryPlans || [])
+      .map(({ categoryKey }) => {
+        const label = CATEGORY_LABELS[categoryKey] || categoryKey || "-";
+        return `  ・${label}: 基準食数ぶん備蓄します。`;
+      })
+      .filter(Boolean);
+    notes.push(
+      [
+        "方針:",
+        `  ・基準食数: ${baseMealsLabel}`,
+        ...(planLines.length ? planLines : ["  ・各カテゴリの備蓄食材を確保します。"]),
+      ].join("\n"),
+    );
+    if (requestedMealsValue > baseMealsValue) {
+      notes.push(`希望食数 ${requestedMealsValue} 食 → バッグ容量内で ${baseMealsValue} 食に調整しました。`);
     }
     if (current.warning) {
       notes.push(current.warning);
@@ -1446,11 +1560,8 @@ function renderStockPlanResults(result) {
     if (current.baselineStats?.length) {
       const titles = current.baselineStats.map((s) => s.recipe?.title).filter(Boolean);
       if (titles.length) {
-        notes.push(`3食分: ${titles.join("、")}`);
+        notes.push(`参考料理: ${titles.join("、")}`);
       }
-    }
-    if (current.topStat?.recipe?.title) {
-      notes.push(`追加分は ${current.topStat.recipe.title} を基準に計算しました。`);
     }
     if (state.stockPlan.excludeMaxLevel) {
       notes.push("レシピレベルMaxの料理は除外しています。");
@@ -1472,7 +1583,11 @@ function renderStockPlanResults(result) {
     if (state.stockPlan.distributeLeftover === false) {
       notes.push("余剰充当: 無効 (バッグ容量に空きが出る場合があります)");
     }
-    noteEl.textContent = notes.join("\n");
+    const html = notes
+      .flatMap((note) => String(note ?? "").split("\n"))
+      .map((line) => escapeHtml(line))
+      .join("<br>");
+    noteEl.innerHTML = html;
   }
 }
 
@@ -1824,6 +1939,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setStockGatherRate,
       clearStockPlanResults,
       setStockBagCapacity,
+      setStockBaseMeals,
       setStockIslandType,
       setStockEventType,
       setStockExcludeMax,

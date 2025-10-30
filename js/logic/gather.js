@@ -34,19 +34,53 @@ export function computeIngredientHours({
   normalizePokemonCount = defaultNormalizePokemonCount,
 } = {}) {
   const required = Number(needQty) || 0;
-  if (required <= 0) return 0;
+  const normalized = (rates || []).map((val) => Math.max(0, Number(val) || 0));
 
-  const normalizedRates = (rates || []).map((val) => Math.max(0, Number(val) || 0));
-  let dailyRate = 0;
+  const ingredientPerSlot = normalized[0] || 0;
+  const assistDailyRate = (normalized[1] || 0) + (normalized[2] || 0);
 
+  let ingredientDailyRate = 0;
   if (usePokemonCount) {
-    const count = Math.max(1, normalizePokemonCount(pokemonCount));
-    const sorted = normalizedRates.slice().sort((a, b) => b - a);
-    dailyRate = sorted.slice(0, count).reduce((sum, val) => sum + val, 0);
+    const slots = Math.max(1, normalizePokemonCount(pokemonCount));
+    ingredientDailyRate = ingredientPerSlot * slots;
   } else {
-    dailyRate = normalizedRates.reduce((sum, val) => sum + val, 0);
+    ingredientDailyRate = ingredientPerSlot;
   }
 
-  if (dailyRate <= 0) return Number.POSITIVE_INFINITY;
-  return (required / dailyRate) * 24;
+  const totalDailyRate = ingredientDailyRate + assistDailyRate;
+
+  const totalHours =
+    required <= 0
+      ? 0
+      : totalDailyRate > 0
+        ? (required / totalDailyRate) * 24
+        : Number.POSITIVE_INFINITY;
+
+  const ingredientHours =
+    required <= 0
+      ? 0
+      : ingredientDailyRate > 0
+        ? (required / ingredientDailyRate) * 24
+        : Number.POSITIVE_INFINITY;
+
+  let ingredientShareHours = 0;
+  let assistShareHours = 0;
+  if (Number.isFinite(totalHours) && totalHours > 0 && totalDailyRate > 0) {
+    if (ingredientDailyRate > 0) {
+      ingredientShareHours = totalHours * (ingredientDailyRate / totalDailyRate);
+    }
+    if (assistDailyRate > 0) {
+      assistShareHours = totalHours * (assistDailyRate / totalDailyRate);
+    }
+  }
+
+  return {
+    totalHours,
+    ingredientHours,
+    totalDailyRate,
+    ingredientDailyRate,
+    assistDailyRate,
+    ingredientShareHours,
+    assistShareHours,
+  };
 }

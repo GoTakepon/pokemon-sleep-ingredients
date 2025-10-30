@@ -51,13 +51,37 @@ export function computeBestRecipeCombos(
 
     const recipes = indexes.map((idx) => valid[idx]);
     let totalHours = 0;
+    let totalIngredientOnlyHours = 0;
+    let totalIngredientShareHours = 0;
+    let totalAssistShareHours = 0;
     let totalEnergy = 0;
+    let ingredientHoursValid = true;
+    let shareHoursValid = true;
     for (const stat of recipes) {
       totalHours += stat.hoursRequired;
       totalEnergy += stat.finalEnergy;
+      if (!Number.isFinite(stat.ingredientHoursRequired)) {
+        ingredientHoursValid = false;
+      } else {
+        totalIngredientOnlyHours += stat.ingredientHoursRequired;
+      }
+
+      if (Number.isFinite(stat.ingredientShareHours)) {
+        totalIngredientShareHours += stat.ingredientShareHours;
+      } else {
+        shareHoursValid = false;
+      }
+
+      if (Number.isFinite(stat.assistShareHours)) {
+        totalAssistShareHours += stat.assistShareHours;
+      } else {
+        shareHoursValid = false;
+      }
     }
 
     if (!Number.isFinite(totalHours) || totalHours <= 0) return;
+    if (!ingredientHoursValid || !Number.isFinite(totalIngredientOnlyHours)) return;
+    if (!shareHoursValid) return;
     if (totalHours / normCount > maxHours) return;
 
     const efficiency = totalEnergy / totalHours;
@@ -66,6 +90,9 @@ export function computeBestRecipeCombos(
       combosMap.set(key, {
         recipes,
         totalHours,
+        totalIngredientOnlyHours,
+        totalIngredientShareHours,
+        totalAssistShareHours,
         totalEnergy,
         efficiency,
       });
@@ -97,16 +124,22 @@ export function computeBestRecipeCombos(
       recipeId: stat.id ?? stat.recipe?.id,
       title: stat.title,
       hoursRequired: stat.hoursRequired,
+      ingredientHoursRequired: stat.ingredientHoursRequired,
+      ingredientShareHours: stat.ingredientShareHours,
+      assistShareHours: stat.assistShareHours,
       finalEnergy: stat.finalEnergy,
     }));
     const slotCount =
-      Number.isFinite(combo.totalHours) && combo.totalHours > 0
-        ? combo.totalHours / 24
+      Number.isFinite(combo.totalIngredientShareHours) && combo.totalIngredientShareHours > 0
+        ? combo.totalIngredientShareHours / 24
         : null;
     const energyPerSlot =
       slotCount && slotCount > 0 ? combo.totalEnergy / slotCount : null;
     return {
       ...combo,
+      totalIngredientHours: combo.totalIngredientOnlyHours,
+      totalIngredientShareHours: combo.totalIngredientShareHours,
+      totalAssistShareHours: combo.totalAssistShareHours,
       recipes: entries,
       slotCount,
       energyPerSlot,

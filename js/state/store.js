@@ -65,6 +65,7 @@ const storedCookingCategoriesRaw = Array.isArray(storedStockConfig?.cookingCateg
     ? [storedStockConfig.cookingCategory]
     : [];
 
+
 export const state = {
   have: safeParse("have", () => ({})),
   chosen: safeParse("chosen", () => []),

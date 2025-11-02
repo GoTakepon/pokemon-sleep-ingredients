@@ -179,4 +179,5 @@ export function setupStockPlanUI({
   syncStockPlanControls();
   renderStockGatherTable();
   renderStockPlanResults();
+  setStockCalcLoading(false);
 }

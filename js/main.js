@@ -64,7 +64,7 @@ let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251030-1332'; // update-version.js と連動
+const APP_VERSION = '20251102-1001'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -685,6 +685,7 @@ function setStockCalcLoading(flag) {
     els.stockCalcIndicator.hidden = !isLoading;
   }
 }
+
 
 function setStockCookingCategories(categories) {
   const normalized = sortStockCategories(

@@ -15,5 +15,7 @@
   { "id": "delicious_tail", "name": "おいしいシッポ", "emoji": "🦎", "aliases": ["おいしいシッポ","しっぽ","tail"] },
   { "id": "wakaku_soy", "name": "ワカクサ大豆", "emoji": "🫘", "aliases": ["ワカクサ大豆","大豆","soybean"] },
   { "id": "wakaku_corn", "name": "ワカクサコーン", "emoji": "🌽", "aliases": ["ワカクサコーン","コーン","とうもろこし","corn"] },
-  { "id": "wake_coffee", "name": "めざましコーヒー", "emoji": "☕", "aliases": ["めざましコーヒー","コーヒー","coffee"] }
+  { "id": "wake_coffee", "name": "めざましコーヒー", "emoji": "☕", "aliases": ["めざましコーヒー","コーヒー","coffee"] },
+  { "id": "heavy_pumpkin", "name": "ずっしりカボチャ", "emoji": "🎃", "aliases": ["ずっしりカボチャ","カボチャ","pumpkin"] },
+  { "id": "glossy_avocado", "name": "つやつやアボカド", "emoji": "🥑", "aliases": ["つやつやアボカド","アボカド","avocado"] }
 ]

@@ -230,6 +230,30 @@
       },
       "total": 101,
       "energy": 20655
+    },
+    {
+      "id": "なりきりバケッチャシチュ",
+      "title": "なりきりバケッチャシチュー",
+      "needs": {
+        "heavy_pumpkin": 10,
+        "mame_meat": 16,
+        "potato": 18,
+        "mushroom": 25
+      },
+      "total": 69,
+      "energy": 15621
+    },
+    {
+      "id": "しんりょくアボカドグラタン",
+      "title": "しんりょくアボカドグラタン",
+      "needs": {
+        "glossy_avocado": 22,
+        "potato": 20,
+        "moo_milk": 41,
+        "pure_oil": 32
+      },
+      "total": 115,
+      "energy": 24802
     }
   ],
   "salad": [
@@ -488,6 +512,29 @@
       },
       "total": 104,
       "energy": 19293
+    },
+    {
+      "id": "くだけるアボカドサラダ",
+      "title": "くだけるアボカドサラダ",
+      "needs": {
+        "glossy_avocado": 14,
+        "wakaku_soy": 18,
+        "pure_oil": 10
+      },
+      "total": 42,
+      "energy": 7125
+    },
+    {
+      "id": "じならしワカモレチップス",
+      "title": "じならしワカモレチップス",
+      "needs": {
+        "glossy_avocado": 28,
+        "wakaku_corn": 25,
+        "herb": 30,
+        "wakaku_soy": 22
+      },
+      "total": 105,
+      "energy": 25162
     }
   ],
   "dessert": [
@@ -755,6 +802,29 @@
       },
       "total": 102,
       "energy": 20885
+    },
+    {
+      "id": "ドキドキこわいかおパンケ-キ",
+      "title": "ドキドキこわいかおパンケーキ",
+      "needs": {
+        "heavy_pumpkin": 18,
+        "egg": 24,
+        "sweet_honey": 32,
+        "sleep_tomato": 29
+      },
+      "total": 103,
+      "energy": 24354
+    },
+    {
+      "id": "グラスミキサ-スム-ジ",
+      "title": "グラスミキサースムージー",
+      "needs": {
+        "glossy_avocado": 18,
+        "sleep_tomato": 16,
+        "moo_milk": 14
+      },
+      "total": 48,
+      "energy": 8165
     }
   ]
 }

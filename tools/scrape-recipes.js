@@ -36,8 +36,10 @@ function loadIngredientsMap() {
   return byName;
 }
 
+const FORCE_REFRESH = process.argv.includes("--refresh") || process.argv.includes("-r");
+
 async function ensureHtml() {
-  if (fs.existsSync(DEBUG_HTML)) {
+  if (!FORCE_REFRESH && fs.existsSync(DEBUG_HTML)) {
     return fs.readFileSync(DEBUG_HTML, "utf-8");
   }
   console.log("Fetching:", WIKI_URL);

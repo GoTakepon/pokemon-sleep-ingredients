@@ -7,13 +7,13 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251110-1358">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251110-1358">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251110-1358">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251110-1358">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251110-1358">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251110-1358">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251110-1358">
+  <link rel="stylesheet" href="./assets/css/base.css?v=20251110-1659">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251110-1659">
+  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251110-1659">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251110-1659">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251110-1659">
+  <link rel="stylesheet" href="./assets/css/custom.css?v=20251110-1659">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251110-1659">
   <link rel="apple-touch-icon" href="./assets/icon-yadon-180.png">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
@@ -166,12 +166,9 @@
           <h2 class="section-title">料理エナジー計算</h2>
         </header>
         <div class="card">
-          <div class="energy-meta">
-            表示カテゴリ: <span id="energyCategoryLabel">-</span>
-          </div>
-          <div class="table-wrapper">
-            <table id="energyTable" class="table table-energy"></table>
-          </div>
+              <div class="table-wrapper">
+                <table id="energyTable" class="table table-energy"></table>
+              </div>
           <div class="io-section">
             <h3 class="io-title">レシピレベルの共有</h3>
             <p class="muted io-note">JSON テキストをコピーして他端末へ持ち運びできます。インポート時は貼り付け後に読み込みを実行してください。</p>
@@ -211,7 +208,6 @@
           <div class="proposal-config">
             <div class="proposal-section-head">
               <h3 class="sub-title">イベント条件</h3>
-              <div id="suggestCurrentMenu" class="current-menu-summary"></div>
             </div>
             <div class="proposal-settings">
               <div class="proposal-row proposal-row-first">
@@ -384,7 +380,7 @@
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251110-1358" type="module"></script>
+  <script src="./js/main.js?v=20251110-1659" type="module"></script>
   <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

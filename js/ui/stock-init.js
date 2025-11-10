@@ -45,7 +45,8 @@ export function setupStockPlanUI({
       if (!input) return;
       const ingId = input.dataset.ingId;
       const idx = input.dataset.index;
-      setStockGatherRate(ingId, idx, input.value);
+      const aggregated = parseAdditiveValue(input.value);
+      setStockGatherRate(ingId, idx, aggregated);
       clearStockPlanResults();
     });
     table.dataset.bound = "1";

@@ -64,7 +64,7 @@ let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251110-1358'; // update-version.js と連動
+const APP_VERSION = '20251110-1659'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -123,6 +123,11 @@ const CATEGORY_LABELS = {
   salad: "サラダ",
   dessert: "デザート・ドリンク",
 };
+const CATEGORY_TO_GROUP = {
+  curry: "CURRY",
+  salad: "SALAD",
+  dessert: "SWEETS",
+};
 const ALL_RECIPE_CATEGORIES = ["curry", "salad", "dessert"];
 const CATEGORY_TO_NEXT_KEY = {
   curry: "CURRY",
@@ -158,6 +163,16 @@ function sortStockCategories(categories = []) {
 function shallowArrayEqual(a = [], b = []) {
   if (a.length !== b.length) return false;
   return a.every((val, idx) => val === b[idx]);
+}
+
+function getCurrentCategory(fallbackToFirst = true) {
+  const fromUi = els.globalCat?.value || els.cat?.value;
+  if (fromUi) return fromUi;
+  const stored = localStorage.getItem("lastCategory");
+  if (stored) return stored;
+  if (!fallbackToFirst) return null;
+  const recipesByCat = state.data?.recipes || {};
+  return Object.keys(recipesByCat)[0] || null;
 }
 
 /* ----------------- State ----------------- */
@@ -305,7 +320,7 @@ function setupTabs() {
       renderNextChosen?.();
       renderTables?.();
       renderSuggestionsTable?.();
-      renderEnergyTable(els.cat?.value || null);
+      renderEnergyTable(getCurrentCategory(true));
     } else if (key === 'gather') {
       renderGatherTable();
     } else if (key === 'stock') {
@@ -347,9 +362,15 @@ function buildCategoryOptions(recipes) {
 }
 
 let buildingRecipeOptions = false;
+let lastCategoryUsed = null;
 function buildRecipeOptions(forcedCategory) {
   const cat = forcedCategory || els.cat?.value || els.globalCat?.value;
   if (!cat) return;
+  const prevCat = lastCategoryUsed;
+  if (prevCat && prevCat !== cat) {
+    clearProposalResults();
+  }
+  lastCategoryUsed = cat;
   localStorage.setItem("lastCategory", cat);
   if (els.cat && els.cat.value !== cat) {
     els.cat.value = cat;
@@ -377,6 +398,10 @@ function addRecipeById(id) {
   if (storeIncChosen(id)) {
     save();
     refresh();
+    const cat = CATEGORY_TO_GROUP[localStorage.getItem("lastCategory") || ""];
+    if (cat) {
+      renderEnergyTable(cat.toLowerCase());
+    }
   }
 }
 
@@ -422,7 +447,7 @@ function setRecipeLevel(recipeId, level) {
   if (levels[recipeId] === normalized) return;
   levels[recipeId] = normalized;
   save();
-  renderEnergyTable(els.cat?.value || null);
+  renderEnergyTable(getCurrentCategory(true));
   clearProposalResults();
 }
 
@@ -432,7 +457,7 @@ function setFieldBonusPercent(value) {
   state.energyConfig.fieldBonusPercent = normalized;
   state.suggestConfig.fieldBonusPercent = normalized;
   save();
-  renderEnergyTable(els.cat?.value || null);
+  renderEnergyTable(getCurrentCategory(true));
   clearProposalResults();
 }
 
@@ -442,7 +467,7 @@ function setEventBonusMultiplier(value) {
   state.energyConfig.eventBonusMultiplier = normalized;
   state.suggestConfig.eventBonusMultiplier = normalized;
   save();
-  renderEnergyTable(els.cat?.value || null);
+  renderEnergyTable(getCurrentCategory(true));
   clearProposalResults();
 }
 
@@ -617,7 +642,7 @@ function setGatherRate(ingId, index, value) {
   state.gatherRates[ingId] = arr;
   save();
   renderGatherTable();
-  renderEnergyTable(els.cat?.value || null);
+  renderEnergyTable(getCurrentCategory(true));
   clearProposalResults();
 }
 
@@ -627,7 +652,7 @@ function setGatherPokemonCount(value) {
   state.gatherPokemonCount = normalized;
   save();
   renderGatherTable();
-  renderEnergyTable(els.cat?.value || null);
+  renderEnergyTable(getCurrentCategory(true));
   clearProposalResults();
 }
 
@@ -1048,7 +1073,7 @@ function refresh() {
   renderMenuList();
   renderNextChosen();
   rerenderTablesAndSuggestions();
-  renderEnergyTable(els.cat?.value || null);
+  renderEnergyTable(getCurrentCategory(true));
   renderGatherTable();
 }
 
@@ -1103,7 +1128,7 @@ function renderEnergyTable(selectedCategory = null) {
   const recipesByCat = state.data.recipes || {};
   const categoryLabelEl = document.getElementById("energyCategoryLabel");
   const rows = [];
-  const filterKey = selectedCategory || els.cat?.value || Object.keys(recipesByCat)[0];
+  const filterKey = selectedCategory || getCurrentCategory(true);
   const targetList = filterKey ? recipesByCat[filterKey] || [] : Object.values(recipesByCat).flat();
 
   if (categoryLabelEl) {
@@ -1190,9 +1215,8 @@ function renderGatherTable() {
     const inputs = rates.map((val, idx) => `
       <td class="num">
         <input
-          type="number"
-          min="0"
-          step="0.1"
+          type="text"
+          inputmode="decimal"
           class="gather-input"
           data-ing-id="${ing.id}"
           data-index="${idx}"
@@ -1232,9 +1256,8 @@ function renderStockGatherTable() {
     const inputs = rates.map((val, idx) => `
       <td class="num">
         <input
-          type="number"
-          min="0"
-          step="0.1"
+          type="text"
+          inputmode="decimal"
           class="stock-gather-input"
           data-ing-id="${ing.id}"
           data-index="${idx}"
@@ -1465,7 +1488,7 @@ function applyProposalCombo(index) {
   save();
   renderMenuList();
   rerenderTablesAndSuggestions();
-  renderEnergyTable(els.cat?.value || null);
+  renderEnergyTable(getCurrentCategory(true));
   renderGatherTable();
   if (typeof switchTab === "function") {
     switchTab("this");
@@ -1478,8 +1501,8 @@ function renderSuggestionsTable() {
     state,
     elements: {
       recommendTable: els.recommendTable,
-      cat: els.cat,
     },
+    categoryKey: getCurrentCategory(true),
     findRecipeById,
     em,
   });
@@ -1659,7 +1682,7 @@ function applyStockPlanToNext() {
   renderNextChosen();
   rerenderTablesAndSuggestions();
   renderStockPlanResults(lastStockPlanResult);
-  renderEnergyTable(els.cat?.value || null);
+  renderEnergyTable(getCurrentCategory(true));
   renderGatherTable();
   if (typeof switchTab === "function") {
     switchTab("this");
@@ -1968,6 +1991,7 @@ document.addEventListener("DOMContentLoaded", () => {
       getAllRecipeEnergyStats,
       computeBestRecipeCombos,
       applyProposalCombo,
+      getCategory: () => getCurrentCategory(true),
     });
     setupStockPlanUI({
       elements: els,

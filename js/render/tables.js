@@ -139,13 +139,14 @@ export function renderSuggestionsTable({
   els = {},
   findRecipeById,
   em = () => "",
+  categoryKey: forcedCategory = null,
 } = {}) {
   const refs = { ...els, ...elements };
   const table = resolveElement(refs.recommendTable, "recommendTable");
   if (!table) return;
 
   const catSelect = resolveElement(refs.cat, "categorySelect");
-  const categoryKey = catSelect?.value;
+  const categoryKey = forcedCategory || catSelect?.value;
   if (!categoryKey) {
     table.innerHTML = `
       <thead>

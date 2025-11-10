@@ -30,7 +30,32 @@ export function setupGatherUI({
   getAllRecipeEnergyStats,
   computeBestRecipeCombos,
   applyProposalCombo,
+  getCategory,
 }) {
+  const getActiveCategory = () => {
+    if (typeof getCategory === "function") {
+      return getCategory();
+    }
+    return cat?.value || null;
+  };
+
+  const parseAdditiveValue = (raw) => {
+    if (raw === null || raw === undefined) return raw;
+    if (typeof raw === "number") return raw;
+    const str = String(raw).trim();
+    if (!str) return raw;
+    const normalized = str.replace(/＋/g, "+");
+    if (!normalized.includes("+")) return raw;
+    const parts = normalized.split("+");
+    let sum = 0;
+    for (const part of parts) {
+      const num = Number(part.trim());
+      if (!Number.isFinite(num)) return raw;
+      sum += num;
+    }
+    return sum;
+  };
+
   const {
     gatherTable,
     suggestEvent,
@@ -55,7 +80,8 @@ export function setupGatherUI({
       if (!input) return;
       const ingId = input.dataset.ingId;
       const idx = input.dataset.index;
-      const normalized = normalizeGatherValue(input.value);
+      const aggregated = parseAdditiveValue(input.value);
+      const normalized = normalizeGatherValue(aggregated);
       input.value = String(normalized);
       setGatherRate(ingId, idx, normalized);
     });
@@ -154,14 +180,14 @@ export function setupGatherUI({
       }
       try {
         const payload = JSON.parse(raw);
-        applyGatherConfig(payload);
-        renderGatherTable();
-        renderEnergyTable(cat?.value || null);
-        clearProposalResults();
-        alert("食材集め能力をインポートしました。");
-      } catch (err) {
-        console.error("Import gather rates failed", err);
-        alert(`インポートに失敗しました: ${err.message || err}`);
+      applyGatherConfig(payload);
+      renderGatherTable();
+      renderEnergyTable(getActiveCategory());
+      clearProposalResults();
+      alert("食材集め能力をインポートしました。");
+    } catch (err) {
+      console.error("Import gather rates failed", err);
+      alert(`インポートに失敗しました: ${err.message || err}`);
       }
     });
     gatherImportBtn.dataset.bound = "1";
@@ -202,7 +228,7 @@ export function setupGatherUI({
   if (calcBtn && !calcBtn.dataset.bound) {
     calcBtn.addEventListener("click", () => {
       clearProposalResults("計算中...");
-      const category = cat?.value || null;
+      const category = getActiveCategory();
       const potLimit = state.excludeOverPot ? state.potCapacity : null;
       const results = [];
 

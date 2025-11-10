@@ -64,7 +64,7 @@ let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251110-1338'; // update-version.js と連動
+const APP_VERSION = '20251110-1358'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {
@@ -92,6 +92,7 @@ const els = {
   excludeMaxLevel: document.getElementById("excludeMaxLevelCheckbox"),
   excludeOverPot: document.getElementById("excludeOverPotCheckbox"),
   gatherTable: document.getElementById("gatherTable"),
+  globalCat: document.getElementById("globalCategorySelect"),
   stockBagCapacity: document.getElementById("stockBagCapacityInput"),
   stockCalcBtn: document.getElementById("calcStockPlanBtn"),
   stockCalcIndicator: document.getElementById("stockCalcIndicator"),
@@ -331,20 +332,36 @@ function buildCategoryOptions(recipes) {
   const order = ["curry", "salad", "dessert"].filter(k => recipes[k]);
   const options = order.map(k => `<option value="${k}">${CATEGORY_LABELS[k] || k}</option>`).join("");
   const saved = localStorage.getItem("lastCategory") || "";
-  els.cat.innerHTML = options;
-  if (order.includes(saved)) {
-    els.cat.value = saved;
+  if (els.cat) {
+    els.cat.innerHTML = options;
   }
-  buildRecipeOptions();
+  if (els.globalCat) {
+    els.globalCat.innerHTML = options;
+  }
+  const active = order.includes(saved) ? saved : order[0] || "";
+  if (active) {
+    if (els.cat) els.cat.value = active;
+    if (els.globalCat) els.globalCat.value = active;
+  }
+  buildRecipeOptions(active);
 }
 
 let buildingRecipeOptions = false;
-function buildRecipeOptions() {
-  const cat = els.cat.value;
-  if (cat) localStorage.setItem("lastCategory", cat);
+function buildRecipeOptions(forcedCategory) {
+  const cat = forcedCategory || els.cat?.value || els.globalCat?.value;
+  if (!cat) return;
+  localStorage.setItem("lastCategory", cat);
+  if (els.cat && els.cat.value !== cat) {
+    els.cat.value = cat;
+  }
+  if (els.globalCat && els.globalCat.value !== cat) {
+    els.globalCat.value = cat;
+  }
   const list = state.data.recipes[cat] || [];
   buildingRecipeOptions = true;
-  els.rec.innerHTML = list.map(r => `<option value="${r.id}">${r.title}</option>`).join("");
+  if (els.rec) {
+    els.rec.innerHTML = list.map(r => `<option value="${r.id}">${r.title}</option>`).join("");
+  }
   buildingRecipeOptions = false;
   renderEnergyTable(cat);
 }
@@ -363,8 +380,9 @@ function addRecipeById(id) {
   }
 }
 
-els.cat.addEventListener("change", () => buildRecipeOptions());
-els.rec.addEventListener("change", () => {
+els.cat?.addEventListener("change", () => buildRecipeOptions(els.cat.value));
+els.globalCat?.addEventListener("change", () => buildRecipeOptions(els.globalCat.value));
+els.rec?.addEventListener("change", () => {
   if (buildingRecipeOptions) return;
   addRecipeById(els.rec.value);
 });

@@ -35,6 +35,26 @@ body{
   color: var(--text);
 }
 
+.global-menu-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.global-menu-control label {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.select-compact {
+  min-width: 220px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-weight: 600;
+}
+
 /* === 全セクションのカードスタイルをフラットに変更 === */
 .section .card {
   background: transparent !important;

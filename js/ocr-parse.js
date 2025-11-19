@@ -8,6 +8,32 @@ function toHalfwidthAscii(s) {
   return s.replace(/[！-～]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
 }
 
+const UI_GARBAGE_PATTERNS = [
+  /バッグ/,
+  /どうぐ/,
+  /容量/,
+  /拡張/,
+  /ポケモンのアメ/,
+  /ゲームモード/,
+  /もどる/,
+  /デフォルト/,
+  /長する/,
+];
+
+function stripUiGarbage(raw) {
+  return String(raw || "")
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => {
+      if (!line) return false;
+      if (/^[=＋+\-－]+$/.test(line)) return false;
+      if (/^\d+(?::\d+)?$/.test(line)) return false;
+      if (UI_GARBAGE_PATTERNS.some(re => re.test(line))) return false;
+      return true;
+    })
+    .join("\n");
+}
+
 function normalizeSpaces(s) {
   return s
     .replace(/\r?\n/g, " ")
@@ -37,7 +63,7 @@ function normalizeForMatch(s) {
 // ------------------------------
 function normalizeText(raw) {
   if (!raw) return "";
-  let s = String(raw);
+  let s = stripUiGarbage(raw);
   // よくある「×」「✕」「X」「ｘ」などを全部 x に寄せる
   s = s
     .replace(/[×✕✖✗ＸｘＸ]/g, "x")
@@ -100,9 +126,14 @@ export function parseOcrText(ocrRaw, ingredients) {
   // 4) 数量と名前を順番に突き合わせ（短い方に合わせる）
   const n = Math.min(counts.length, orderedNames.length);
   const result = {};
+  const duplicatesIgnored = [];
   for (let i = 0; i < n; i++) {
     const id = orderedNames[i].id;
-    result[id] = (result[id] || 0) + counts[i];
+    if (Object.prototype.hasOwnProperty.call(result, id)) {
+      duplicatesIgnored.push({ id, previous: result[id], skipped: counts[i] });
+      continue;
+    }
+    result[id] = counts[i];
   }
 
   // 5) デバッグ情報を返す（従来互換＋少し詳細）
@@ -112,7 +143,8 @@ export function parseOcrText(ocrRaw, ingredients) {
     leftoverCounts: counts.slice(n),
     leftoverNames: orderedNames.slice(n).map(o => o.name),
     rawNormalized: text,          // 数量抽出に使った本文
-    matchNormalized: textForMatch // 名前照合に使った本文
+    matchNormalized: textForMatch, // 名前照合に使った本文
+    duplicatesIgnored,
   };
 
   return { result, debug };

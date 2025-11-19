@@ -64,7 +64,7 @@ let lastProposalCombos = [];
 let lastStockPlanResult = null;
 let stockCategoryCheckboxes = [];
 
-const APP_VERSION = '20251110-1659'; // update-version.js と連動
+const APP_VERSION = '20251119-1552'; // update-version.js と連動
 
 /* ----------------- DOM ----------------- */
 const els = {

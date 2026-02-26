@@ -15,7 +15,6 @@ import {
   decNextExtra,
   setNextExtraQty,
   removeNextExtra,
-  resetNextIfMissing,
 } from "../state/store.js";
 
 export function setupTabs(rerender) {
@@ -216,8 +215,4 @@ export function setupIngredientsFilter({ renderTables }) {
       renderTables();
     });
   }
-}
-
-export function initNextState() {
-  resetNextIfMissing();
 }

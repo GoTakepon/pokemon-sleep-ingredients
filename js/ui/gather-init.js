@@ -31,6 +31,7 @@ export function setupGatherUI({
   computeBestRecipeCombos,
   applyProposalCombo,
   getCategory,
+  showToast,
 }) {
   const getActiveCategory = () => {
     if (typeof getCategory === "function") {
@@ -180,14 +181,24 @@ export function setupGatherUI({
       }
       try {
         const payload = JSON.parse(raw);
-      applyGatherConfig(payload);
-      renderGatherTable();
-      renderEnergyTable(getActiveCategory());
-      clearProposalResults();
-      alert("食材集め能力をインポートしました。");
-    } catch (err) {
-      console.error("Import gather rates failed", err);
-      alert(`インポートに失敗しました: ${err.message || err}`);
+        applyGatherConfig(payload);
+        renderGatherTable();
+        renderEnergyTable(getActiveCategory());
+        clearProposalResults();
+        // Assuming showToast is passed in setupGatherUI arguments or imported
+        // But setupGatherUI signature needs to be updated to accept showToast
+        if (typeof showToast === "function") {
+          showToast("食材集め能力をインポートしました。", "success");
+        } else {
+          alert("食材集め能力をインポートしました。");
+        }
+      } catch (err) {
+        console.error("Import gather rates failed", err);
+        if (typeof showToast === "function") {
+          showToast(`インポートに失敗しました: ${err.message || err}`, "error");
+        } else {
+          alert(`インポートに失敗しました: ${err.message || err}`);
+        }
       }
     });
     gatherImportBtn.dataset.bound = "1";

@@ -23,25 +23,7 @@ const bumpQuery = (s, file) => {
 const read = p => fs.readFileSync(p, "utf-8");
 const write = (p, txt) => fs.writeFileSync(p, txt);
 
-// 1) index.html を更新（CSS と main.js の ?v を揃える）
-{
-  const p = path.resolve("index.html");
-  let html = read(p);
-
-  html = bumpQuery(html, "./assets/css/base.css");
-  html = bumpQuery(html, "./assets/css/section-ocr.css");
-  html = bumpQuery(html, "./assets/css/section-goal.css");
-  html = bumpQuery(html, "./assets/css/section-ingrediants.css");
-  html = bumpQuery(html, "./assets/css/section-recommend.css");
-  html = bumpQuery(html, "./assets/css/custom.css");
-  html = bumpQuery(html, "./assets/css/theme-yadon.css");
-  html = bumpQuery(html, "./js/main.js");
-  html = bumpQuery(html, "./data/ingredients.json");
-  html = bumpQuery(html, "./data/recipes.json");
-
-  write(p, html);
-  console.log("✅ index.html: bumped ?v=", VER);
-}
+// 1) index.html の更新は削除（ViteのHMRとの競合を防ぐため）
 
 // 2) service-worker.js を更新
 {
@@ -73,13 +55,9 @@ const write = (p, txt) => fs.writeFileSync(p, txt);
   sw = bumpQuery(sw, "./js/render/tables.js");
   sw = bumpQuery(sw, "./js/state/store.js");
   sw = bumpQuery(sw, "./js/ui/init.js");
- // sw = bumpQuery(sw, "./data/ingredients.json");
- // sw = bumpQuery(sw, "./data/recipes.json");
 
   // main.js のバージョン文字列置換
   let js = fs.readFileSync("./js/main.js", "utf8");
- // js = bumpQuery(js, "./data/ingredients.json");
- // js = bumpQuery(js, "./data/recipes.json");
 
   // 🔸ここを追加
   js = js.replace(/const APP_VERSION = ['"].*?['"];/, `const APP_VERSION = '${VER}';`);

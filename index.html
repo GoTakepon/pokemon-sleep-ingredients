@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="ja">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
@@ -7,25 +8,28 @@
   <style>
     @layer reset, base, sections, overrides;
   </style>
-  <link rel="stylesheet" href="./assets/css/base.css?v=20251119-1552">
-  <link rel="stylesheet" href="./assets/css/section-ocr.css?v=20251119-1552">
-  <link rel="stylesheet" href="./assets/css/section-goal.css?v=20251119-1552">
-  <link rel="stylesheet" href="./assets/css/section-ingrediants.css?v=20251119-1552">
-  <link rel="stylesheet" href="./assets/css/section-recommend.css?v=20251119-1552">
-  <link rel="stylesheet" href="./assets/css/custom.css?v=20251119-1552">
-  <link rel="stylesheet" href="./assets/css/theme-yadon.css?v=20251119-1552">
-  <link rel="apple-touch-icon" href="./assets/icon-yadon-180.png">
+  <link rel="stylesheet" href="./assets/css/base.css">
+  <link rel="stylesheet" href="./assets/css/section-ocr.css">
+  <link rel="stylesheet" href="./assets/css/section-goal.css">
+  <link rel="stylesheet" href="./assets/css/section-ingrediants.css">
+  <link rel="stylesheet" href="./assets/css/section-recommend.css">
+  <link rel="stylesheet" href="./assets/css/custom.css">
+  <link rel="stylesheet" href="./assets/css/theme-yadon.css">
+  <link rel="stylesheet" href="./assets/css/toast.css">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+  <link rel="icon" type="image/x-icon" href="./favicon.ico">
   <link rel="manifest" href="./manifest.json">
   <!--<meta name="theme-color" content="#fdeef4">*/-->
 </head>
+
 <body>
   <main class="container">
     <header class="app-header">
-        <img src="./assets/logo.png" alt="Yadon Tools" class="app-logo" />
-        <div class="logo-text">
-          <h1 class="app-title">やどんの料理お手伝いツール</h1>
-          <p class="app-subtitle">Pokémon Sleep 食材管理 & 料理シミュレータ</p>
-        </div>
+      <img src="./assets/logo.png" alt="Yadon Tools" class="app-logo" />
+      <div class="logo-text">
+        <h1 class="app-title">やどんの料理お手伝いツール</h1>
+        <p class="app-subtitle">Pokémon Sleep 食材管理 & 料理シミュレータ</p>
+      </div>
       </div>
       <div class="global-menu-control">
         <label for="globalCategorySelect">今週の料理:</label>
@@ -72,6 +76,7 @@
 
         <div id="panel_this_week" class="card">
           <div class="form-row end">
+            <select id="categorySelect" class="select"></select>
             <select id="recipeSelect" class="select select-wide"></select>
           </div>
           <div id="menuList" class="menu-list"></div>
@@ -166,9 +171,9 @@
           <h2 class="section-title">料理エナジー計算</h2>
         </header>
         <div class="card">
-              <div class="table-wrapper">
-                <table id="energyTable" class="table table-energy"></table>
-              </div>
+          <div class="table-wrapper">
+            <table id="energyTable" class="table table-energy"></table>
+          </div>
           <div class="io-section">
             <h3 class="io-title">レシピレベルの共有</h3>
             <p class="muted io-note">JSON テキストをコピーして他端末へ持ち運びできます。インポート時は貼り付け後に読み込みを実行してください。</p>
@@ -176,7 +181,8 @@
               <button type="button" id="exportRecipeLevelsBtn" class="btn btn-ghost">エクスポート</button>
               <button type="button" id="importRecipeLevelsBtn" class="btn btn-primary">インポート</button>
             </div>
-            <textarea id="recipeLevelsText" class="io-textarea" placeholder="例: {\n  &quot;levels&quot;: { &quot;recipe-id&quot;: 12 }\n}"></textarea>
+            <textarea id="recipeLevelsText" class="io-textarea"
+              placeholder="例: {\n  &quot;levels&quot;: { &quot;recipe-id&quot;: 12 }\n}"></textarea>
           </div>
           <p class="muted footnote">レシピレベルは 0〜65 の範囲で設定できます。フィールド／イベントボーナスは全レシピに共通で適用されます。</p>
         </div>
@@ -203,7 +209,8 @@
               <button type="button" id="exportGatherRatesBtn" class="btn btn-ghost">エクスポート</button>
               <button type="button" id="importGatherRatesBtn" class="btn btn-primary">インポート</button>
             </div>
-            <textarea id="gatherRatesText" class="io-textarea" placeholder="例: {\n  &quot;rates&quot;: { &quot;ing-id&quot;: [1,0,0] }\n}"></textarea>
+            <textarea id="gatherRatesText" class="io-textarea"
+              placeholder="例: {\n  &quot;rates&quot;: { &quot;ing-id&quot;: [1,0,0] }\n}"></textarea>
           </div>
           <div class="proposal-config">
             <div class="proposal-section-head">
@@ -302,7 +309,8 @@
               <button type="button" id="exportStockGatherBtn" class="btn btn-ghost">エクスポート</button>
               <button type="button" id="importStockGatherBtn" class="btn btn-primary">インポート</button>
             </div>
-            <textarea id="stockGatherText" class="io-textarea" placeholder="例: {\n  &quot;bagCapacity&quot;: 240,\n  &quot;rates&quot;: { &quot;ing-id&quot;: [1,0,0] }\n}"></textarea>
+            <textarea id="stockGatherText" class="io-textarea"
+              placeholder="例: {\n  &quot;bagCapacity&quot;: 240,\n  &quot;rates&quot;: { &quot;ing-id&quot;: [1,0,0] }\n}"></textarea>
           </div>
 
           <div class="stock-actions">
@@ -380,15 +388,16 @@
     </section>
 
   </main>
-  <script src="./js/main.js?v=20251119-1552" type="module"></script>
+  <script src="./js/main.js" type="module"></script>
   <script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./service-worker.js")
-        .then(() => console.log("Service Worker registered"))
-        .catch((err) => console.error("SW registration failed:", err));
-    });
-  }
-</script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js")
+          .then(() => console.log("Service Worker registered (offline mode enabled)"))
+          .catch((err) => console.error("SW registration failed:", err));
+      });
+    }
+  </script>
 </body>
+
 </html>

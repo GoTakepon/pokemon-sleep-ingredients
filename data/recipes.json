@@ -825,6 +825,18 @@
       },
       "total": 48,
       "energy": 8165
+    },
+    {
+      "id": "みつあつめチョコワッフル",
+      "title": "みつあつめチョコワッフル",
+      "needs": {
+        "sweet_honey": 38,
+        "wakaku_corn": 28,
+        "pure_oil": 28,
+        "relax_cacao": 21
+      },
+      "total": 115,
+      "energy": 25484
     }
   ]
 }

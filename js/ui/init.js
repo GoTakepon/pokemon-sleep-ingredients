@@ -48,11 +48,14 @@ export function setupTabs(rerender) {
 }
 
 export function setupCategorySelects({ els, buildRecipeOptions, addRecipeById }) {
-  els.cat.addEventListener("change", () => buildRecipeOptions());
-  els.rec.addEventListener("change", () => {
-    if (els.rec.dataset.building === "true") return;
-    addRecipeById(els.rec.value);
-  });
+  if (els.cat) els.cat.addEventListener("change", () => buildRecipeOptions());
+  if (els.rec) {
+    els.rec.addEventListener("change", () => {
+      if (els.rec.dataset.building === "true") return;
+      addRecipeById(els.rec.value);
+      els.rec.value = "";
+    });
+  }
 }
 
 export function setRecipeOptionsBuilding(els, flag) {
@@ -123,7 +126,8 @@ export function setupMenuCardOps({
       const ctx = card.dataset.ctx;
       const catKey = card.dataset.cat || null;
       const targetId = card.dataset.id;
-      const qty = Math.max(0, parseInt(e.target.value || "0", 10));
+      const parsedValue = parseInt(e.target.value || "0", 10);
+      const qty = catKey === "extra" ? parsedValue : Math.max(0, parsedValue);
 
       if (ctx === "THIS") {
         setChosenQty(targetId, qty);

@@ -170,9 +170,21 @@ export function computeNextWeekStockPlan({
   const subtractBoosted = stockPlanSubtractsBoosted(islandType, eventType);
   const boostedSet = new Set(boostedIngredientIds || []);
 
-  const extraTotals = new Map();
-  const extraMeals = 0;
-  let finalTotals = new Map(baseTotals);
+  const extraPerSet = new Map();
+  perSetTotals.forEach((qty, ingId) => {
+    const value = Number(qty) || 0;
+    if (value <= 0) return;
+    if (subtractBoosted && boostedSet.has(ingId)) return;
+    extraPerSet.set(ingId, value);
+  });
+  const effectivePerSetSum = sumQtyMap(extraPerSet);
+
+  const extraCapacity = Math.max(0, capacity - baseCount);
+  const extraMeals = effectivePerSetSum > 0 ? Math.max(0, Math.floor(extraCapacity / effectivePerSetSum)) : 0;
+
+  const extraTotals = scaleQtyMap(extraPerSet, extraMeals);
+
+  let finalTotals = addQtyMap(baseTotals, extraTotals);
   let totalCount = sumQtyMap(finalTotals);
   let leftover = Math.max(0, capacity - totalCount);
   const bonusTotals = new Map();
@@ -188,11 +200,11 @@ export function computeNextWeekStockPlan({
       Math.min(2, recipesForIntersection.length || 0),
     );
     if (sharedIds.length) {
-        const sharedTotals = new Map();
-        sharedIds.forEach((ingId) => {
-          const qty = Number(perSetTotals.get(ingId)) || 0;
-          if (qty > 0) sharedTotals.set(ingId, qty);
-        });
+      const sharedTotals = new Map();
+      sharedIds.forEach((ingId) => {
+        const qty = Number(perSetTotals.get(ingId)) || 0;
+        if (qty > 0) sharedTotals.set(ingId, qty);
+      });
       if (sharedTotals.size) {
         sharedSetIngredients = Array.from(sharedTotals.keys());
       }

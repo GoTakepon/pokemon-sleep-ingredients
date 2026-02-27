@@ -82,68 +82,67 @@ function normalizeText(raw) {
  */
 export function parseOcrText(ocrRaw, ingredients) {
   const text = normalizeText(ocrRaw);
+  const textForMatch = normalizeForMatch(text);
 
-  // 1) 数量を順番に抜く（x の直後に 1～3桁）
-  //    "x 12" などの空白や、"x12," のような後続記号も許容
+  // 1) Find all counts in textForMatch
   const counts = [];
-  const reCount = /x\s*(\d{1,3})(?!\d)/gi;
+  const reCount = /x(\d{1,3})(?!\d)/gi;
   let m;
-  while ((m = reCount.exec(text))) {
-    counts.push(parseInt(m[1], 10));
+  while ((m = reCount.exec(textForMatch))) {
+    counts.push({ val: parseInt(m[1], 10), start: m.index, end: m.index + m[0].length, used: false });
   }
 
-  // 2) 数量表記をいったん除去して、名前マッチ用の本文を作る
-  const textNoCounts = text.replace(/x\s*\d{1,3}(?!\d)/gi, "");
-  const textForMatch = normalizeForMatch(textNoCounts);
-
-  // 3) 食材名の出現順を抽出（最も早く現れるものを貪欲に1つずつ拾う）
+  // 2) Expand aliases to ensure robust name matching
   const entries = (ingredients || []).map(ing => {
-    const name = ing.name ?? ing.name_ja ?? "";
+    const aliases = (ing.aliases || []).filter(a => typeof a === 'string');
+    const primary = ing.name || ing.name_ja || "";
+    if (primary && !aliases.includes(primary)) aliases.push(primary);
     return {
       id: ing.id,
-      name,
-      key: normalizeForMatch(name),
+      name: primary,
+      keys: aliases.map(a => normalizeForMatch(a)).filter(a => a.length > 0)
     };
   });
 
+  // 3) Find all ingredient names in the text
   let cursor = 0;
-  const orderedNames = []; // {id, name, start, end}
+  const orderedNames = [];
   while (cursor < textForMatch.length) {
-    let best = null; // 最短位置、同位置なら長いキー優先
+    let best = null;
     for (const e of entries) {
-      if (!e.key) continue;
-      const pos = textForMatch.indexOf(e.key, cursor);
-      if (pos === -1) continue;
-      if (!best || pos < best.start || (pos === best.start && e.key.length > best.key.length)) {
-        best = { id: e.id, name: e.name, key: e.key, start: pos, end: pos + e.key.length };
+      for (const k of e.keys) {
+        const pos = textForMatch.indexOf(k, cursor);
+        if (pos === -1) continue;
+        if (!best || pos < best.start || (pos === best.start && k.length > best.key.length)) {
+          best = { id: e.id, name: e.name, key: k, start: pos, end: pos + k.length };
+        }
       }
     }
     if (!best) break;
     orderedNames.push(best);
-    cursor = best.end; // マッチ末尾から次へ
+    cursor = best.end;
   }
 
-  // 4) 数量と名前を順番に突き合わせ（短い方に合わせる）
-  const n = Math.min(counts.length, orderedNames.length);
+  // 4) Sequential matching
   const result = {};
   const duplicatesIgnored = [];
+  const n = Math.min(counts.length, orderedNames.length);
+
   for (let i = 0; i < n; i++) {
     const id = orderedNames[i].id;
     if (Object.prototype.hasOwnProperty.call(result, id)) {
-      duplicatesIgnored.push({ id, previous: result[id], skipped: counts[i] });
+      duplicatesIgnored.push({ id, previous: result[id], skipped: counts[i].val });
       continue;
     }
-    result[id] = counts[i];
+    result[id] = counts[i].val;
   }
 
-  // 5) デバッグ情報を返す（従来互換＋少し詳細）
+  // 5) Debug package
   const debug = {
-    countsExtracted: counts,
+    countsExtracted: counts.map(c => c.val),
     namesExtracted: orderedNames.map(o => ({ id: o.id, name: o.name })),
-    leftoverCounts: counts.slice(n),
-    leftoverNames: orderedNames.slice(n).map(o => o.name),
-    rawNormalized: text,          // 数量抽出に使った本文
-    matchNormalized: textForMatch, // 名前照合に使った本文
+    rawNormalized: text,
+    matchNormalized: textForMatch,
     duplicatesIgnored,
   };
 

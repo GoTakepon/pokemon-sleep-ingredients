@@ -146,7 +146,8 @@ export function renderSuggestionsTable({
   if (!table) return;
 
   const catSelect = resolveElement(refs.cat, "categorySelect");
-  const categoryKey = forcedCategory || catSelect?.value;
+  const globalCat = resolveElement(refs.globalCat, "globalCategorySelect");
+  const categoryKey = forcedCategory || catSelect?.value || globalCat?.value;
   if (!categoryKey) {
     table.innerHTML = `
       <thead>
@@ -223,8 +224,8 @@ export function renderSuggestionsTable({
     </thead>
     <tbody>
       ${rows.length
-        ? rows.map((row) => row.html).join("")
-        : `<tr><td class="muted" colspan="3">該当なし</td></tr>`}
+      ? rows.map((row) => row.html).join("")
+      : `<tr><td class="muted" colspan="3">該当なし</td></tr>`}
     </tbody>
   `;
 }

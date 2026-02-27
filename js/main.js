@@ -79,7 +79,7 @@ import {
   DEFAULT_STOCK_CATEGORIES,
 } from "./constants.js";
 
-const APP_VERSION = '20260226-1339';
+const APP_VERSION = '20260227-0925';
 
 /* ----------------- State Variables ----------------- */
 // Variables are declared here to be available globally within the module
@@ -97,9 +97,6 @@ const els = {
   ocr: document.getElementById("ocrInput"),
   parse: document.getElementById("parseBtn"),
   clear: document.getElementById("clearDataBtn"),
-
-  cat: document.getElementById("categorySelect"),
-  rec: document.getElementById("recipeSelect"),
 
   nwRecCurry: document.getElementById("nwRecCurry"),
   nwRecSalad: document.getElementById("nwRecSalad"),
@@ -481,7 +478,7 @@ function renderStockGatherTable() {
   `;
 }
 
-function formatStockPlanTotalsRow({ ingredient, baseQty, bonusQty, totalQty }) {
+function formatStockPlanTotalsRow({ ingredient, baseQty, extraQty, bonusQty, totalQty }) {
   return `
     <tr>
       <td class="cell-ing">
@@ -489,6 +486,7 @@ function formatStockPlanTotalsRow({ ingredient, baseQty, bonusQty, totalQty }) {
         <span class="name">${ingredient.name || ingredient.id}</span>
       </td>
       <td class="num">${baseQty}</td>
+      <td class="num">${extraQty}</td>
       <td class="num">${bonusQty}</td>
       <td class="num">${totalQty}</td>
     </tr>
@@ -496,10 +494,7 @@ function formatStockPlanTotalsRow({ ingredient, baseQty, bonusQty, totalQty }) {
 }
 
 function renderStockPlanResults(result) {
-  let lastStockPlanResult = null; // Local variable for now, or global if needed for persistence?
-  // Original code had global lastStockPlanResult.
-  // If we want to persist it across renders, we need a module-level variable.
-  // But here we are just rendering.
+  window.lastStockPlanResult = result;
 
   const table = document.getElementById("stockPlanTable");
   const totalEl = document.getElementById("stockTotalCount");
@@ -515,12 +510,15 @@ function renderStockPlanResults(result) {
     : requestedMealsValue;
   const baseMealsLabel = `${baseMealsValue}食分`;
 
+  const extraMealsValue = current.extraMeals || 0;
+  const extraMealsLabel = extraMealsValue > 0 ? `+${extraMealsValue}食分` : `追加分`;
+
   if (!current || current.error) {
     table.innerHTML = `
       <thead>
-        <tr><th>食材名</th><th class="num">${baseMealsLabel}</th><th class="num">余剰充当</th><th class="num">合計</th></tr>
+        <tr><th>食材名</th><th class="num">${baseMealsLabel}</th><th class="num">${extraMealsLabel}</th><th class="num">余剰充当</th><th class="num">合計</th></tr>
       </thead>
-      <tbody><tr><td class="muted" colspan="4">${current?.error || "条件を設定し、「備蓄プランを計算」を押してください。"}</td></tr></tbody>
+      <tbody><tr><td class="muted" colspan="5">${current?.error || "条件を設定し、「備蓄プランを計算」を押してください。"}</td></tr></tbody>
     `;
     if (totalEl) totalEl.textContent = "-";
     if (noteEl) noteEl.textContent = current?.planEntry?.plan || "";
@@ -542,11 +540,13 @@ function renderStockPlanResults(result) {
     const meta = ingredientMap.get(ingId) || { id: ingId, name: ingId, emoji: "" };
     const totalQty = Number(finalTotals.get(ingId) || 0);
     const baseQty = Number(baseTotals.get(ingId) || 0);
+    const extraQty = Number(current.extraTotals?.get(ingId) || 0);
     const bonusQty = Number(bonusTotals.get(ingId) || 0);
-    if (totalQty <= 0 && baseQty <= 0 && bonusQty <= 0) return;
+    if (totalQty <= 0 && baseQty <= 0 && extraQty <= 0 && bonusQty <= 0) return;
     rows.push(formatStockPlanTotalsRow({
       ingredient: meta,
       baseQty,
+      extraQty,
       bonusQty,
       totalQty,
     }));
@@ -554,9 +554,9 @@ function renderStockPlanResults(result) {
 
   table.innerHTML = `
     <thead>
-      <tr><th>食材名</th><th class="num">${baseMealsLabel}</th><th class="num">余剰充当</th><th class="num">合計</th></tr>
+      <tr><th>食材名</th><th class="num">${baseMealsLabel}</th><th class="num">${extraMealsLabel}</th><th class="num">余剰充当</th><th class="num">合計</th></tr>
     </thead>
-    <tbody>${rows.length ? rows.join("") : `<tr><td class="muted" colspan="4">（備蓄対象なし）</td></tr>`}</tbody>
+    <tbody>${rows.length ? rows.join("") : `<tr><td class="muted" colspan="5">（備蓄対象なし）</td></tr>`}</tbody>
   `;
 
   if (totalEl) totalEl.textContent = String(current.totalCount || current.baseCount || 0);
@@ -564,7 +564,10 @@ function renderStockPlanResults(result) {
   if (noteEl) {
     const notes = [];
     const planLines = (current.categoryPlans || [])
-      .map(p => `${CATEGORY_LABELS[p.category] || p.category}: ${p.count}食`)
+      .map(p => {
+        const title = p.recipeTitle ? ` (${p.recipeTitle})` : "";
+        return `${CATEGORY_LABELS[p.categoryKey] || p.categoryKey}${title}: ${current.baseMeals}食`;
+      })
       .join(" / ");
     if (planLines) notes.push(`内訳: ${planLines}`);
     if (current.planEntry?.plan) notes.push(`プラン: ${current.planEntry.plan}`);
@@ -846,9 +849,10 @@ function setupUI() {
       // I need to access the result.
       // I'll make lastStockPlanResult a module-level variable in main.js.
       if (window.lastStockPlanResult) {
-        applyStockPlanResult(window.lastStockPlanResult);
+        applyStockPlanResult(window.lastStockPlanResult, CATEGORY_TO_NEXT_KEY);
         saveState();
         refresh();
+        showToast("次週計画に反映しました。", "success");
       }
     },
     showToast,
@@ -1008,18 +1012,6 @@ function setupUI() {
     renderTables,
   });
 
-  if (els.cat) {
-    els.cat.addEventListener("change", () => {
-      buildRecipeOptions(els.cat.value);
-    });
-  }
-
-  if (els.rec) {
-    els.rec.addEventListener("change", () => {
-      addRecipeById(els.rec.value);
-      els.rec.value = "";
-    });
-  }
 
   setupTabs();
 }

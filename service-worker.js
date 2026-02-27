@@ -1,26 +1,26 @@
 // service-worker.js
 
 // ★ キャッシュ名を更新して強制入れ替え（update-version.js が自動更新）
-const CACHE_NAME = "psleep-cache-20260226-1339";
+const CACHE_NAME = "psleep-cache-20260227-0925";
 
 // ★ データ用のバージョン（update-version.js が自動更新）
-const VERSION = "20260226-1339";
+const VERSION = "20260227-0925";
 
 // 静的アセット（?v は update-version.js で更新される）
 const STATIC_ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./js/main.js?v=20260226-1339",
-  "./js/ocr-parse.js?v=20260226-1339",
-  "./js/state/store.js?v=20260226-1339",
+  "./js/main.js?v=20260227-0925",
+  "./js/ocr-parse.js?v=20260227-0925",
+  "./js/state/store.js?v=20260227-0925",
   "./js/state/apply.js",
   "./js/render/menu.js",
-  "./js/render/tables.js?v=20260226-1339",
+  "./js/render/tables.js?v=20260227-0925",
   "./js/ui/card-ops.js",
   "./js/ui/next-week-selects.js",
   "./js/ui/ingredients-filter.js",
-  "./js/ui/init.js?v=20260226-1339",
+  "./js/ui/init.js?v=20260227-0925",
   "./js/ui/gather-init.js",
   "./js/ui/stock-init.js",
   "./js/ui/energy-controls.js",
@@ -31,13 +31,13 @@ const STATIC_ASSETS = [
   "./js/logic/next-week.js",
   "./js/logic/weekly-totals.js",
   "./js/data/recipe-level-bonus.js",
-  "./assets/css/base.css?v=20260226-1339",
-  "./assets/css/custom.css?v=20260226-1339",
-  "./assets/css/section-ocr.css?v=20260226-1339",
-  "./assets/css/section-goal.css?v=20260226-1339",
-  "./assets/css/section-ingrediants.css?v=20260226-1339",
-  "./assets/css/section-recommend.css?v=20260226-1339",
-  "./assets/css/theme-yadon.css?v=20260226-1339",
+  "./assets/css/base.css?v=20260227-0925",
+  "./assets/css/custom.css?v=20260227-0925",
+  "./assets/css/section-ocr.css?v=20260227-0925",
+  "./assets/css/section-goal.css?v=20260227-0925",
+  "./assets/css/section-ingrediants.css?v=20260227-0925",
+  "./assets/css/section-recommend.css?v=20260227-0925",
+  "./assets/css/theme-yadon.css?v=20260227-0925",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
 ];

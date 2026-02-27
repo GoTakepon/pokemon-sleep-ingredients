@@ -387,11 +387,7 @@ export function decNextExtra(ingId) {
   const prev = Number(hit.qty) || 0;
   const nextQty = prev - 1;
   if (nextQty === prev) return false;
-  if (nextQty === 0) {
-    state.next.extra = arr.filter((entry) => entry.ingId !== ingId);
-  } else {
-    hit.qty = nextQty;
-  }
+  hit.qty = nextQty;
   markNextDirty();
   return true;
 }
@@ -404,11 +400,7 @@ export function setNextExtraQty(ingId, qty) {
   const nextQtyRaw = Number(qty);
   const nextQty = Number.isFinite(nextQtyRaw) ? nextQtyRaw : 0;
   if (hit.qty === nextQty) return false;
-  if (nextQty === 0) {
-    state.next.extra = arr.filter((entry) => entry.ingId !== ingId);
-  } else {
-    hit.qty = nextQty;
-  }
+  hit.qty = nextQty;
   markNextDirty();
   return true;
 }
@@ -437,7 +429,7 @@ function sanitizeNextExtraEntry(entry) {
   const ingId = entry.ingId;
   if (!ingId) return null;
   const qty = Number(entry.qty);
-  if (!Number.isFinite(qty) || qty === 0) return null;
+  if (!Number.isFinite(qty)) return null;
   return { ingId, qty };
 }
 

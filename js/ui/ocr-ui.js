@@ -8,11 +8,9 @@ export function setupOcrUI({
   refreshViews,
   showToast,
 }) {
-  const {
-    ocrInput,
-    parseBtn,
-    clearDataBtn,
-  } = elements;
+  const ocrInput = elements.ocr;
+  const parseBtn = elements.parse;
+  const clearDataBtn = elements.clear;
 
   if (parseBtn) {
     parseBtn.addEventListener("click", () => {
@@ -20,14 +18,14 @@ export function setupOcrUI({
       if (!raw) {
         return showToast("OCRテキストを入力してください。", "error");
       }
-      
+
       try {
         const { result, debug } = parseOcrText(raw, state.data.ingredients);
         console.log("OCR debug:", debug);
-        
+
         if (!result || Object.keys(result).length === 0) {
-           showToast("食材が検出されませんでした。", "error");
-           return;
+          showToast("食材が検出されませんでした。", "error");
+          return;
         }
 
         state.have = result || {};
@@ -44,11 +42,11 @@ export function setupOcrUI({
   if (clearDataBtn) {
     clearDataBtn.addEventListener("click", () => {
       if (!confirm("食材バッグ情報をリセットしますか？")) return;
-      
+
       state.have = {};
       replaceChosen([]);
       if (ocrInput) ocrInput.value = "";
-      
+
       saveState();
       refreshViews();
       showToast("バッグ情報をリセットしました。", "success");

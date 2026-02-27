@@ -1,7 +1,7 @@
 // js/ui/card-ops.js
 // カード操作（数量の増減・削除）のイベント委譲を扱うモジュール
 
-function noop() {}
+function noop() { }
 
 export function bindMenuCardOpsDelegation({
   rootIds = [],
@@ -80,7 +80,8 @@ export function bindMenuCardOpsDelegation({
       const ctx = card.dataset.ctx;
       const catKey = card.dataset.cat || null;
       const id = card.dataset.id;
-      const qty = Math.max(0, parseInt(e.target.value || "0", 10));
+      const parsedValue = parseInt(e.target.value || "0", 10);
+      const qty = catKey === "extra" ? parsedValue : Math.max(0, parsedValue);
 
       if (ctx === "THIS") {
         setChosenQty(id, qty);

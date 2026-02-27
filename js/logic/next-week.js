@@ -68,7 +68,7 @@ export function computeNextWeekTotals(
 
   (nwState.extra || []).forEach(({ ingId, qty }) => {
     const numeric = Number(qty) || 0;
-    if (numeric <= 0) return;
+    if (numeric === 0) return;
     merged.set(ingId, (merged.get(ingId) || 0) + numeric);
   });
 
@@ -76,7 +76,7 @@ export function computeNextWeekTotals(
 
   ingredients.forEach((meta) => {
     const qty = Number(merged.get(meta.id)) || 0;
-    if (qty <= 0) {
+    if (qty === 0) {
       merged.delete(meta.id);
       return;
     }
@@ -91,7 +91,7 @@ export function computeNextWeekTotals(
 
   merged.forEach((qty, ingId) => {
     const numeric = Number(qty) || 0;
-    if (numeric <= 0) return;
+    if (numeric === 0) return;
     result.set(ingId, { ingId, name: ingId, emoji: "", qty: numeric });
   });
 

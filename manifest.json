@@ -1,8 +1,8 @@
 {
   "name": "やどんのお手伝いツール",
   "short_name": "やどんツール",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/pokemon-sleep-ingredients/",
+  "scope": "/pokemon-sleep-ingredients/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0ae5e9",

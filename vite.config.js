@@ -4,6 +4,7 @@ import fs from "fs";
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: '/pokemon-sleep-ingredients/',
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',

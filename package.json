@@ -14,12 +14,14 @@
   "dependencies": {
     "cheerio": "^1.1.2",
     "node-fetch": "^3.3.2",
-    "puppeteer": "^24.23.0"
+    "puppeteer": "^24.23.0",
+    "workbox-window": "^7.4.0"
   },
   "type": "module",
   "devDependencies": {
     "jsdom": "^27.0.1",
     "vite": "^7.1.9",
+    "vite-plugin-pwa": "^1.2.0",
     "vitest": "^1.6.1"
   }
 }

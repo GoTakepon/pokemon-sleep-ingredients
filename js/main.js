@@ -79,7 +79,7 @@ import {
   DEFAULT_STOCK_CATEGORIES,
 } from "./constants.js";
 
-const APP_VERSION = '20260227-0925';
+const APP_VERSION = '20260307-1111';
 
 /* ----------------- State Variables ----------------- */
 // Variables are declared here to be available globally within the module

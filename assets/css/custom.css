@@ -400,6 +400,30 @@ body{
 /* ==========================
    ユーティリティ（必要なら）
 ========================== */
+
+/* ==========================
+   レスポンシブ
+========================== */
+@media (max-width: 860px){
+  .section{ padding: 16px; }
+  .section-title{ font-size: 1.05rem; }
+  .chip{ font-size:.85rem; padding: 3px 7px; }
+  .cell-ing .em{ font-size:18px; }
+}
+
+@media (max-width: 520px){
+  .table th, .table td,
+  .reco-table th, .reco-table td{
+    padding:10px 10px;
+  }
+  .reco-chip{ font-size:.85rem; padding:3px 6px; }
+  .reco-chip .em{ font-size:15px; }
+  .reco-lack{ width:80px; }
+}
+
+/* ==========================
+   ユーティリティ（必要なら）
+========================== */
 .hidden { display:none !important; }
 .center { text-align:center; }
 .right  { text-align:right; }
@@ -407,15 +431,27 @@ body{
 
 /* Tabs */
 .tabs {
-  display:flex; gap:8px; margin:12px 8px 0; align-items:center;
+  display: flex; 
+  gap: 6px; 
+  margin: 6px 4px 0; 
+  align-items: center;
+  flex-wrap: wrap;
 }
 .tab {
-  appearance:none; border:1px solid var(--border); background:#fff;
-  padding:8px 14px; border-radius:10px; font-weight:700; color:var(--muted);
+  appearance: none; 
+  border: 1px solid var(--border); 
+  background: #fff;
+  padding: 6px 10px; 
+  border-radius: 8px; 
+  font-weight: 700; 
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 .tab.is-active {
-  background:var(--paper); color:var(--text); border-color:var(--primary);
-  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  background: var(--paper); 
+  color: var(--text); 
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
 }
 
 /* パネル切替（hidden を確実に隠す） */

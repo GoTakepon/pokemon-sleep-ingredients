@@ -208,6 +208,7 @@ textarea:focus,
   color: var(--yadon-diff-pos);
   font-weight: 800;
 }
+
 .table .neg,
 .table-recipe .neg,
 .table-energy .neg,
@@ -231,7 +232,8 @@ textarea:focus,
   color: #d3506a;
   font-weight: 800;
 }
-.table-gather .gather-input{
+
+.table-gather .gather-input {
   width: 68px;
   max-width: 90px;
   padding: 6px 6px;
@@ -243,33 +245,37 @@ textarea:focus,
   box-sizing: border-box;
   background: #fff9fd;
 }
+
 .table-gather th:first-child,
-.table-gather td:first-child{
+.table-gather td:first-child {
   width: 45%;
   white-space: nowrap;
 }
+
 .table-gather th:nth-child(2),
 .table-gather td:nth-child(2),
 .table-gather th:nth-child(3),
 .table-gather td:nth-child(3),
 .table-gather th:nth-child(4),
-.table-gather td:nth-child(4){
+.table-gather td:nth-child(4) {
   width: 18%;
   min-width: 82px;
   text-align: center;
 }
-.table-gather .cell-ing{
-  display:flex;
-  align-items:center;
-  gap:8px;
+
+.table-gather .cell-ing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.table-gather .cell-ing .name{
-  flex:1;
-  min-width:0;
-  white-space:nowrap;
-  overflow:visible;
-  font-size:clamp(0.88rem, 2vw, 0.98rem);
-  line-height:1.15;
+
+.table-gather .cell-ing .name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: visible;
+  font-size: clamp(0.88rem, 2vw, 0.98rem);
+  line-height: 1.15;
 }
 
 .status-ok {
@@ -286,14 +292,17 @@ textarea:focus,
   background: var(--yadon-chip-bg) !important;
   border-color: rgba(233, 160, 194, 0.6) !important;
 }
+
 .need-pod.is-this {
   background: var(--yadon-chip-this) !important;
   border-color: rgba(226, 128, 165, 0.55) !important;
 }
+
 .need-pod.is-next {
   background: var(--yadon-chip-next) !important;
   border-color: rgba(239, 188, 94, 0.45) !important;
 }
+
 .need-pod.is-both {
   background: var(--yadon-chip-both) !important;
   border-color: rgba(238, 170, 90, 0.5) !important;
@@ -581,62 +590,75 @@ textarea:focus,
   box-shadow: 0 0 0 3px rgba(226, 102, 153, 0.18);
   outline: none;
 }
+
 .app-header {
   position: sticky;
   top: 0;
   z-index: 200;
-  padding: 10px 14px 6px;
-  background: linear-gradient(180deg, rgba(255, 238, 246, 0.92) 0%, rgba(255, 238, 246, 0.7) 75%, rgba(255, 238, 246, 0) 100%);
-  backdrop-filter: blur(6px);
+  padding: 6px 10px 4px;
+  background: linear-gradient(180deg, rgba(255, 238, 246, 0.95) 0%, rgba(255, 238, 246, 0.8) 75%, rgba(255, 238, 246, 0) 100%);
+  backdrop-filter: blur(8px);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   box-shadow: 0 12px 24px -22px rgba(112, 47, 94, 0.45);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .logo-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .app-logo {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
-  filter: drop-shadow(0 6px 12px rgba(173, 20, 87, 0.25));
+  filter: drop-shadow(0 4px 8px rgba(173, 20, 87, 0.25));
 }
 
 .logo-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
 }
 
 .app-title {
-  font-size: clamp(0.95rem, 1.1rem, 1.18rem);
+  font-size: clamp(0.9rem, 1.05rem, 1.15rem);
   margin: 0;
   color: var(--yadon-accent-strong);
   letter-spacing: 0.02em;
+  line-height: 1.2;
 }
 
 .app-subtitle {
   margin: 0;
   color: var(--yadon-muted);
-  font-size: clamp(0.72rem, 0.82rem, 0.9rem);
+  font-size: clamp(0.68rem, 0.75rem, 0.85rem);
+  line-height: 1.2;
 }
 
 .version-info {
   color: var(--yadon-muted);
-  font-size: clamp(0.68rem, 0.76rem, 0.84rem);
+  font-size: clamp(0.65rem, 0.72rem, 0.8rem);
+  margin-top: -2px;
 }
+
 .table-recipe .need-pod.is-this,
-.table-energy .need-pod.is-this { background: var(--bg-this); }
+.table-energy .need-pod.is-this {
+  background: var(--bg-this);
+}
+
 .table-recipe .need-pod.is-next,
-.table-energy .need-pod.is-next { background: var(--bg-next); }
+.table-energy .need-pod.is-next {
+  background: var(--bg-next);
+}
+
 .table-recipe .need-pod.is-both,
-.table-energy .need-pod.is-both { background: var(--bg-both); }
+.table-energy .need-pod.is-both {
+  background: var(--bg-both);
+}
 
 
 .gather-memo {

@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Load actual ingredients for accurate testing
 const ingredients = JSON.parse(
-    fs.readFileSync(path.join(__dirname, "../data/ingredients.json"), "utf-8")
+    fs.readFileSync(path.join(__dirname, "../public/data/ingredients.json"), "utf-8")
 );
 
 describe("parseOcrText", () => {

@@ -32,6 +32,11 @@ function loadIngredientsMap() {
     // JSONの構造に合わせて、nameJp / name / id など適宜調整してください
     const jp = ing.nameJp || ing.name_jp || ing.name; // 保険
     if (jp) byName.set(jp.trim(), ing.id);
+    if (Array.isArray(ing.aliases)) {
+      for (const alias of ing.aliases) {
+        byName.set(alias.trim(), ing.id);
+      }
+    }
   }
   return byName;
 }
@@ -87,7 +92,7 @@ function parseRow($, tr, ingMap) {
     const id = ingMap.get(name);
     if (!id) {
       // マッピングできない食材名はスキップ（必要ならログ）
-      // console.warn("Unmapped ingredient:", name);
+      console.warn("Unmapped ingredient:", name);
       continue;
     }
     needs[id] = (needs[id] || 0) + count;

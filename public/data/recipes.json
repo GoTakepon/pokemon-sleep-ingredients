@@ -535,6 +535,18 @@
       },
       "total": 105,
       "energy": 25162
+    },
+    {
+      "id": "ごろごろねっとうサラダ",
+      "title": "ごろごろねっとうサラダ",
+      "needs": {
+        "heavy_pumpkin": 20,
+        "potato": 30,
+        "wakaku_corn": 18,
+        "mushroom": 27
+      },
+      "total": 95,
+      "energy": 25356
     }
   ],
   "dessert": [

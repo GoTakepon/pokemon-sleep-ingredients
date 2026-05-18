@@ -64,10 +64,16 @@ function normalizeForMatch(s) {
 function normalizeText(raw) {
   if (!raw) return "";
   let s = stripUiGarbage(raw);
+  
+  // iOS OCR sometimes uses Cyrillic characters instead of English letters or numbers
+  s = s.replace(/б/g, "6"); // Cyrillic Small Letter Be -> 6
+  s = s.replace(/з/g, "3"); // Cyrillic Small Letter Ze -> 3
+  s = s.replace(/о/g, "0"); // Cyrillic Small Letter O -> 0
+
   // よくある「×」「✕」「X」「ｘ」などを全部 x に寄せる
-  // ＋、*、乂、メ なども x に誤爆しやすいので追加
+  // ＋、*、乂、メ、х (Cyrillic Ha) なども x に誤爆しやすいので追加
   s = s
-    .replace(/[×✕✖✗ＸｘX＋\+*＊乂メ]/g, "x")
+    .replace(/[×✕✖✗ＸｘX＋\+*＊乂メхХ]/g, "x")
     .replace(/(?:\bX\b)/g, "x"); // 単独の大文字 X も x とみなす（保険）
   s = toHalfwidthAscii(s);
   s = normalizeSpaces(s);

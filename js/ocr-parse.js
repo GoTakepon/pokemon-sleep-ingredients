@@ -196,18 +196,83 @@ export function parseOcrText(ocrRaw, ingredients) {
     cursor = best.end;
   }
 
-  // 4) Sequential matching
+  // 4) Sequence Alignment Matching (Dynamic Programming)
+  // This mathematically aligns the arrays to preserve order while minimizing the character distance
+  // between matches, gracefully skipping any items the OCR missed without breaking the chain.
   const result = {};
   const duplicatesIgnored = [];
-  const n = Math.min(counts.length, orderedNames.length);
 
-  for (let i = 0; i < n; i++) {
-    const id = orderedNames[i].id;
-    if (Object.prototype.hasOwnProperty.call(result, id)) {
-      duplicatesIgnored.push({ id, previous: result[id], skipped: counts[i].val });
-      continue;
+  const M = counts.length;
+  const N = orderedNames.length;
+
+  // dp[i][j] stores the minimum cost to align the first i counts and first j names
+  const dp = Array.from({ length: M + 1 }, () => new Array(N + 1).fill(0));
+  
+  // choices stores the optimal path: 1 = Match, 2 = Skip Count, 3 = Skip Name
+  const choices = Array.from({ length: M + 1 }, () => new Array(N + 1).fill(0));
+
+  const MATCH_REWARD = -1000000;
+
+  for (let i = 1; i <= M; i++) {
+    for (let j = 1; j <= N; j++) {
+      const c = counts[i - 1];
+      const nItem = orderedNames[j - 1];
+
+      // Calculate physical distance between count and name in the string
+      let dist = 0;
+      if (c.end <= nItem.start) dist = nItem.start - c.end;
+      else if (nItem.end <= c.start) dist = c.start - nItem.end;
+
+      // Option 1: Match these two
+      const costMatch = dp[i - 1][j - 1] + MATCH_REWARD + dist;
+      
+      // Option 2: Skip this count
+      const costSkipCount = dp[i - 1][j];
+      
+      // Option 3: Skip this name
+      const costSkipName = dp[i][j - 1];
+
+      // Find minimum cost
+      if (costMatch <= costSkipCount && costMatch <= costSkipName) {
+        dp[i][j] = costMatch;
+        choices[i][j] = 1;
+      } else if (costSkipCount <= costSkipName) {
+        dp[i][j] = costSkipCount;
+        choices[i][j] = 2;
+      } else {
+        dp[i][j] = costSkipName;
+        choices[i][j] = 3;
+      }
     }
-    result[id] = counts[i].val;
+  }
+
+  // Backtrack to find the optimal alignment
+  let dpI = M;
+  let dpJ = N;
+  const alignments = [];
+
+  while (dpI > 0 && dpJ > 0) {
+    if (choices[dpI][dpJ] === 1) {
+      alignments.push({ countIdx: dpI - 1, nameIdx: dpJ - 1 });
+      dpI--;
+      dpJ--;
+    } else if (choices[dpI][dpJ] === 2) {
+      dpI--;
+    } else {
+      dpJ--;
+    }
+  }
+
+  // Apply the matched alignments
+  for (const match of alignments) {
+    const id = orderedNames[match.nameIdx].id;
+    const val = counts[match.countIdx].val;
+
+    if (Object.prototype.hasOwnProperty.call(result, id)) {
+      duplicatesIgnored.push({ id, previous: result[id], skipped: val });
+    } else {
+      result[id] = val;
+    }
   }
 
   // 5) Debug package

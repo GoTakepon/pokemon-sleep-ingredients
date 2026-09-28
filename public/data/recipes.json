@@ -254,6 +254,30 @@
       },
       "total": 115,
       "energy": 24802
+    },
+    {
+      "id": "ワカクサカレ-パン",
+      "title": "ワカクサカレーパン",
+      "needs": {
+        "warm_ginger": 20,
+        "herb": 20,
+        "wakaku_soy": 8,
+        "pure_oil": 15
+      },
+      "total": 63,
+      "energy": 10945
+    },
+    {
+      "id": "とびはねるカレ-うどん",
+      "title": "とびはねるカレーうどん",
+      "needs": {
+        "warm_ginger": 39,
+        "mushroom": 31,
+        "herb": 22,
+        "mame_meat": 20
+      },
+      "total": 112,
+      "energy": 25539
     }
   ],
   "salad": [

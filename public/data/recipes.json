@@ -278,6 +278,17 @@
       },
       "total": 112,
       "energy": 25539
+    },
+    {
+      "id": "タネばくだんナンカレ",
+      "title": "タネばくだんナンカレー",
+      "needs": {
+        "snackable_nuts": 15,
+        "heavy_pumpkin": 12,
+        "wakaku_corn": 12
+      },
+      "total": 39,
+      "energy": 7950
     }
   ],
   "salad": [
@@ -571,6 +582,18 @@
       },
       "total": 95,
       "energy": 25356
+    },
+    {
+      "id": "くさむすびサラダラップ",
+      "title": "くさむすびサラダラップ",
+      "needs": {
+        "snackable_nuts": 30,
+        "glossy_avocado": 22,
+        "warm_ginger": 36,
+        "sleep_tomato": 33
+      },
+      "total": 121,
+      "energy": 26350
     }
   ],
   "dessert": [
@@ -873,6 +896,18 @@
       },
       "total": 115,
       "energy": 25484
+    },
+    {
+      "id": "おいしいシッポロ-ルケ-キ",
+      "title": "おいしいシッポロールケーキ",
+      "needs": {
+        "snackable_nuts": 26,
+        "delicious_tail": 10,
+        "wakaku_soy": 22,
+        "egg": 33
+      },
+      "total": 91,
+      "energy": 19846
     }
   ]
 }

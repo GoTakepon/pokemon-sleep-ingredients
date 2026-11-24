@@ -37,7 +37,9 @@
         <select id="globalCategorySelect" class="select select-compact"></select>
       </div>
       <div class="version-info">
-        現在のバージョン: <span id="appVersion">-</span>
+        <span>現在のバージョン <span id="appVersion">—</span></span>
+        <button type="button" id="checkVersionBtn" class="btn btn-ghost" hidden>最新版を確認</button>
+        <span id="versionStatus" role="status"></span>
       </div>
       <nav class="tabs" role="tablist" aria-label="機能切り替え">
         <button type="button" class="tab is-active" data-tab="this" aria-selected="true">食材バッグ管理</button>

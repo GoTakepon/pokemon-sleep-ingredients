@@ -640,9 +640,18 @@ textarea:focus,
 }
 
 .version-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
   color: var(--yadon-muted);
   font-size: clamp(0.65rem, 0.72rem, 0.8rem);
   margin-top: -2px;
+}
+
+.version-info .btn {
+  padding: 4px 8px;
+  font-size: inherit;
 }
 
 .table-recipe .need-pod.is-this,

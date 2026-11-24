@@ -64,6 +64,7 @@ import { setupStockUI } from "./ui/stock-ui.js";
 import { setupOcrUI } from "./ui/ocr-ui.js";
 import { setupEnergyUI, createLevelSetter } from "./ui/energy-ui.js";
 import { setupSettingsUI } from "./ui/settings-ui.js";
+import { setupVersionUI } from "./ui/version-ui.js";
 import { showToast } from "./ui/toast.js";
 
 import { renderMenuList as renderMenuListView, renderNextChosen as renderNextChosenView } from "./render/menu.js";
@@ -1018,6 +1019,7 @@ function setupUI() {
 
 // Start
 try {
+  setupVersionUI(__APP_BUILD__);
   setupUI();
   loadData();
 } catch (e) {

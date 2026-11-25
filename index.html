@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>やどんの料理お手伝いツール</title>
   <style>
     @layer reset, base, sections, overrides;
@@ -26,60 +26,63 @@
   <main class="container">
     <header class="app-header">
       <div class="logo-wrap">
-        <img src="./assets/logo.png" alt="Yadon Tools" class="app-logo" />
+        <img src="./assets/icon-yadon-180.png" alt="" class="app-logo" />
         <div class="logo-text">
           <h1 class="app-title">やどんの料理お手伝いツール</h1>
-          <p class="app-subtitle">Pokémon Sleep 食材管理 & 料理シミュレータ</p>
+          <p class="app-subtitle">Pokémon Sleep 料理・食材管理</p>
         </div>
       </div>
-      <div class="global-menu-control">
-        <label for="globalCategorySelect">今週の料理:</label>
-        <select id="globalCategorySelect" class="select select-compact"></select>
+      <div class="header-controls">
+        <div class="global-menu-control">
+          <label for="globalCategorySelect">今週の料理</label>
+          <select id="globalCategorySelect" class="select select-compact"></select>
+        </div>
+        <details class="version-info">
+          <summary>バージョン <span id="appVersion">—</span></summary>
+          <div class="version-actions">
+            <button type="button" id="checkVersionBtn" class="btn btn-ghost" hidden>最新版を確認</button>
+            <span id="versionStatus" role="status"></span>
+          </div>
+        </details>
       </div>
-      <div class="version-info">
-        <span>現在のバージョン <span id="appVersion">—</span></span>
-        <button type="button" id="checkVersionBtn" class="btn btn-ghost" hidden>最新版を確認</button>
-        <span id="versionStatus" role="status"></span>
-      </div>
-      <nav class="tabs" role="tablist" aria-label="機能切り替え">
-        <button type="button" class="tab is-active" data-tab="this" aria-selected="true">食材バッグ管理</button>
-        <button type="button" class="tab" data-tab="next" aria-selected="false">料理エナジー計算</button>
-        <button type="button" class="tab" data-tab="gather" aria-selected="false">今週料理提案</button>
-        <button type="button" class="tab" data-tab="stock" aria-selected="false">次週備蓄プラン</button>
-      </nav>
     </header>
+    <div class="tabs" role="tablist" aria-label="機能切り替え">
+      <button type="button" id="tab-button-this" class="tab is-active" role="tab" data-tab="this" aria-controls="tab_this_week" aria-selected="true"><span>食材バッグ</span><span>管理</span></button>
+      <button type="button" id="tab-button-next" class="tab" role="tab" data-tab="next" aria-controls="tab_next_week" aria-selected="false" tabindex="-1"><span>料理</span><span>エナジー計算</span></button>
+      <button type="button" id="tab-button-gather" class="tab" role="tab" data-tab="gather" aria-controls="tab_gather" aria-selected="false" tabindex="-1"><span>今週</span><span>料理提案</span></button>
+      <button type="button" id="tab-button-stock" class="tab" role="tab" data-tab="stock" aria-controls="tab_stock" aria-selected="false" tabindex="-1"><span>次週</span><span>備蓄プラン</span></button>
+    </div>
 
     <!-- ▼ 今週タブ（メインタブ） -->
-    <section id="tab_this_week" class="tab-panel is-active">
+    <section id="tab_this_week" class="tab-panel is-active" role="tabpanel" aria-labelledby="tab-button-this">
 
       <!-- OCR入力 -->
-      <section class="section">
+      <section class="section inventory-import">
         <header class="section-header">
-          <span class="dot dot-green"></span>
-          <h2 class="section-title">OCRから食材バッグを更新</h2>
+          <h2 class="section-title" id="ocrTitle">OCRから食材バッグを更新</h2>
         </header>
 
         <div class="card">
-          <textarea id="ocrInput" class="textarea" placeholder="Paste OCR text here..."></textarea>
+          <p class="field-help" id="ocrHelp">食材バッグのOCRテキストを貼り付けてください。</p>
+          <textarea id="ocrInput" class="textarea" aria-labelledby="ocrTitle" aria-describedby="ocrHelp" placeholder="例：×15&#10;ひとくちナッツ"></textarea>
           <div class="row row-gap">
             <button id="parseBtn" class="btn btn-primary">OCR解析を実行</button>
             <button id="clearDataBtn" class="btn btn-ghost">バッグ情報をリセット</button>
           </div>
-          <p class="hint">入力内容はブラウザのローカルストレージに自動保存されます。</p>
+          <p class="hint">入力はこのブラウザに自動保存されます。</p>
         </div>
       </section>
 
       <!-- ② 今週の目標料理を追加 -->
-      <section class="section">
+      <section class="section current-goals">
         <header class="section-header">
-          <span class="dot dot-green"></span>
-          <h2 class="section-title">目標料理</h2>
-          <button class="collapse-toggle" data-target="#panel_this_week" aria-expanded="true">表示/非表示</button>
+          <h2 class="section-title" id="goalsTitle">目標料理</h2>
+          <button type="button" class="collapse-toggle" data-target="#panel_this_week" aria-controls="panel_this_week" aria-label="目標料理の表示" aria-expanded="true"></button>
         </header>
 
         <div id="panel_this_week" class="card">
           <div class="form-row end">
-            <select id="recipeSelect" class="select select-wide"></select>
+            <select id="recipeSelect" class="select select-wide" aria-labelledby="goalsTitle"></select>
           </div>
           <div id="menuList" class="menu-list"></div>
         </div>
@@ -87,13 +90,12 @@
 
 
       <!-- 次週の目標料理を追加 -->
-      <section class="section">
+      <section class="section next-goals">
         <header class="section-header">
-          <span class="dot dot-green"></span>
           <h2 class="section-title">次週の計画</h2>
-          <button class="collapse-toggle" data-target="#panel_next_week" aria-expanded="false">表示/非表示</button>
+          <button type="button" class="collapse-toggle" data-target="#panel_next_week" aria-controls="panel_next_week" aria-label="次週の計画の表示" aria-expanded="false"></button>
         </header>
-        <div id="panel_next_week" class="card">
+        <div id="panel_next_week" class="card" hidden>
           <!-- カレー・シチュー -->
           <div class="form-row">
             <label class="label" for="nwRecCurry">カレー・シチュー：</label>
@@ -125,9 +127,8 @@
 
 
       <!-- 食材一覧 -->
-      <section class="section">
+      <section class="section inventory-section">
         <header class="section-header">
-          <span class="dot dot-green"></span>
           <h2 class="section-title">食材バッグ一覧</h2>
           <div class="table-filters">
             <label><input type="checkbox" id="chkThisWeek" checked> 今週</label>
@@ -135,29 +136,31 @@
           </div>
         </header>
 
-        <div class="card">
-          <h3 class="sub-title">目標料理の使用食材</h3>
-          <div class="table-wrapper mt-md">
-            <table id="usedTable" class="table"></table>
+        <div class="card inventory-groups">
+          <div>
+            <h3 class="sub-title" id="usedIngredientsTitle">目標料理の使用食材</h3>
+            <div class="table-wrapper" tabindex="0" role="region" aria-labelledby="usedIngredientsTitle">
+              <table id="usedTable" class="table"></table>
+            </div>
           </div>
-
-          <h3 class="sub-title mt-lg">その他の食材</h3>
-          <div class="table-wrapper">
-            <table id="otherTable" class="table"></table>
+          <div>
+            <h3 class="sub-title" id="otherIngredientsTitle">その他の食材</h3>
+            <div class="table-wrapper" tabindex="0" role="region" aria-labelledby="otherIngredientsTitle">
+              <table id="otherTable" class="table"></table>
+            </div>
           </div>
         </div>
       </section>
 
 
       <!-- おすすめレシピ -->
-      <section class="section">
+      <section class="section recipe-suggestions">
         <header class="section-header">
-          <span class="dot dot-green"></span>
-          <h2 class="section-title">おすすめレシピ（未選択・今週の料理）</h2>
+          <h2 class="section-title" id="recipeSuggestionsTitle">おすすめレシピ（未選択・今週の料理）</h2>
         </header>
 
         <div class="card">
-          <div class="table-wrapper">
+          <div class="table-wrapper" tabindex="0" role="region" aria-labelledby="recipeSuggestionsTitle">
             <table id="recommendTable" class="table table-recipe"></table>
           </div>
         </div>
@@ -166,25 +169,26 @@
     </section> <!-- ← 今週タブをここで閉じる -->
 
     <!-- ▼ 料理エナジー計算タブ -->
-    <section id="tab_next_week" class="tab-panel" hidden>
+    <section id="tab_next_week" class="tab-panel" role="tabpanel" aria-labelledby="tab-button-next" hidden>
       <section class="section">
         <header class="section-header">
-          <span class="dot dot-green"></span>
-          <h2 class="section-title">料理エナジー計算</h2>
+          <h2 class="section-title" id="energyTitle">料理エナジー計算</h2>
         </header>
-        <div class="card">
-          <div class="table-wrapper">
-            <table id="energyTable" class="table table-energy"></table>
-          </div>
-          <div class="io-section">
-            <h3 class="io-title">レシピレベルの共有</h3>
-            <p class="muted io-note">JSON テキストをコピーして他端末へ持ち運びできます。インポート時は貼り付け後に読み込みを実行してください。</p>
-            <div class="io-controls">
-              <button type="button" id="exportRecipeLevelsBtn" class="btn btn-ghost">エクスポート</button>
-              <button type="button" id="importRecipeLevelsBtn" class="btn btn-primary">インポート</button>
+        <div class="card energy-layout">
+          <details class="io-section">
+            <summary class="io-title">レシピレベルの共有</summary>
+            <div class="io-content">
+              <p class="muted io-note">JSON テキストをコピーして他端末へ持ち運びできます。インポート時は貼り付け後に読み込みを実行してください。</p>
+              <div class="io-controls">
+                <button type="button" id="exportRecipeLevelsBtn" class="btn btn-ghost">エクスポート</button>
+                <button type="button" id="importRecipeLevelsBtn" class="btn btn-primary">インポート</button>
+              </div>
+              <textarea id="recipeLevelsText" class="io-textarea"
+                placeholder="例: {\n  &quot;levels&quot;: { &quot;recipe-id&quot;: 12 }\n}"></textarea>
             </div>
-            <textarea id="recipeLevelsText" class="io-textarea"
-              placeholder="例: {\n  &quot;levels&quot;: { &quot;recipe-id&quot;: 12 }\n}"></textarea>
+          </details>
+          <div class="table-wrapper" tabindex="0" role="region" aria-labelledby="energyTitle">
+            <table id="energyTable" class="table table-energy"></table>
           </div>
           <p class="muted footnote">レシピレベルは 0〜65 の範囲で設定できます。フィールド／イベントボーナスは全レシピに共通で適用されます。</p>
         </div>
@@ -192,28 +196,29 @@
     </section>
 
     <!-- ▼ 今週料理提案タブ -->
-    <section id="tab_gather" class="tab-panel" hidden>
+    <section id="tab_gather" class="tab-panel" role="tabpanel" aria-labelledby="tab-button-gather" hidden>
       <section class="section">
         <header class="section-header">
-          <span class="dot dot-green"></span>
-          <h2 class="section-title">今週料理提案</h2>
+          <h2 class="section-title" id="gatherTitle">今週料理提案</h2>
         </header>
         <div class="card">
-          <p class="muted">今週の食材状況とボーナス設定をもとにおすすめ料理を提案します。集め能力やボーナスはここで一元管理します。</p>
+          <p class="muted">食材の収集量とボーナスをもとに献立を提案します。</p>
 
-          <div class="table-wrapper mt-md">
+          <div class="table-wrapper rate-table" tabindex="0" role="region" aria-labelledby="gatherTitle">
             <table id="gatherTable" class="table table-gather"></table>
           </div>
-          <div class="io-section">
-            <h3 class="io-title">食材集め能力の共有</h3>
-            <p class="muted io-note">JSON テキストをエクスポート／インポートして別端末へ設定を引き継げます。</p>
-            <div class="io-controls">
-              <button type="button" id="exportGatherRatesBtn" class="btn btn-ghost">エクスポート</button>
-              <button type="button" id="importGatherRatesBtn" class="btn btn-primary">インポート</button>
+          <details class="io-section">
+            <summary class="io-title">食材集め能力の共有</summary>
+            <div class="io-content">
+              <p class="muted io-note">JSON テキストをエクスポート／インポートして別端末へ設定を引き継げます。</p>
+              <div class="io-controls">
+                <button type="button" id="exportGatherRatesBtn" class="btn btn-ghost">エクスポート</button>
+                <button type="button" id="importGatherRatesBtn" class="btn btn-primary">インポート</button>
+              </div>
+              <textarea id="gatherRatesText" class="io-textarea"
+                placeholder="例: {\n  &quot;rates&quot;: { &quot;ing-id&quot;: [1,0,0] }\n}"></textarea>
             </div>
-            <textarea id="gatherRatesText" class="io-textarea"
-              placeholder="例: {\n  &quot;rates&quot;: { &quot;ing-id&quot;: [1,0,0] }\n}"></textarea>
-          </div>
+          </details>
           <div class="proposal-config">
             <div class="proposal-section-head">
               <h3 class="sub-title">イベント条件</h3>
@@ -292,27 +297,31 @@
     </section>
 
     <!-- ▼ 次週備蓄プランタブ -->
-    <section id="tab_stock" class="tab-panel" hidden>
+    <section id="tab_stock" class="tab-panel" role="tabpanel" aria-labelledby="tab-button-stock" hidden>
       <section class="section">
         <header class="section-header">
-          <span class="dot dot-green"></span>
-          <h2 class="section-title">次週食材備蓄プラン</h2>
+          <h2 class="section-title" id="stockTitle">次週食材備蓄プラン</h2>
         </header>
         <div class="card">
-          <p class="muted">次週の島・イベント条件とバッグ容量に合わせて、今週のうちに備蓄しておきたい食材数を試算します。</p>
+          <p class="muted">次週の条件とバッグ容量から、備蓄する食材数を試算します。</p>
 
           <div class="io-section">
-            <h3 class="io-title">次週用の食材集め能力</h3>
-            <p class="muted io-note">第3タブとは別に、次週案に向けた想定値を入力します。値が入っている食材はブースト対象とみなされます。</p>
-            <div class="table-wrapper">
+            <h3 class="io-title" id="stockGatherTitle">次週用の食材集め能力</h3>
+            <p class="muted io-note">次週の想定値を入力します。値を入れた食材はブースト対象になります。</p>
+            <div class="table-wrapper rate-table" tabindex="0" role="region" aria-labelledby="stockGatherTitle">
               <table id="stockGatherTable" class="table table-gather"></table>
             </div>
-            <div class="io-controls">
-              <button type="button" id="exportStockGatherBtn" class="btn btn-ghost">エクスポート</button>
-              <button type="button" id="importStockGatherBtn" class="btn btn-primary">インポート</button>
-            </div>
-            <textarea id="stockGatherText" class="io-textarea"
-              placeholder="例: {\n  &quot;bagCapacity&quot;: 240,\n  &quot;rates&quot;: { &quot;ing-id&quot;: [1,0,0] }\n}"></textarea>
+            <details class="io-section stock-sharing">
+              <summary class="io-title">次週用の食材集め能力の共有</summary>
+              <div class="io-content">
+                <div class="io-controls">
+                  <button type="button" id="exportStockGatherBtn" class="btn btn-ghost">エクスポート</button>
+                  <button type="button" id="importStockGatherBtn" class="btn btn-primary">インポート</button>
+                </div>
+                <textarea id="stockGatherText" class="io-textarea"
+                  placeholder="例: {\n  &quot;bagCapacity&quot;: 240,\n  &quot;rates&quot;: { &quot;ing-id&quot;: [1,0,0] }\n}"></textarea>
+              </div>
+            </details>
           </div>
 
           <div class="stock-actions">
@@ -380,7 +389,7 @@
             </div>
           </div>
 
-          <div class="table-wrapper mt-md">
+          <div class="table-wrapper mt-md" tabindex="0" role="region" aria-labelledby="stockTitle">
             <table id="stockPlanTable" class="table table-stock-plan"></table>
           </div>
 

@@ -44,12 +44,6 @@
     padding:18px 14px 50px;
   }
 
-  /* セクション全体の左右余白もフラット化 */
-  .section {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
-
   /* セクション間は控えめに間隔を取る */
   .section + .section {
     margin-top: 24px;

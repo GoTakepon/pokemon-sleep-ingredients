@@ -371,7 +371,8 @@ function renderEnergyTable(selectedCategory = null) {
               min="0"
               max="65"
               step="1"
-              class="energy-level-input"
+              class="input energy-level-input"
+              aria-label="レシピレベル"
               data-recipe-id="${row.recipe.id}"
               value="${row.level}"
             >
@@ -684,7 +685,8 @@ function buildRecipeOptions(forcedCategory) {
   const list = state.data.recipes[cat] || [];
   buildingRecipeOptions = true;
   if (els.rec) {
-    els.rec.innerHTML = list.map(r => `<option value="${r.id}">${r.title}</option>`).join("");
+    const options = list.map(r => `<option value="${r.id}">${r.title}</option>`).join("");
+    els.rec.innerHTML = `<option value="" disabled selected>料理を追加</option>${options}`;
   }
   buildingRecipeOptions = false;
   renderEnergyTable(cat);
@@ -703,7 +705,8 @@ function addRecipeById(id) {
 }
 
 function setupTabs() {
-  const btns = document.querySelectorAll('.tabs .tab');
+  const tabList = document.querySelector('.tabs');
+  const btns = Array.from(tabList?.querySelectorAll('.tab') || []);
   const panels = {
     this: document.getElementById('tab_this_week'),
     next: document.getElementById('tab_next_week'),
@@ -717,6 +720,7 @@ function setupTabs() {
       const active = btn.dataset.tab === key;
       btn.classList.toggle('is-active', active);
       btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      btn.tabIndex = active ? 0 : -1;
     });
 
     Object.entries(panels).forEach(([panelKey, panel]) => {
@@ -742,8 +746,30 @@ function setupTabs() {
     }
   };
 
-  btns.forEach((btn) => {
-    btn.addEventListener('click', () => activate(btn.dataset.tab));
+  const selectTab = (key) => {
+    activate(key);
+    const panel = panels[key];
+    if (panel.getBoundingClientRect().top < tabList.getBoundingClientRect().bottom) {
+      panel.scrollIntoView();
+    }
+  };
+
+  btns.forEach((btn, index) => {
+    btn.addEventListener('click', () => selectTab(btn.dataset.tab));
+    btn.addEventListener('keydown', (event) => {
+      const destinations = {
+        ArrowLeft: (index + btns.length - 1) % btns.length,
+        ArrowRight: (index + 1) % btns.length,
+        Home: 0,
+        End: btns.length - 1,
+      };
+      if (!Object.hasOwn(destinations, event.key)) return;
+
+      event.preventDefault();
+      const target = btns[destinations[event.key]];
+      selectTab(target.dataset.tab);
+      target.focus({ preventScroll: true });
+    });
   });
 
   const saved = localStorage.getItem('activeTab');
@@ -1012,9 +1038,6 @@ function setupUI() {
     state,
     renderTables,
   });
-
-
-  setupTabs();
 }
 
 // Start

@@ -1,10 +1,26 @@
 // js/logic/next-week.js
 // 次週（NEXT）料理の目標材料数を集計するヘルパー
 
+import { CATEGORY_TO_NEXT_KEY } from "../constants.js";
+
 let lastCacheKey;
 let lastRecipesRef;
 let lastIngredientsRef;
 let lastEntries;
+
+export function collectZeroQuantityNextRecipeIngredientIds(nwState = {}, recipesByCat = {}) {
+  const ingredientIds = new Set();
+  for (const [category, key] of Object.entries(CATEGORY_TO_NEXT_KEY)) {
+    const zeroQuantityRecipes = new Set(
+      (nwState[key] || []).filter(({ qty }) => Number(qty) === 0).map(({ recipe }) => recipe),
+    );
+    for (const recipe of recipesByCat[category] || []) {
+      if (!zeroQuantityRecipes.has(recipe.id)) continue;
+      for (const id of Object.keys(recipe.needs || {})) ingredientIds.add(id);
+    }
+  }
+  return ingredientIds;
+}
 
 /**
  * 次週の材料需要を計算する。

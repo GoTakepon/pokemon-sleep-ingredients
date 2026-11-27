@@ -1,7 +1,7 @@
 // js/render/tables.js
 // テーブル描画とおすすめ表示に関するユーティリティ
 
-import { computeNextWeekTotals } from "../logic/next-week.js";
+import { collectZeroQuantityNextRecipeIngredientIds, computeNextWeekTotals } from "../logic/next-week.js";
 import { computeThisWeekTotals, buildTableRows } from "../logic/weekly-totals.js";
 import {
   collectThisWeekIngredientIds,
@@ -58,6 +58,7 @@ export function renderTables({
     ingredients,
     state.nextVersion,
   );
+  const zeroRecipeIngredients = collectZeroQuantityNextRecipeIngredientIds(state.next, recipesByCat);
   const nextTotals = {
     map: new Map(
       Array.from(totalsMap.entries()).map(([id, info]) => [
@@ -66,6 +67,7 @@ export function renderTables({
       ]),
     ),
     used: new Set(totalsMap.keys()),
+    zeroRecipeIngredients,
   };
 
   const tableFilter = {

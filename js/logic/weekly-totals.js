@@ -26,7 +26,7 @@ export function computeThisWeekTotals(chosen = [], findRecipeById) {
 /**
  * 今週/次週の使用状況からテーブル表示データを構築する。
  * @param {{map:Map<string,number>, used:Set<string>}} thisTotals
- * @param {{map:Map<string,number>, used:Set<string>}} nextTotals
+ * @param {{map:Map<string,number>, used:Set<string>, zeroRecipeIngredients?:Set<string>}} nextTotals
  * @param {{this:boolean, next:boolean}} tableFilter
  * @param {Map<string, number>} inventoryMap
  * @param {Array<{id:string, name?:string, emoji?:string}>} ingredients
@@ -64,7 +64,8 @@ export function buildTableRows({
     const tar = Number(targetMap.get(id) || 0);
     const diff = cur - tar;
     const inThis = usedThisSet.has(id);
-    const inNext = usedNextSet.has(id);
+    const inZeroRecipe = nextTotals?.zeroRecipeIngredients?.has(id);
+    const inNext = usedNextSet.has(id) || inZeroRecipe;
     const rowCls = (inThis && inNext) ? "wk-both"
       : inThis ? "wk-this"
       : inNext ? "wk-next"
@@ -83,7 +84,7 @@ export function buildTableRows({
         <td class="num">${shortageDisplay}</td>
       </tr>`;
 
-    if (tar > 0) {
+    if (tar > 0 || (tar === 0 && tableFilter?.next && inZeroRecipe)) {
       usedRows.push(rowHtml);
       sumCurU += cur;
       sumTarU += tar;

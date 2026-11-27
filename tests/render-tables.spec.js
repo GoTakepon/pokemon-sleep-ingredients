@@ -101,6 +101,39 @@ describe("renderTables", () => {
     expect(otherRow?.classList.contains("wk-this")).toBe(false);
     expect(otherRow?.classList.contains("wk-next")).toBe(false);
   });
+
+  it("keeps ingredients from a selected next-week recipe when its quantity reaches zero", () => {
+    const state = createState();
+    state.data.recipes.curry[0].needs = { ing1: 2 };
+    const findRecipeById = createFindRecipeById(state);
+    const findRow = (table, name) => Array.from(document.querySelectorAll(`#${table} tbody tr`))
+      .find((row) => row.cells[0].textContent.includes(name));
+    const render = () => renderTables({ state, findRecipeById });
+
+    render();
+    expect(findRow("usedTable", "Beans")?.cells[2].textContent).toBe("3");
+
+    state.next.CURRY[0].qty = 0;
+    state.nextVersion++;
+    render();
+
+    const beans = findRow("usedTable", "Beans");
+    expect(beans?.cells[2].textContent).toBe("0");
+    expect(beans?.classList.contains("wk-next")).toBe(true);
+    expect(findRow("otherTable", "Beans")).toBeUndefined();
+    expect(findRow("usedTable", "Apples")?.cells[2].textContent).toBe("2");
+    expect(findRow("usedTable", "Carrots")?.cells[2].textContent).toBe("2.5");
+
+    state.tableFilter.next = false;
+    render();
+    expect(findRow("otherTable", "Beans")).toBeDefined();
+
+    state.tableFilter.next = true;
+    state.next.CURRY = [];
+    state.nextVersion++;
+    render();
+    expect(findRow("otherTable", "Beans")).toBeDefined();
+  });
 });
 
 describe("renderSuggestionsTable", () => {
